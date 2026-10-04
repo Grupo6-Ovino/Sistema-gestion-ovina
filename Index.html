@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sistema de Gestión Ovina · Pozo del Carril</title>
+<?!= include('Foto'); ?>
+<style>
+  :root {
+    --bg:#f3f0e8; --card:#ffffff; --ink:#1e2420; --muted:#5d685f; --line:#e1ddd2; --soft:#faf8f3;
+    --brand:#2c5a43; --brand-d:#1d3d2d; --brand-2:#e2ede5; --earth:#a8742c; --earth-2:#f6ecdc;
+    --warn:#a35a06; --warn-bg:#fdf0dd; --bad:#b42318; --bad-bg:#fdecea; --ok:#1d7a46; --ok-bg:#e5f3ea;
+    --r:14px; --sh:0 1px 2px rgba(30,36,32,.06), 0 4px 14px rgba(30,36,32,.06);
+  }
+  * { box-sizing:border-box; }
+  html { -webkit-text-size-adjust:100%; }
+  body { margin:0; font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; color:var(--ink); background:var(--bg); }
+  .hide { display:none !important; }
+  button { font:inherit; }
+
+  /* ---------- Encabezado con foto ---------- */
+  .hero { position:relative; color:#fff; background:var(--brand-d); overflow:hidden; }
+  .hero .foto { position:absolute; top:0; right:0; height:100%; width:min(100%, 1000px); object-fit:cover; object-position:38% 42%; -webkit-mask-image:linear-gradient(90deg, transparent 0, #000 35%); mask-image:linear-gradient(90deg, transparent 0, #000 35%); }
+  .hero::before { content:""; position:absolute; inset:0; z-index:1; background:linear-gradient(90deg, rgba(29,61,45,.9) 0%, rgba(29,61,45,.75) 35%, rgba(29,61,45,.3) 70%, rgba(29,61,45,.05) 100%); }
+  .hero .in { z-index:2; }
+  .hero .in { position:relative; max-width:1600px; margin:0 auto; padding:14px clamp(16px,3vw,40px); display:flex; flex-direction:column; gap:6px; min-height:112px; }
+  .hero.big .in { min-height:210px; padding-top:18px; padding-bottom:22px; }
+  .hero .top { display:flex; align-items:center; gap:10px; }
+  .hero .marca { font-size:13px; letter-spacing:.06em; text-transform:uppercase; opacity:.9; flex:1; min-width:0; }
+  .hero .marca b { letter-spacing:.02em; }
+  .chipU { display:flex; align-items:center; gap:8px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.25); border-radius:999px; padding:4px 6px 4px 4px; cursor:pointer; color:#fff; }
+  .chipU .av { width:30px; height:30px; border-radius:50%; background:#fff; color:var(--brand-d); display:grid; place-items:center; font-weight:700; font-size:14px; }
+  .chipU .nm { font-size:14px; line-height:1.15; text-align:left; } .chipU .nm small { display:block; opacity:.8; font-size:11px; }
+  .hero h1 { margin:6px 0 0; font-size:22px; line-height:1.2; font-weight:700; }
+  .hero.big h1 { font-size:28px; margin-top:16px; }
+  .hero .fecha { font-size:15px; opacity:.92; }
+  .menuU { z-index:30; position:absolute; right:16px; top:52px; background:#fff; color:var(--ink); border-radius:12px; box-shadow:0 8px 30px rgba(0,0,0,.2); overflow:hidden; z-index:20; min-width:200px; }
+  .menuU button { display:block; width:100%; text-align:left; background:none; border:0; padding:12px 16px; cursor:pointer; }
+  .menuU button:hover { background:var(--soft); }
+
+  main { max-width:1600px; margin:0 auto; padding:16px clamp(16px,3vw,40px); }
+  .volver { display:inline-flex; align-items:center; gap:6px; background:#fff; border:1px solid var(--line); color:var(--brand); border-radius:999px; padding:8px 14px; cursor:pointer; font-weight:600; margin-bottom:12px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:18px; margin-bottom:16px; box-shadow:var(--sh); }
+  .card h2 { font-size:19px; margin:0 0 4px; } .card h3 { font-size:16px; margin:18px 0 8px; }
+  .card .sub { color:var(--muted); margin:0 0 14px; font-size:15px; }
+  .muted { color:var(--muted); font-size:13px; }
+
+  /* ---------- Inicio ---------- */
+  .resumen { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin:-38px 0 16px; position:relative; z-index:2; }
+  .res { background:#fff; border-radius:var(--r); padding:12px 14px; box-shadow:var(--sh); border:1px solid var(--line); cursor:pointer; }
+  .res .v { font-size:26px; font-weight:750; line-height:1.1; } .res .l { font-size:13px; color:var(--muted); }
+  .res.alerta .v { color:var(--bad); } .res.aviso .v { color:var(--warn); } .res.dolar .v { color:var(--brand); }
+  .usd { font-size:13px; color:var(--muted); font-weight:500; margin-top:2px; }
+  .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; }
+  @media (min-width:900px) { .tiles.t3 { grid-template-columns:repeat(3,1fr); } }
+  @media (min-width:641px) and (max-width:899px) { .tiles.t3 { grid-template-columns:repeat(2,1fr); } }
+  .tile { display:flex; gap:14px; align-items:center; text-align:left; background:#fff; border:1px solid var(--line); border-radius:var(--r); padding:16px; cursor:pointer; box-shadow:var(--sh); min-height:88px; transition:transform .08s, border-color .15s; color:var(--ink); }
+  .tile:hover { border-color:var(--brand); transform:translateY(-1px); }
+  .tile .ic { flex:0 0 52px; height:52px; border-radius:14px; display:grid; place-items:center; font-size:28px; background:var(--brand-2); }
+  .tile.carga .ic { background:var(--earth-2); }
+  .tile b { display:block; font-size:17px; line-height:1.25; color:var(--ink); } .tile span { display:block; font-size:13px; color:var(--muted); margin-top:2px; }
+  .seccion { font-size:13px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin:20px 2px 10px; font-weight:650; }
+
+  /* ---------- Formularios ---------- */
+  .row { display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; }
+  .f { display:flex; flex-direction:column; gap:5px; min-width:180px; flex:1; margin-bottom:12px; }
+  .f > label, .lab { font-size:14px; font-weight:600; color:#38423b; } .req { color:var(--bad); }
+  .f .ay { font-size:12.5px; color:var(--muted); }
+  input, select, textarea { font:inherit; font-size:16px; padding:11px 12px; border:1px solid #cfcabd; border-radius:10px; background:#fff; width:100%; min-height:46px; color:var(--ink); }
+  input:focus, select:focus, textarea:focus { outline:3px solid rgba(44,90,67,.2); border-color:var(--brand); }
+  textarea { min-height:70px; }
+  .pills { display:flex; flex-wrap:wrap; gap:8px; }
+  .pill { border:1.5px solid #cfcabd; background:#fff; border-radius:999px; padding:9px 15px; cursor:pointer; font-size:15px; color:var(--ink); min-height:44px; }
+  .pill.on { background:var(--brand); border-color:var(--brand); color:#fff; font-weight:600; }
+  .btn { border:0; background:var(--brand); color:#fff; border-radius:12px; padding:13px 20px; cursor:pointer; font-size:17px; font-weight:650; min-height:50px; }
+  .btn:hover { background:var(--brand-d); } .btn.full { width:100%; }
+  .btn2 { border:1.5px solid #cfcabd; background:#fff; color:var(--ink); border-radius:12px; padding:10px 16px; cursor:pointer; font-size:15px; min-height:44px; }
+  .btn2:hover { border-color:var(--brand); color:var(--brand); }
+  .link { background:none; border:0; color:var(--brand); cursor:pointer; padding:4px 0; font-weight:600; text-decoration:underline; }
+  button:disabled { opacity:.55; cursor:wait; }
+  .paso { display:flex; align-items:center; gap:10px; margin:6px 0 12px; font-size:17px; font-weight:700; }
+  .paso i { font-style:normal; width:28px; height:28px; border-radius:50%; background:var(--brand); color:#fff; display:grid; place-items:center; font-size:14px; }
+  .mini { background:var(--soft); border:1px dashed #cfcabd; border-radius:12px; padding:14px; margin:4px 0 14px; }
+
+  .msg { padding:12px 14px; border-radius:12px; margin:0 0 12px; font-size:15px; }
+  .msg.ok { background:var(--ok-bg); color:var(--ok); } .msg.err { background:var(--bad-bg); color:var(--bad); } .msg.warn { background:var(--warn-bg); color:var(--warn); }
+  .listo { text-align:center; padding:26px 16px; } .listo .ch { width:72px; height:72px; border-radius:50%; background:var(--ok-bg); color:var(--ok); display:grid; place-items:center; font-size:38px; margin:0 auto 10px; }
+  .listo h2 { font-size:22px; } .listo p { color:var(--muted); max-width:520px; margin:6px auto 18px; }
+
+  /* Selector de animales */
+  .grupoA { border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-bottom:10px; }
+  .grupoA .gh { display:flex; align-items:center; gap:10px; margin-bottom:8px; flex-wrap:wrap; } .grupoA .gh b { flex:1; }
+  .cars { display:flex; flex-wrap:wrap; gap:6px; }
+  .car { min-width:52px; height:44px; border-radius:10px; border:1.5px solid #cfcabd; background:#fff; cursor:pointer; font-weight:650; font-size:15px; position:relative; }
+  .car.on { background:var(--brand); border-color:var(--brand); color:#fff; }
+  .car.cr::after { content:""; position:absolute; top:4px; right:4px; width:8px; height:8px; border-radius:50%; background:var(--bad); }
+  .contador { position:sticky; bottom:0; z-index:3; background:#fff; border-top:1px solid var(--line); padding:12px 0; margin:6px 0 -18px; box-shadow:0 -8px 16px -10px rgba(0,0,0,.15); }
+
+  /* Tablas y tarjetas */
+  table { border-collapse:collapse; width:100%; font-size:14px; }
+  th, td { border-bottom:1px solid var(--line); padding:8px 9px; text-align:left; vertical-align:top; }
+  th { background:var(--soft); font-weight:650; position:sticky; top:0; z-index:1; }
+  td.n, th.n { text-align:right; font-variant-numeric:tabular-nums; }
+  tr.tot td { font-weight:700; background:var(--soft); }
+  tr.baja td { color:#999; text-decoration:line-through; } tr.sup td { background:var(--warn-bg); }
+  .scroll { overflow:auto; max-height:540px; border:1px solid var(--line); border-radius:10px; }
+  .scroll td, .scroll th { white-space:nowrap; max-width:340px; overflow:hidden; text-overflow:ellipsis; }
+  .tag { display:inline-block; font-size:12px; padding:2px 9px; border-radius:20px; background:var(--warn-bg); color:var(--warn); margin-left:6px; font-weight:600; white-space:nowrap; }
+  .tag.r { background:var(--bad-bg); color:var(--bad); } .tag.v { background:var(--ok-bg); color:var(--ok); } .tag.g { background:#eef0ee; color:#555; }
+  .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; margin-bottom:16px; }
+  .kpi { background:#fff; border:1px solid var(--line); border-radius:var(--r); padding:14px 16px; box-shadow:var(--sh); }
+  .kpi .l { font-size:13px; color:var(--muted); } .kpi .v { font-size:22px; font-weight:700; margin-top:2px; }
+  .lista { display:grid; gap:10px; }
+  .item { border:1px solid var(--line); border-radius:12px; padding:12px 14px; background:#fff; display:flex; flex-wrap:wrap; gap:8px 12px; align-items:flex-start; }
+  .item .t { flex:1 1 220px; min-width:0; overflow-wrap:anywhere; } .item .t b { font-size:16px; color:var(--ink); } .an b { color:var(--ink); } .item .t div { font-size:14px; color:var(--muted); }
+  .item .der { text-align:right; font-variant-numeric:tabular-nums; margin-left:auto; }
+  .animales { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; }
+  .an { border:1px solid var(--line); border-radius:12px; padding:12px; background:#fff; cursor:pointer; text-align:left; color:var(--ink); }
+  .an:hover { border-color:var(--brand); } .an b { font-size:18px; display:block; } .an span { font-size:13px; color:var(--muted); display:block; }
+  ul.lect { margin:0; padding-left:20px; } ul.lect li { margin-bottom:6px; }
+  details summary { cursor:pointer; color:var(--brand); margin:8px 0; font-weight:600; }
+
+  .modal { position:fixed; inset:0; background:rgba(15,25,20,.5); z-index:50; display:flex; align-items:flex-start; justify-content:center; padding:24px 12px; overflow:auto; }
+  .modal .card { max-width:640px; width:100%; }
+
+  footer { max-width:1600px; margin:10px auto 24px; padding:0 clamp(16px,3vw,40px); display:flex; align-items:center; gap:12px; color:var(--muted); font-size:13px; }
+  footer img { height:44px; border-radius:4px; }
+
+  /* Login */
+  #login { max-width:440px; margin:6vh auto; padding:0 12px; }
+  #login .card { padding:0; overflow:hidden; }
+  #login .ft { height:170px; background:center 30% / cover no-repeat; position:relative; }
+  #login .ft::after { content:""; position:absolute; inset:0; background:linear-gradient(0deg, rgba(20,44,32,.85), rgba(20,44,32,0) 70%); }
+  #login .ft div { position:absolute; left:18px; bottom:14px; color:#fff; z-index:1; } #login .ft b { font-size:22px; display:block; }
+  #login .cuerpo { padding:18px; }
+
+  @media (max-width:640px) {
+    main { padding:12px; } .f { min-width:100%; } .hero.big h1 { font-size:24px; } .hero .chipU .nm { display:none; }
+    .resumen { grid-template-columns:repeat(2,1fr); gap:8px; } .res { padding:10px; } .res .v { font-size:22px; } .res .l { font-size:12px; line-height:1.3; } .tiles { grid-template-columns:1fr; } .tile { min-height:76px; }
+  }
+</style>
+</head>
+<body>
+<div id="login">
+  <div class="card">
+    <div class="ft" id="loginFoto"><div><b>Pozo del Carril</b>Sistema de Gestión Ovina · Rodeo Dorper</div></div>
+    <div class="cuerpo">
+      <div id="loginMsg"></div>
+      <div class="f"><label for="lEmail">Tu email</label><input id="lEmail" type="email" autocomplete="username" inputmode="email"></div>
+      <div class="f"><label for="lClave">Tu clave</label><input id="lClave" type="password" autocomplete="current-password"></div>
+      <button class="btn full" id="lBtn" onclick="ingresar()">Entrar</button>
+      <p class="muted" style="text-align:center;margin:14px 0 0">¿No tenés usuario o te olvidaste la clave? Pedíselo al administrador del sistema.</p>
+    </div>
+  </div>
+</div>
+
+<div id="app" class="hide">
+  <header class="hero" id="hero">
+    <img class="foto" id="heroImg" alt="">
+    <div class="in">
+      <div class="top">
+        <div class="marca"><b>Pozo del Carril</b> · La Aguada · Ovinos Dorper</div>
+        <button class="chipU" id="chipU" onclick="menuUsuario()"><span class="av" id="avU"></span><span class="nm" id="nmU"></span></button>
+      </div>
+      <h1 id="heroTit"></h1>
+      <div class="fecha" id="heroFecha"></div>
+    </div>
+    <div class="menuU hide" id="menuU">
+      <button onclick="ir('clave')">🔑 Cambiar mi clave</button>
+      <button onclick="salir()">↩ Salir</button>
+    </div>
+  </header>
+  <main id="main"></main>
+  <footer><img id="logoPie" alt="UNRC"><div>Sistema de Gestión Ovina · Grupo 6 · Taller de Práctica II · FCE – UNRC<br><span id="verPie"></span></div></footer>
+</div>
+
+<script>
+var S = { token:null, u:null, esq:null, listas:null, resumen:null, vista:'inicio' };
+try { S.token = sessionStorage.getItem('ovToken'); } catch (e) {}
+var $ = function (id) { return document.getElementById(id); };
+if (typeof FOTO !== 'undefined') { $('loginFoto').style.backgroundImage = 'url(' + FOTO + ')'; $('heroImg').src = FOTO; }
+if (typeof LOGO !== 'undefined') $('logoPie').src = LOGO;
+
+function call(fn) {
+  var args = Array.prototype.slice.call(arguments, 1);
+  return new Promise(function (res, rej) {
+    var runner = google.script.run.withSuccessHandler(res).withFailureHandler(function (e) {
+      var m = (e && e.message) || String(e);
+      if (/Sesión vencida/.test(m)) { salir(true); }
+      rej(new Error(m));
+    });
+    runner[fn].apply(runner, args);
+  });
+}
+function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) { return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
+function pesos(x) { return x === null || x === undefined || x === '' ? '—' : '$ ' + Number(x).toLocaleString('es-AR', { minimumFractionDigits:2, maximumFractionDigits:2 }); }
+function pesos0(x) { return '$ ' + Number(x).toLocaleString('es-AR', { maximumFractionDigits:2 }); }
+function dolarHoy() { return S.resumen && S.resumen.dolar ? Number(S.resumen.dolar.Vendedor) : 0; }
+function enUSD(x) { var d = dolarHoy(); return d ? 'US$ ' + Number(x / d).toLocaleString('es-AR', { minimumFractionDigits:2, maximumFractionDigits:2 }) : ''; }
+function num(x, d) { return x === null || x === undefined || x === '' ? '—' : Number(x).toLocaleString('es-AR', { maximumFractionDigits: d === undefined ? 2 : d }); }
+function msg(el, tipo, t) { if (el) el.innerHTML = '<div class="msg ' + tipo + '">' + esc(t) + '</div>'; }
+function hoy() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function fecha(s) { if (!s) return '—'; var p = String(s).slice(0, 10).split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : s; }
+function fechaLarga() { var t = new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long', year:'numeric' }); return t.charAt(0).toUpperCase() + t.slice(1); }
+function L(t) { return S.listas[t] || []; }
+function etiqueta(tabla, id) { var l = L(tabla).filter(function (x) { return String(x.id) === String(id); })[0]; return l ? l.label : id; }
+function item(tabla, id) { return L(tabla).filter(function (x) { return String(x.id) === String(id); })[0] || null; }
+function puede(t, a) { return S.esq[t] && S.esq[t].puede[a]; }
+function opciones(lista, sel, vacio) { return (vacio === false ? '' : '<option value="">' + (vacio || '— elegir —') + '</option>') + lista.map(function (o) { return '<option value="' + esc(o.id) + '"' + (String(o.id) === String(sel) ? ' selected' : '') + '>' + esc(o.label) + '</option>'; }).join(''); }
+function pills(id, ops, sel) { return '<div class="pills" id="' + id + '">' + ops.map(function (o) { var v = typeof o === 'string' ? o : o[0], l = typeof o === 'string' ? o : o[1]; return '<button type="button" class="pill' + (v === sel ? ' on' : '') + '" data-v="' + esc(v) + '" onclick="pillSel(this)">' + esc(l) + '</button>'; }).join('') + '</div>'; }
+function pillSel(b) { Array.prototype.forEach.call(b.parentNode.children, function (x) { x.classList.toggle('on', x === b); }); var ev = b.parentNode.getAttribute('data-on'); if (ev && window[ev]) window[ev](b.getAttribute('data-v')); }
+function pillVal(id) { var b = $(id) && $(id).querySelector('.pill.on'); return b ? b.getAttribute('data-v') : ''; }
+function campo(lab, html, ayuda, req) { return '<div class="f"><label>' + lab + (req ? ' <span class="req">*</span>' : '') + '</label>' + html + (ayuda ? '<div class="ay">' + ayuda + '</div>' : '') + '</div>'; }
+function nombreCat(id) { return etiqueta('D_Categoria', id); }
+function activos() { return L('D_Animal').filter(function (a) { return a.estado === 'Activo'; }); }
+function listo(titulo, texto, otraVista, otraTxt) {
+  $('main').innerHTML = volverBtn() + '<div class="card listo"><div class="ch">✓</div><h2>' + esc(titulo) + '</h2><p>' + esc(texto) + '</p><div class="row" style="justify-content:center">' +
+    (otraVista ? '<button class="btn2" onclick="ir(\'' + otraVista + '\')">' + esc(otraTxt) + '</button>' : '') + '<button class="btn" onclick="ir(\'inicio\')">Volver al inicio</button></div></div>';
+  window.scrollTo(0, 0);
+}
+function volverBtn() { return '<button class="volver" onclick="ir(\'inicio\')">← Inicio</button>'; }
+function ocupado(btn, si) { if (btn) { btn.disabled = si; if (si) { btn._t = btn.textContent; btn.textContent = 'Guardando…'; } else if (btn._t) btn.textContent = btn._t; } }
+
+/* ---------- Sesión ---------- */
+function ingresar() {
+  var b = $('lBtn'); b.disabled = true;
+  call('api_login', $('lEmail').value, $('lClave').value).then(function (r) {
+    S.token = r.token; try { sessionStorage.setItem('ovToken', r.token); } catch (e) {}
+    return iniciar();
+  }).catch(function (e) { msg($('loginMsg'), 'err', e.message); }).then(function () { b.disabled = false; });
+}
+$('lClave').addEventListener('keydown', function (e) { if (e.key === 'Enter') ingresar(); });
+function salir(silencioso) {
+  if (S.token && !silencioso) call('api_logout', S.token).catch(function () {});
+  S.token = null; try { sessionStorage.removeItem('ovToken'); } catch (e) {}
+  $('menuU').classList.add('hide'); $('app').classList.add('hide'); $('login').classList.remove('hide');
+  if (silencioso) msg($('loginMsg'), 'warn', 'La sesión venció. Volvé a entrar.');
+}
+function iniciar() {
+  return call('api_inicio', S.token).then(function (r) {
+    S.u = r.usuario; S.esq = r.esquema; S.listas = r.listas; S.resumen = r.resumen; S.rubros = r.rubros;
+    var ini = String(S.u.Nombre || '?').trim().split(/\s+/).map(function (p) { return p[0]; }).slice(0, 2).join('').toUpperCase();
+    $('avU').textContent = ini; $('nmU').innerHTML = esc(S.u.Nombre) + '<small>' + esc(S.u.Rol) + (S.u.IdSubunidad ? ' · ' + esc(etiqueta('D_Subunidad', S.u.IdSubunidad)) : '') + '</small>';
+    $('heroFecha').textContent = fechaLarga(); $('verPie').textContent = 'Versión ' + r.version;
+    $('login').classList.add('hide'); $('app').classList.remove('hide');
+    ir(S.vista);
+  });
+}
+function refrescar() { return call('api_inicio', S.token).then(function (r) { S.listas = r.listas; S.esq = r.esquema; S.resumen = r.resumen; }); }
+function menuUsuario() { $('menuU').classList.toggle('hide'); }
+document.addEventListener('click', function (e) { if (!e.target.closest('#chipU') && !e.target.closest('#menuU')) $('menuU').classList.add('hide'); });
+
+var VISTAS = {
+  inicio:    ['', vInicio], sanidad: ['Vacunas y tratamientos', vSanidad], nacimiento: ['Nació un cordero', vNacimiento],
+  muerte:    ['Murió un animal', vMuerte], compra: ['Cargar una compra', vCompra], compras: ['Cobros y pagos', vCuentas], cuentas: ['Cobros y pagos', vCuentas],
+  venta:     ['Vender animales', vVenta], terceros: ['Proveedores y clientes', vTerceros], animales: ['Los animales', vAnimales],
+  tablero:   ['Resultados', vTablero], tablas: ['Administración', vTablas], clave: ['Cambiar mi clave', vClave]
+};
+function ir(v) {
+  if (!VISTAS[v]) v = 'inicio';
+  S.vista = v; $('menuU').classList.add('hide');
+  $('hero').classList.toggle('big', v === 'inicio');
+  var h = new Date().getHours(), saludo = h < 13 ? 'Buen día' : h < 20 ? 'Buenas tardes' : 'Buenas noches';
+  $('heroTit').textContent = v === 'inicio' ? saludo + ', ' + String(S.u.Nombre).split(' ')[0] : VISTAS[v][0];
+  window.scrollTo(0, 0);
+  VISTAS[v][1]();
+}
+
+/* ---------- INICIO ---------- */
+function vInicio() {
+  var r = S.resumen || {};
+  var h = '<div class="resumen">' +
+    '<div class="res" onclick="ir(\'animales\')"><div class="v">' + num(r.rodeo, 0) + '</div><div class="l">animales en el rodeo</div></div>' +
+    '<div class="res' + (r.enCarencia ? ' aviso' : '') + '" onclick="ir(\'animales\')"><div class="v">' + num(r.enCarencia, 0) + '</div><div class="l">en carencia (no vender)</div></div>' +
+    '<div class="res' + (r.comprasVencidas ? ' alerta' : r.comprasPendientes ? ' aviso' : '') + '" onclick="ir(\'cuentas\')"><div class="v">' + num(r.comprasPendientes, 0) + '</div><div class="l">facturas por pagar' + (r.comprasVencidas ? ' · ' + r.comprasVencidas + ' vencida' + (r.comprasVencidas > 1 ? 's' : '') : '') + (r.porCobrar ? ' · ' + r.porCobrar + ' venta' + (r.porCobrar > 1 ? 's' : '') + ' por cobrar' : '') + '</div></div>' +
+    '<div class="res dolar"' + (S.u.Rol === 'Administrador' ? ' onclick="dolarAhora(this)" title="Tocá para buscar la cotización de hoy"' : '') + '><div class="v">' + (r.dolar ? pesos0(r.dolar.Vendedor) : '—') + '</div><div class="l">' + (r.dolar ? 'dólar oficial BNA (vendedor) · ' + fecha(r.dolar.Fecha) : 'dólar BNA: todavía sin cotización') + '</div></div>' +
+    '</div>';
+  var t = function (v, ic, tit, sub, carga) { return '<button class="tile' + (carga ? ' carga' : '') + '" onclick="ir(\'' + v + '\')"><span class="ic">' + ic + '</span><span><b>' + tit + '</b><span>' + sub + '</span></span></button>'; };
+  var carga = [];
+  if (puede('F_Sanidad', 'crear')) carga.push(t('sanidad', '💉', 'Vacuné o traté animales', 'Vacunas, antiparasitarios, remedios', 1));
+  if (puede('D_Animal', 'crear')) carga.push(t('nacimiento', '🐑', 'Nació un cordero', 'Alta de un animal nuevo', 1));
+  if (puede('F_Mortandad', 'crear')) carga.push(t('muerte', '🕊️', 'Murió un animal', 'Sacarlo del rodeo y anotar la causa', 1));
+  if (puede('F_Compras', 'crear')) carga.push(t('compra', '🧾', 'Cargué una compra', 'Factura de un proveedor', 1));
+  if (puede('F_Ingresos', 'crear')) carga.push(t('venta', '💰', 'Vendí animales', 'Factura de venta y salida del rodeo', 1));
+  if (puede('F_Tesoreria', 'crear')) carga.push(t('cuentas', '💵', 'Cobré o pagué algo', 'Recibos, lo que se debe y lo que nos deben', 1));
+  var ver = [t('animales', '🐏', 'Ver los animales', 'Rodeo, fichas y tratamientos'), 
+    t('terceros', '🤝', 'Proveedores y clientes', puede('D_Tercero', 'crear') ? 'Ver y agregar' : 'Ver la lista'), t('tablero', '📊', 'Resultados', 'Ingresos, costos y margen')];
+  if (!puede('F_Tesoreria', 'crear')) ver.splice(1, 0, t('cuentas', '📋', 'Cobros y pagos', 'Facturas, lo que se debe y lo que nos deben'));
+  if (S.u.Rol === 'Administrador') ver.push(t('tablas', '⚙️', 'Administración', 'Tablas, parámetros y usuarios'));
+  if (carga.length) h += '<div class="seccion">¿Qué hiciste hoy?</div><div class="tiles t3">' + carga.join('') + '</div>';
+  h += '<div class="seccion">Consultar</div><div class="tiles">' + ver.join('') + '</div>';
+  $('main').innerHTML = h;
+}
+
+/* ---------- Selector de animales (para sanidad) ---------- */
+var SEL = {};
+function selectorAnimales(soloSub) {
+  var grupos = {};
+  activos().forEach(function (a) {
+    var cat = item('D_Categoria', a.cat);
+    if (soloSub && cat && cat.sub !== soloSub) return;
+    var n = nombreCat(a.cat); (grupos[n] = grupos[n] || []).push(a);
+  });
+  var orden = ['Oveja', 'Carnero', 'Cordero', 'Borrego', 'Borrega'];
+  var claves = Object.keys(grupos).sort(function (a, b) { return (orden.indexOf(a) + 99) % 99 - (orden.indexOf(b) + 99) % 99; });
+  if (!claves.length) return '<p class="muted">No hay animales en el rodeo.</p>';
+  return '<div class="row" style="margin-bottom:10px"><button type="button" class="btn2" onclick="selTodos(true)">Elegir todo el rodeo</button><button type="button" class="btn2" onclick="selTodos(false)">Ninguno</button></div>' +
+    claves.map(function (g) {
+      var lista = grupos[g].sort(function (a, b) { return Number(a.id) - Number(b.id); });
+      return '<div class="grupoA"><div class="gh"><b>' + esc(g) + (lista.length === 1 ? '' : g.slice(-1) === 'o' || g.slice(-1) === 'a' ? 's' : 'es') + ' (' + lista.length + ')</b><button type="button" class="btn2" onclick="selGrupo(\'' + esc(g) + '\')">Todas/os</button></div><div class="cars">' +
+        lista.map(function (a) { return '<button type="button" class="car' + (SEL[a.id] ? ' on' : '') + (a.carencia ? ' cr' : '') + '" data-g="' + esc(g) + '" data-id="' + a.id + '" title="' + (a.carencia ? 'En carencia hasta ' + fecha(a.carencia) : '') + '" onclick="selUno(this)">' + a.id + '</button>'; }).join('') + '</div></div>';
+    }).join('') + '<p class="muted">El punto rojo indica un animal que ya está en carencia por otro tratamiento.</p>';
+}
+function selUno(b) { var id = b.getAttribute('data-id'); SEL[id] = !SEL[id]; b.classList.toggle('on', !!SEL[id]); selContar(); }
+function selGrupo(g) { var bs = document.querySelectorAll('.car[data-g="' + g + '"]'); var todos = Array.prototype.every.call(bs, function (b) { return SEL[b.getAttribute('data-id')]; }); Array.prototype.forEach.call(bs, function (b) { SEL[b.getAttribute('data-id')] = !todos; b.classList.toggle('on', !todos); }); selContar(); }
+function selTodos(si) { Array.prototype.forEach.call(document.querySelectorAll('.car'), function (b) { SEL[b.getAttribute('data-id')] = si; b.classList.toggle('on', si); }); selContar(); }
+function selElegidos() { return Object.keys(SEL).filter(function (k) { return SEL[k]; }); }
+function selContar() { var n = selElegidos().length; if ($('selN')) $('selN').textContent = n ? n + ' animal' + (n === 1 ? '' : 'es') + ' elegido' + (n === 1 ? '' : 's') : 'Todavía no elegiste animales'; sTotal(); }
+
+/* ---------- Producto nuevo (alta rápida, se usa en sanidad y compras) ---------- */
+function productoSelect(id, rubro, sel, onchange) {
+  var ins = L('D_Insumo').filter(function (x) { return !rubro || x.rubro === rubro; });
+  return '<select id="' + id + '" onchange="' + (onchange || '') + '">' + opciones(ins, sel) + (puede('D_Insumo', 'crear') ? '<option value="__nuevo">＋ Agregar un producto nuevo…</option>' : '') + '</select>';
+}
+function productoNuevoHTML(pref, rubro) {
+  var ums = L('D_UM').filter(function (u) { return ['mL', 'L', 'ds', 'kg', 'g', 'un', 'cab', 'km', 'h', 'J', 'bol', 'd'].indexOf(u.abrev) >= 0; });
+  return '<div class="mini" id="' + pref + 'Nuevo"><b>Producto nuevo</b><div id="' + pref + 'NMsg"></div>' +
+    campo('Nombre del producto', '<input id="' + pref + 'NNom" placeholder="ej. Ivermectina 1% x 500 mL">', '', 1) +
+    (rubro ? '' : campo('¿Para qué es?', pills(pref + 'NRub', S.rubros, ''), 'Con esto el sistema sabe en qué cuenta del plan de cuentas va.', 1)) +
+    '<div class="row">' + campo('Se usa en', '<select id="' + pref + 'NUm">' + opciones(ums.map(function (u) { return { id: u.id, label: u.label + ' (' + u.abrev + ')' }; }), (L('D_UM').filter(function (u) { return u.abrev === (rubro === 'Sanidad' ? 'mL' : 'un'); })[0] || {}).id, false) + '</select>', 'La unidad en que se mide cada aplicación o uso', 1) +
+    campo('Cuánto trae cada envase', '<input id="' + pref + 'NCont" type="number" step="any" inputmode="decimal" placeholder="ej. 500">', 'Opcional (ej. un frasco de 500 mL)') + '</div>' +
+    '<div class="row"><button type="button" class="btn" onclick="productoGuardar(\'' + pref + '\',\'' + (rubro || '') + '\')">Agregar producto</button><button type="button" class="btn2" onclick="productoCancelar(\'' + pref + '\')">Cancelar</button></div></div>';
+}
+function productoGuardar(pref, rubro) {
+  var o = { Nombre: $(pref + 'NNom').value, Rubro: rubro || pillVal(pref + 'NRub'), IdUM: $(pref + 'NUm').value, ContenidoEnvase: $(pref + 'NCont').value };
+  if (!o.Nombre || !o.Rubro) { msg($(pref + 'NMsg'), 'err', 'Completá el nombre' + (rubro ? '' : ' y para qué es') + '.'); return; }
+  call('api_crear', S.token, 'D_Insumo', o).then(function (r) {
+    return refrescar().then(function () { var cont = $(pref + 'NuevoWrap'); if (cont) cont.innerHTML = ''; var s = $(pref); if (s) { s.outerHTML = productoSelect(pref, rubro, r.id, s.getAttribute('onchange')); } if (window[pref + 'Cambio']) window[pref + 'Cambio'](); });
+  }).catch(function (e) { msg($(pref + 'NMsg'), 'err', e.message); });
+}
+function productoCancelar(pref) { var c = $(pref + 'NuevoWrap'); if (c) c.innerHTML = ''; var s = $(pref); if (s) s.value = ''; }
+
+/* ---------- SANIDAD ---------- */
+function vSanidad() {
+  SEL = {};
+  var h = volverBtn() + '<div class="card"><h2>Vacunas y tratamientos</h2><p class="sub">Anotá qué le aplicaste a los animales. Si el producto tiene días de carencia, esos animales no se van a poder vender hasta que se cumplan.</p><div id="sMsg"></div>' +
+    '<div class="paso"><i>1</i>¿Qué hiciste?</div>' + pills('sTipo', ['Vacuna', 'Antiparasitario', 'Antibiótico / tratamiento', 'Vitaminas / minerales', 'Curación', 'Otro'], '') +
+    '<div style="height:12px"></div><div class="row">' + campo('Producto', productoSelect('sProd', 'Sanidad', '', 'sProdCambio()'), '', 1) +
+    campo('Dosis por animal', '<input id="sDosis" type="number" step="any" min="0" inputmode="decimal" oninput="sTotal()">', '<span id="sUm">Elegí el producto</span>', 1) + '</div><div id="sProdNuevoWrap"></div>' +
+    '<div class="row">' + campo('Días de carencia', '<input id="sCar" type="number" min="0" step="1" inputmode="numeric" value="0">', 'Está en el prospecto del producto. Si no tiene, dejá 0.', 1) +
+    campo('Fecha', '<input id="sFecha" type="date" value="' + hoy() + '" max="' + hoy() + '">', '', 1) +
+    campo('Quién lo aplicó', '<input id="sResp" value="' + esc(S.u.Nombre) + '">', '', 1) + '</div>' +
+    '<div class="paso" style="margin-top:8px"><i>2</i>¿A qué animales?</div><div id="sAnim">' + selectorAnimales(S.u.Rol === 'Responsable de subunidad' ? S.u.IdSubunidad : '') + '</div>' +
+    campo('Observaciones', '<textarea id="sObs" placeholder="Opcional"></textarea>') +
+    '<div class="contador"><div class="row" style="align-items:center"><div style="flex:1"><b id="selN">Todavía no elegiste animales</b><div class="muted" id="sTot"></div></div><button class="btn" id="sBtn" onclick="sGuardar()">Guardar</button></div></div></div>' +
+    '<div class="card"><h2>Últimos tratamientos</h2><div id="sHist" class="muted">Cargando…</div></div>';
+  $('main').innerHTML = h;
+  sHistorial();
+}
+function sProdCambio() {
+  var v = $('sProd').value;
+  if (v === '__nuevo') { $('sProdNuevoWrap').innerHTML = productoNuevoHTML('sProd', 'Sanidad'); $('sUm').textContent = ''; return; }
+  $('sProdNuevoWrap').innerHTML = ''; sTotal();
+}
+window.sProdCambio = sProdCambio;
+function sUmDe(id) { var p = item('D_Insumo', id); if (!p) return ''; var u = item('D_UM', p.um); return u ? u.abrev : ''; }
+function sTotal() {
+  if (!$('sTot')) return;
+  var p = $('sProd') ? $('sProd').value : '', um = sUmDe(p), d = Number($('sDosis').value) || 0, n = selElegidos().length;
+  $('sUm').textContent = p && p !== '__nuevo' ? 'En ' + (um || 'la unidad del producto') + ' por animal' : 'Elegí el producto';
+  var pr = item('D_Insumo', p), t = d * n;
+  $('sTot').textContent = d && n ? 'Total a usar: ' + num(t) + ' ' + um + (pr && pr.contenido ? ' (≈ ' + num(t / pr.contenido, 1) + ' envase' + (t / pr.contenido > 1 ? 's' : '') + ')' : '') : '';
+}
+function sGuardar() {
+  var s = { TipoEvento: pillVal('sTipo'), IdInsumo: $('sProd').value, Dosis: $('sDosis').value, DiasCarencia: $('sCar').value, Fecha: $('sFecha').value,
+    Responsable: $('sResp').value, Observaciones: $('sObs').value, caravanas: selElegidos() };
+  var falta = [];
+  if (!s.TipoEvento) falta.push('qué hiciste'); if (!s.IdInsumo || s.IdInsumo === '__nuevo') falta.push('el producto'); if (s.Dosis === '') falta.push('la dosis');
+  if (s.DiasCarencia === '') falta.push('los días de carencia'); if (!s.caravanas.length) falta.push('los animales');
+  if (falta.length) { msg($('sMsg'), 'err', 'Falta completar: ' + falta.join(', ') + '.'); $('sMsg').scrollIntoView({ behavior:'smooth', block:'center' }); return; }
+  var b = $('sBtn'); ocupado(b, true);
+  call('api_registrarSanidad', S.token, s).then(function (r) {
+    return refrescar().then(function () { listo('Tratamiento guardado', r.mensaje, 'sanidad', 'Cargar otro tratamiento'); });
+  }).catch(function (e) { msg($('sMsg'), 'err', e.message); $('sMsg').scrollIntoView({ behavior:'smooth', block:'center' }); ocupado(b, false); });
+}
+function sHistorial() {
+  call('api_listar', S.token, 'F_Sanidad').then(function (rows) {
+    rows = rows.filter(function (x) { return x.Activo !== 'No'; });
+    if (!rows.length) { $('sHist').innerHTML = 'Todavía no hay tratamientos cargados.'; return; }
+    var jor = {};
+    rows.forEach(function (x) { var k = x.IdEvento || x.IdSanidad; (jor[k] = jor[k] || []).push(x); });
+    var ks = Object.keys(jor).sort(function (a, b) { return jor[b][0].Fecha < jor[a][0].Fecha ? -1 : 1; }).slice(0, 15);
+    var h = hoy();
+    $('sHist').innerHTML = '<div class="lista">' + ks.map(function (k) {
+      var g = jor[k], x = g[0], vig = x.FinCarencia > h;
+      return '<div class="item"><div class="t"><b>' + esc(x.TipoEvento) + ' · ' + esc(etiqueta('D_Insumo', x.IdInsumo)) + '</b><div>' + fecha(x.Fecha) + ' · ' + g.length + ' animal' + (g.length === 1 ? '' : 'es') + ' · ' + num(x.Dosis) + ' ' + sUmDe(x.IdInsumo) + ' c/u · ' + esc(x.Responsable) + '</div><div>Caravanas: ' + g.map(function (y) { return y.Caravana; }).join(', ') + '</div></div>' +
+        '<div class="der">' + (Number(x.DiasCarencia) > 0 ? (vig ? '<span class="tag r">En carencia hasta ' + fecha(x.FinCarencia) + '</span>' : '<span class="tag v">Carencia cumplida</span>') : '<span class="tag g">Sin carencia</span>') + '</div></div>';
+    }).join('') + '</div>';
+  }).catch(function (e) { msg($('sHist'), 'err', e.message); });
+}
+
+/* ---------- NACIMIENTO ---------- */
+function vNacimiento() {
+  var max = L('D_Animal').reduce(function (m, a) { return Math.max(m, Number(a.id) || 0); }, 0);
+  var catCordero = L('D_Categoria').filter(function (c) { return /^cordero$/i.test(c.label); })[0];
+  var madres = activos().filter(function (a) { return /oveja|borrega/i.test(nombreCat(a.cat)); }).map(function (a) { return { id: a.id, label: 'Caravana ' + a.id + ' · ' + nombreCat(a.cat) }; });
+  var padres = activos().filter(function (a) { return /carnero/i.test(nombreCat(a.cat)); }).map(function (a) { return { id: a.id, label: 'Caravana ' + a.id }; });
+  var h = volverBtn() + '<div class="card"><h2>Nació un cordero</h2><p class="sub">Le ponés la caravana y lo anotás acá. Queda en el rodeo como cordero.</p><div id="nMsg"></div>' +
+    '<div class="row">' + campo('Número de caravana', '<input id="nCar" type="number" min="1" inputmode="numeric" value="' + (max + 1) + '">', 'Te sugerimos el próximo número libre (' + (max + 1) + ').', 1) +
+    campo('Fecha de nacimiento', '<input id="nFecha" type="date" value="' + hoy() + '" max="' + hoy() + '">', '', 1) + '</div>' +
+    campo('Sexo', pills('nSexo', ['Hembra', 'Macho'], ''), '', 1) +
+    '<div class="row">' + campo('Peso al nacer (kg)', '<input id="nPeso" type="number" step="any" min="0" inputmode="decimal">', 'Si no lo pesaste, dejalo vacío') +
+    campo('Categoría', '<select id="nCat">' + opciones(L('D_Categoria'), catCordero ? catCordero.id : '', false) + '</select>', '', 1) + '</div>' +
+    '<div class="row">' + campo('Madre', '<select id="nMadre">' + opciones(madres, '', '— no se sabe —') + '</select>') + campo('Padre', '<select id="nPadre">' + opciones(padres, '', '— no se sabe —') + '</select>') + '</div>' +
+    campo('Observaciones', '<textarea id="nObs" placeholder="ej. mellizo, parto difícil…"></textarea>') +
+    '<button class="btn full" id="nBtn" onclick="nGuardar()">Guardar nacimiento</button></div>';
+  $('main').innerHTML = h;
+}
+function nGuardar() {
+  var o = { Caravana: $('nCar').value, IdCategoria: $('nCat').value, FechaNac: $('nFecha').value, PesoKg: $('nPeso').value, Sexo: pillVal('nSexo'),
+    Madre: $('nMadre').value, Padre: $('nPadre').value, EstadoRepro: 'No aplica', Observaciones: $('nObs').value };
+  var falta = []; if (!o.Caravana) falta.push('la caravana'); if (!o.FechaNac) falta.push('la fecha'); if (!o.Sexo) falta.push('el sexo');
+  if (falta.length) { msg($('nMsg'), 'err', 'Falta completar: ' + falta.join(', ') + '.'); return; }
+  var b = $('nBtn'); ocupado(b, true);
+  call('api_crear', S.token, 'D_Animal', o).then(function () {
+    return refrescar().then(function () { listo('¡Bienvenido al rodeo!', 'La caravana ' + o.Caravana + ' quedó registrada' + (o.Madre ? ', hija/o de la ' + o.Madre : '') + '.', 'nacimiento', 'Anotar otro nacimiento'); });
+  }).catch(function (e) { msg($('nMsg'), 'err', e.message); ocupado(b, false); });
+}
+
+/* ---------- MUERTE ---------- */
+function vMuerte() {
+  var an = activos().map(function (a) { return { id: a.id, label: 'Caravana ' + a.id + ' · ' + nombreCat(a.cat) }; }).sort(function (a, b) { return a.id - b.id; });
+  var h = volverBtn() + '<div class="card"><h2>Murió un animal</h2><p class="sub">El animal sale del rodeo y queda anotada la causa. Si te equivocaste, el administrador lo puede anular.</p><div id="mMsg"></div>' +
+    '<div class="row">' + campo('¿Qué animal?', '<select id="mCar">' + opciones(an) + '</select>', '', 1) + campo('Fecha', '<input id="mFecha" type="date" value="' + hoy() + '" max="' + hoy() + '">', '', 1) + '</div>' +
+    campo('¿De qué murió?', pills('mCausa', ['Enfermedad', 'Parto', 'Accidente', 'Predador', 'Clima', 'No se sabe', 'Otra'], ''), '', 1) +
+    campo('Observaciones', '<textarea id="mObs" placeholder="Opcional"></textarea>') +
+    '<button class="btn full" id="mBtn" onclick="mGuardar()">Registrar muerte</button></div>';
+  $('main').innerHTML = h;
+}
+function mGuardar() {
+  var o = { Caravana: $('mCar').value, Fecha: $('mFecha').value, Causa: pillVal('mCausa'), Observaciones: $('mObs').value };
+  if (!o.Caravana || !o.Causa) { msg($('mMsg'), 'err', 'Elegí el animal y la causa.'); return; }
+  if (!window.confirm('¿Confirmás que murió la caravana ' + o.Caravana + '?')) return;
+  var b = $('mBtn'); ocupado(b, true);
+  call('api_registrarMuerte', S.token, o).then(function (r) { return refrescar().then(function () { listo('Registrado', r.mensaje); }); })
+    .catch(function (e) { msg($('mMsg'), 'err', e.message); ocupado(b, false); });
+}
+
+/* ---------- COMPRA ---------- */
+var C = { lineas: [] };
+function vCompra() {
+  C = { lineas: [] };
+  var prov = L('D_Tercero').filter(function (t) { return t.tipo !== 'Cliente'; });
+  var tc = L('D_TipoComprobante').filter(function (t) { return t.circuito === 'Compra'; });
+  var subDef = S.u.Rol === 'Responsable de subunidad' ? S.u.IdSubunidad : '';
+  var h = volverBtn() + '<div class="card"><h2>Cargar una compra</h2><p class="sub">Copiá los datos de la factura del proveedor. Cada renglón es un producto o servicio y a qué etapa corresponde.</p><div id="cMsg"></div>' +
+    '<div class="paso"><i>1</i>La factura</div>' +
+    '<div class="row">' + campo('Proveedor', '<select id="cProv" onchange="cProvCambio()">' + opciones(prov) + (puede('D_Tercero', 'crear') ? '<option value="__nuevo">＋ Agregar un proveedor nuevo…</option>' : '') + '</select>', '', 1) +
+    campo('Fecha de la factura', '<input id="cFecha" type="date" value="' + hoy() + '" max="' + hoy() + '">', '', 1) + '</div><div id="cProvNuevo"></div>' +
+    campo('Tipo de comprobante', pills('cTipo', tc.map(function (t) { return [t.id, t.nombre]; }), 'FAC'), '', 1) +
+    '<div class="row">' + campo('Letra', '<div id="cLetraW">' + pills('cLetra', ['A', 'B', 'C', 'Sin letra'], 'B') + '</div>', 'Factura A: el IVA se separa (crédito fiscal). B o C: el IVA ya está en el precio.', 1) +
+    campo('Número', '<input id="cNum" placeholder="ej. 0002-00007401">', '', 1) + '</div>' +
+    '<div class="paso" style="margin-top:6px"><i>2</i>¿Qué compraste?</div>' +
+    '<div class="mini" style="border-style:solid;background:#fff"><div class="row">' + campo('Producto o servicio', productoSelect('cProd', '', '', 'cProdCambio()'), '', 1) + campo('Etapa', '<select id="cSub">' + opciones(L('D_Subunidad'), subDef) + '</select>', '¿Para qué animales fue?', 1) + '</div><div id="cProdNuevoWrap"></div>' +
+    '<div class="row">' + campo('Cantidad', '<input id="cCant" type="number" step="any" min="0" inputmode="decimal" value="1">', '<span id="cCantAy">Envases o unidades</span>', 1) +
+    campo('Precio unitario', '<input id="cPrecio" type="number" step="any" min="0" inputmode="decimal">', '<span id="cPrecioAy">Tal como figura en la factura</span>', 1) +
+    '<div class="f hide" id="cIvaW"><label>IVA %</label><select id="cIva"><option>21</option><option>10.5</option><option>27</option><option>0</option></select></div></div>' +
+    '<button type="button" class="btn2" onclick="cAgregar()">＋ Agregar a la factura</button></div><div id="cLin"></div>' +
+    '<div class="paso" style="margin-top:6px"><i>3</i>El pago</div>' +
+    campo('¿Ya está pagada?', pills('cPago', [['Pagado', 'Sí, ya se pagó'], ['Pendiente', 'No, se debe']], 'Pagado'), '', 1) +
+    '<div class="row">' + campo('Forma de pago', '<select id="cFP">' + opciones(L('D_FormaPago')) + '</select>') + '<div class="f hide" id="cVencW"><label>Vence el</label><input id="cVenc" type="date"></div></div>' +
+    campo('Observaciones', '<textarea id="cObs" placeholder="Opcional"></textarea>') +
+    '<button class="btn full" id="cBtn" onclick="cGuardar()">Guardar compra</button></div>';
+  $('main').innerHTML = h;
+  $('cLetra').setAttribute('data-on', 'cLetraCambio'); $('cTipo').setAttribute('data-on', 'cTotales'); $('cPago').setAttribute('data-on', 'cPagoCambio');
+  cLetraCambio(); cTotales();
+}
+function cLetraCambio() { $('cIvaW').classList.toggle('hide', pillVal('cLetra') !== 'A'); $('cPrecioAy').textContent = pillVal('cLetra') === 'A' ? 'Precio SIN IVA (neto), como figura en la factura A' : 'Precio final, con IVA incluido'; cTotales(); }
+function cPagoCambio() { $('cVencW').classList.toggle('hide', pillVal('cPago') !== 'Pendiente'); }
+window.cLetraCambio = cLetraCambio; window.cPagoCambio = cPagoCambio;
+function cProvCambio() {
+  if ($('cProv').value !== '__nuevo') { $('cProvNuevo').innerHTML = ''; return; }
+  $('cProvNuevo').innerHTML = '<div class="mini"><b>Proveedor nuevo</b><div id="pnMsg"></div>' + terceroCampos('pn', 'Proveedor') +
+    '<div class="row"><button type="button" class="btn" onclick="terceroGuardar(\'pn\', cProvListo)">Agregar proveedor</button><button type="button" class="btn2" onclick="$(\'cProv\').value=\'\';cProvCambio()">Cancelar</button></div></div>';
+}
+function cProvListo(id) {
+  var prov = L('D_Tercero').filter(function (t) { return t.tipo !== 'Cliente'; });
+  $('cProv').innerHTML = opciones(prov, id) + '<option value="__nuevo">＋ Agregar un proveedor nuevo…</option>'; $('cProvNuevo').innerHTML = '';
+}
+function cProdCambio() {
+  var v = $('cProd').value;
+  if (v === '__nuevo') { $('cProdNuevoWrap').innerHTML = productoNuevoHTML('cProd', ''); return; }
+  $('cProdNuevoWrap').innerHTML = '';
+  var p = item('D_Insumo', v), u = p ? item('D_UM', p.um) : null;
+  $('cCantAy').textContent = p && p.contenido ? 'Cantidad de envases (cada uno trae ' + num(p.contenido) + ' ' + (u ? u.abrev : '') + ')' : 'Cantidad' + (u ? ' (en ' + u.abrev + ')' : '');
+}
+window.cProdCambio = cProdCambio;
+function cAgregar() {
+  var l = { IdInsumo: $('cProd').value, IdSubunidad: $('cSub').value, Cantidad: Number($('cCant').value), PrecioUnit: Number($('cPrecio').value), AlicuotaIVA: $('cIva').value };
+  if (!l.IdInsumo || l.IdInsumo === '__nuevo' || !l.IdSubunidad || !(l.Cantidad > 0) || !(l.PrecioUnit > 0)) { msg($('cMsg'), 'err', 'Para agregar el renglón completá producto, etapa, cantidad y precio.'); return; }
+  C.lineas.push(l); $('cMsg').innerHTML = ''; $('cPrecio').value = ''; $('cCant').value = '1'; $('cProd').value = ''; cProdCambio(); cTotales();
+}
+function cQuitar(i) { C.lineas.splice(i, 1); cTotales(); }
+function cTotales() {
+  if (!$('cLin')) return;
+  var A = pillVal('cLetra') === 'A', neg = pillVal('cTipo') === 'NCC' ? -1 : 1, neto = 0, iva = 0;
+  if (!C.lineas.length) { $('cLin').innerHTML = '<p class="muted">Todavía no agregaste renglones.</p>'; return; }
+  var h = '<div class="lista">';
+  C.lineas.forEach(function (l, i) {
+    var imp = l.Cantidad * l.PrecioUnit, iv = A ? imp * Number(l.AlicuotaIVA) / 100 : 0; neto += imp; iva += iv;
+    h += '<div class="item"><div class="t"><b>' + esc(etiqueta('D_Insumo', l.IdInsumo)) + '</b><div>' + num(l.Cantidad) + ' × ' + pesos(l.PrecioUnit) + (A ? ' + IVA ' + num(l.AlicuotaIVA) + '%' : '') + ' · ' + esc(etiqueta('D_Subunidad', l.IdSubunidad)) + '</div></div>' +
+      '<div class="der"><b>' + pesos((imp + iv) * neg) + '</b><br><button class="link" onclick="cQuitar(' + i + ')">Quitar</button></div></div>';
+  });
+  h += '<div class="item" style="background:var(--soft)"><div class="t"><b>Total de la factura</b>' + (A ? '<div>Neto ' + pesos(neto * neg) + ' + IVA ' + pesos(iva * neg) + '</div>' : '') + '</div><div class="der"><b>' + pesos((neto + iva) * neg) + '</b></div></div></div>';
+  $('cLin').innerHTML = h + (neg < 0 ? '<p class="muted">Nota de crédito: estos importes se RESTAN de los costos.</p>' : '');
+}
+function cGuardar() {
+  var c = { Fecha: $('cFecha').value, IdTipoComprobante: pillVal('cTipo'), Letra: pillVal('cLetra'), Numero: $('cNum').value, IdTercero: $('cProv').value,
+    IdFormaPago: $('cFP').value, EstadoPago: pillVal('cPago'), Vencimiento: pillVal('cPago') === 'Pendiente' ? $('cVenc').value : '', Observaciones: $('cObs').value, lineas: C.lineas };
+  var falta = []; if (!c.IdTercero || c.IdTercero === '__nuevo') falta.push('el proveedor'); if (!c.Numero) falta.push('el número'); if (!c.IdTipoComprobante) falta.push('el tipo de comprobante');
+  if (!c.lineas.length) falta.push('al menos un renglón (botón "Agregar a la factura")');
+  if (c.EstadoPago === 'Pagado' && c.IdTipoComprobante !== 'NCC' && !c.IdFormaPago) falta.push('la forma de pago');
+  if (falta.length) { msg($('cMsg'), 'err', 'Falta: ' + falta.join(', ') + '.'); $('cMsg').scrollIntoView({ behavior:'smooth', block:'center' }); return; }
+  var b = $('cBtn'); ocupado(b, true);
+  call('api_registrarCompra', S.token, c).then(function (r) {
+    return refrescar().then(function () { listo('Compra guardada', r.mensaje + ' Total ' + pesos(r.totales.total) + (c.EstadoPago === 'Pendiente' ? ' (queda pendiente de pago).' : '.'), 'compra', 'Cargar otra compra'); });
+  }).catch(function (e) { msg($('cMsg'), 'err', e.message); $('cMsg').scrollIntoView({ behavior:'smooth', block:'center' }); ocupado(b, false); });
+}
+
+/* ---------- COBROS Y PAGOS (un solo lugar) ---------- */
+var CU = null;
+function vCuentas(tipo, tercero, ref) {
+  var carga = puede('F_Tesoreria', 'crear');
+  var h = volverBtn() + '<div class="card"><h2>Cobros y pagos</h2><p class="sub">Acá se anota la plata que entra (cobros a clientes) y la que sale (pagos a proveedores). Cada uno se puede aplicar a una factura, completa o una parte.</p><div id="mvMsg"></div>' +
+    (carga ? '<div class="paso"><i>1</i>¿Qué pasó?</div>' + pills('mvTipo', [['Pago', '💸 Pagamos algo'], ['Cobro', '💰 Nos pagaron']], tipo || '') + '<div id="mvForm"></div>' : '<p class="muted">Tu usuario puede consultar pero no registrar cobros ni pagos.</p>') + '</div>' +
+    '<div class="card"><h2>Cuentas</h2>' + pills('cuTab', [['pagar', 'Por pagar'], ['cobrar', 'Por cobrar'], ['facturas', 'Facturas de compra'], ['recibos', 'Recibos']], 'pagar') + '<div id="cuLista" class="muted" style="margin-top:14px">Cargando…</div></div>';
+  $('main').innerHTML = h;
+  if (carga) { $('mvTipo').setAttribute('data-on', 'mvTipoCambio'); }
+  $('cuTab').setAttribute('data-on', 'cuPintar');
+  Promise.all([call('api_cuentas', S.token), call('api_listar', S.token, 'F_Compras'), call('api_listar', S.token, 'F_Costos')]).then(function (r) {
+    CU = r[0]; S.compras = r[1]; S.costosC = r[2]; cuPintar();
+    if (carga && tipo) { mvTipoCambio(tipo); if (tercero) { $('mvTer').value = tercero; mvTerCambio(ref); } }
+  }).catch(function (e) { msg($('cuLista'), 'err', e.message); });
+}
+function mvTipoCambio(tipo) {
+  var pago = tipo === 'Pago';
+  var ter = L('D_Tercero').filter(function (t) { return pago ? t.tipo !== 'Cliente' : t.tipo !== 'Proveedor'; });
+  $('mvForm').innerHTML = '<div style="height:12px"></div><div class="paso"><i>2</i>' + (pago ? '¿A quién le pagamos?' : '¿Quién nos pagó?') + '</div>' +
+    campo(pago ? 'Proveedor' : 'Cliente', '<select id="mvTer" onchange="mvTerCambio()">' + opciones(ter) + '</select>', puede('D_Tercero', 'crear') ? '¿No está? Agregalo en "Proveedores y clientes".' : '', 1) +
+    '<div id="mvDocs"></div>' +
+    '<div class="paso"><i>3</i>Los datos del ' + (pago ? 'pago' : 'cobro') + '</div><div class="row">' +
+    campo('Importe ($)', '<input id="mvImp" type="number" step="any" min="0" inputmode="decimal" oninput="mvUSD()">', '<span id="mvUsd"></span>', 1) +
+    campo('Fecha', '<input id="mvFecha" type="date" value="' + hoy() + '" max="' + hoy() + '">', '', 1) + '</div><div class="row">' +
+    campo(pago ? '¿Cómo se pagó?' : '¿Cómo nos pagaron?', '<select id="mvFP">' + opciones(L('D_FormaPago')) + '</select>', '', 1) +
+    campo('Número de recibo', '<input id="mvNum" placeholder="Opcional">') + '</div>' +
+    campo('Observaciones', '<textarea id="mvObs" placeholder="Opcional"></textarea>') +
+    '<button class="btn full" id="mvBtn" onclick="mvGuardar()">Guardar ' + (pago ? 'pago' : 'cobro') + '</button>';
+  CU_TIPO = tipo;
+}
+var CU_TIPO = '';
+function mvPendientes(ter) {
+  if (!CU) return [];
+  return CU_TIPO === 'Pago' ? CU.porPagar.filter(function (x) { return x.IdTercero === ter; }).map(function (x) { return { ref: x.IdCompra, txt: x.Comprobante + ' · ' + fecha(x.Fecha), saldo: x.Saldo, total: x.Total }; })
+    : CU.porCobrar.filter(function (x) { return x.IdTercero === ter; }).map(function (x) { return { ref: x.Comprobante, txt: x.Comprobante + ' · ' + fecha(x.Fecha) + ' · ' + x.Animales + ' animal' + (x.Animales > 1 ? 'es' : ''), saldo: x.Saldo, total: x.Total }; });
+}
+function mvTerCambio(ref) {
+  var ter = $('mvTer').value, P = mvPendientes(ter);
+  if (!ter) { $('mvDocs').innerHTML = ''; return; }
+  var h = '<div class="f"><label>¿De qué factura es?</label><div class="lista">';
+  P.forEach(function (d, i) { h += '<label class="item" style="cursor:pointer"><input type="radio" name="mvDoc" value="' + esc(d.ref) + '" data-saldo="' + d.saldo + '" onchange="mvDocCambio(this)" style="width:auto;min-height:0;margin-top:4px"' + (d.ref === ref || (!ref && i === 0) ? ' checked' : '') + '><div class="t"><b>' + esc(d.txt) + '</b><div>Total ' + pesos(d.total) + '</div></div><div class="der"><b>' + pesos(d.saldo) + '</b><br><span class="muted">falta ' + (CU_TIPO === 'Pago' ? 'pagar' : 'cobrar') + '</span></div></label>'; });
+  h += '<label class="item" style="cursor:pointer"><input type="radio" name="mvDoc" value="" data-saldo="" onchange="mvDocCambio(this)" style="width:auto;min-height:0;margin-top:4px"' + (!P.length ? ' checked' : '') + '><div class="t"><b>No es de una factura cargada</b><div>' + (P.length ? 'Pago a cuenta o de algo que no está en el sistema' : 'Este ' + (CU_TIPO === 'Pago' ? 'proveedor' : 'cliente') + ' no tiene facturas pendientes') + '</div></div></label></div></div>';
+  $('mvDocs').innerHTML = h;
+  var sel = document.querySelector('input[name="mvDoc"]:checked'); if (sel) mvDocCambio(sel);
+}
+function mvDocCambio(r) { if (r.getAttribute('data-saldo')) $('mvImp').value = r.getAttribute('data-saldo'); mvUSD(); }
+function mvUSD() { var v = Number($('mvImp').value); $('mvUsd').textContent = v && dolarHoy() ? '≈ ' + enUSD(v) + ' al dólar BNA de hoy' : ''; }
+function mvGuardar() {
+  var doc = document.querySelector('input[name="mvDoc"]:checked');
+  var m = { Tipo: CU_TIPO, IdTercero: $('mvTer').value, Importe: $('mvImp').value, Fecha: $('mvFecha').value, IdFormaPago: $('mvFP').value, Numero: $('mvNum').value, Observaciones: $('mvObs').value };
+  if (doc && doc.value) { if (CU_TIPO === 'Pago') m.IdCompra = doc.value; else m.ComprobanteVenta = doc.value; }
+  var falta = []; if (!m.IdTercero) falta.push(CU_TIPO === 'Pago' ? 'el proveedor' : 'el cliente'); if (!(Number(m.Importe) > 0)) falta.push('el importe'); if (!m.IdFormaPago) falta.push('cómo se ' + (CU_TIPO === 'Pago' ? 'pagó' : 'cobró'));
+  if (falta.length) { msg($('mvMsg'), 'err', 'Falta: ' + falta.join(', ') + '.'); $('mvMsg').scrollIntoView({ behavior:'smooth', block:'center' }); return; }
+  var b = $('mvBtn'); ocupado(b, true);
+  call('api_registrarMovimiento', S.token, m).then(function (r) { return refrescar().then(function () { listo(CU_TIPO === 'Pago' ? 'Pago guardado' : 'Cobro guardado', r.mensaje, 'cuentas', 'Ver cobros y pagos'); }); })
+    .catch(function (e) { msg($('mvMsg'), 'err', e.message); $('mvMsg').scrollIntoView({ behavior:'smooth', block:'center' }); ocupado(b, false); });
+}
+function cuIr(tipo, ter, ref) { vCuentas(tipo, ter, ref); }
+function cuPintar() {
+  if (!CU) return;
+  var tab = pillVal('cuTab'), hh = hoy(), carga = puede('F_Tesoreria', 'crear'), h = '';
+  if (tab === 'pagar') {
+    var P = CU.porPagar.slice().sort(function (a, b) { return (a.Vencimiento || '9') < (b.Vencimiento || '9') ? -1 : 1; });
+    h = P.length ? '<div class="lista">' + P.map(function (x) { var venc = x.Vencimiento && x.Vencimiento < hh;
+      return '<div class="item"><div class="t"><b>' + esc(etiqueta('D_Tercero', x.IdTercero)) + '</b><div>' + esc(x.Comprobante) + ' · ' + fecha(x.Fecha) + (x.Pagado ? ' · ya se pagó ' + pesos(x.Pagado) : '') + '</div></div>' +
+        '<div class="der"><b>' + pesos(x.Saldo) + '</b>' + (x.SaldoUSD !== null ? '<div class="usd">US$ ' + num(x.SaldoUSD) + '</div>' : '') + '<span class="tag ' + (venc ? 'r' : '') + '">' + (venc ? 'Vencida' : 'Por pagar') + (x.Vencimiento ? ' · ' + fecha(x.Vencimiento) : '') + '</span>' +
+        (carga ? '<br><button class="btn2" style="margin-top:6px" onclick="cuIr(\'Pago\',\'' + x.IdTercero + '\',\'' + x.IdCompra + '\')">Registrar pago</button>' : '') + '</div></div>'; }).join('') + '</div><p class="muted">Total por pagar: ' + pesos(P.reduce(function (a, x) { return a + x.Saldo; }, 0)) + '</p>'
+      : '<p class="muted">No hay facturas por pagar. 🎉</p>';
+  } else if (tab === 'cobrar') {
+    var C2 = CU.porCobrar;
+    h = C2.length ? '<div class="lista">' + C2.map(function (x) {
+      return '<div class="item"><div class="t"><b>' + esc(etiqueta('D_Tercero', x.IdTercero)) + '</b><div>' + esc(x.Comprobante) + ' · ' + fecha(x.Fecha) + ' · ' + x.Animales + ' animal' + (x.Animales > 1 ? 'es' : '') + (x.Cobrado ? ' · ya se cobró ' + pesos(x.Cobrado) : '') + '</div></div>' +
+        '<div class="der"><b>' + pesos(x.Saldo) + '</b>' + (x.SaldoUSD !== null ? '<div class="usd">US$ ' + num(x.SaldoUSD) + '</div>' : '') + '<span class="tag">Por cobrar</span>' +
+        (carga ? '<br><button class="btn2" style="margin-top:6px" onclick="cuIr(\'Cobro\',\'' + x.IdTercero + '\',\'' + esc(x.Comprobante) + '\')">Registrar cobro</button>' : '') + '</div></div>'; }).join('') + '</div><p class="muted">Total por cobrar: ' + pesos(C2.reduce(function (a, x) { return a + x.Saldo; }, 0)) + '</p>'
+      : '<p class="muted">No hay ventas por cobrar.</p>';
+  } else if (tab === 'facturas') {
+    var rows = (S.compras || []).filter(function (x) { return x.Activo !== 'No'; }).sort(function (a, b) { return a.Fecha < b.Fecha ? 1 : -1; });
+    h = (puede('F_Compras', 'crear') ? '<button class="btn" onclick="ir(\'compra\')" style="margin-bottom:12px">＋ Cargar una compra</button>' : '') + (rows.length ? '<div class="lista">' + rows.map(function (x) {
+      var R = (S.costosC || []).filter(function (c) { return c.IdCompra === x.IdCompra && c.Activo !== 'No'; });
+      return '<div class="item"><div class="t"><b>' + esc(etiqueta('D_Tercero', x.IdTercero)) + '</b><div>' + esc(x.IdTipoComprobante) + ' ' + esc(x.Letra) + ' ' + esc(x.Numero) + ' · ' + fecha(x.Fecha) + '</div><div>' + R.map(function (c) { return esc(etiqueta('D_Insumo', c.IdInsumo)) + ' (' + esc(etiqueta('D_Subunidad', c.IdSubunidad)) + ')'; }).join(' · ') + '</div></div>' +
+        '<div class="der"><b>' + pesos(x.Total) + '</b><br>' + (x.EstadoPago === 'Pagado' ? '<span class="tag v">Pagada ' + fecha(x.FechaPago) + '</span>' : '<span class="tag">Por pagar</span>') + '</div></div>'; }).join('') + '</div>' : '<p class="muted">Todavía no hay compras cargadas.</p>');
+  } else {
+    var M = CU.movimientos;
+    h = M.length ? '<div class="lista">' + M.map(function (m) {
+      var ref = m.IdCompra ? (function () { var c = (S.compras || []).filter(function (x) { return x.IdCompra === m.IdCompra; })[0]; return c ? c.IdTipoComprobante + ' ' + c.Letra + ' ' + c.Numero : m.IdCompra; })() : m.ComprobanteVenta;
+      return '<div class="item"><div class="t"><b>' + (m.Tipo === 'Pago' ? '💸 Pago a ' : '💰 Cobro de ') + esc(etiqueta('D_Tercero', m.IdTercero)) + '</b><div>' + fecha(m.Fecha) + ' · ' + esc(etiqueta('D_FormaPago', m.IdFormaPago)) + (m.Numero ? ' · recibo ' + esc(m.Numero) : '') + (ref ? ' · ' + esc(ref) : ' · sin factura') + '</div>' + (m.Observaciones ? '<div>' + esc(m.Observaciones) + '</div>' : '') + '</div>' +
+        '<div class="der"><b>' + (m.Tipo === 'Pago' ? '− ' : '+ ') + pesos(m.Importe) + '</b>' + (m.ImporteUSD !== null ? '<div class="usd">US$ ' + num(m.ImporteUSD) + '</div>' : '') + '</div></div>'; }).join('') + '</div>'
+      : '<p class="muted">Todavía no hay cobros ni pagos registrados.</p>';
+  }
+  $('cuLista').innerHTML = h;
+}
+window.cuPintar = cuPintar; window.mvTipoCambio = mvTipoCambio;
+function dolarAhora(el) {
+  if (el) el.querySelector('.l').textContent = 'buscando la cotización…';
+  call('api_actualizarDolar', S.token).then(function () { return refrescar(); }).then(function () { if (S.vista === 'inicio') vInicio(); })
+    .catch(function (e) { if (el) el.querySelector('.l').textContent = e.message; });
+}
+
+/* ---------- PROVEEDORES Y CLIENTES ---------- */
+function terceroCampos(p, tipo) {
+  return '<div class="row">' + campo('Nombre o razón social', '<input id="' + p + 'Nom">', '', 1) + campo('CUIT', '<input id="' + p + 'Cuit" placeholder="30-12345678-9" inputmode="numeric">', 'Opcional') + '</div>' +
+    (tipo ? '' : campo('Es', pills(p + 'Tipo', ['Proveedor', 'Cliente', 'Cliente y proveedor'], 'Proveedor'), '', 1)) +
+    '<div class="row">' + campo('Condición frente al IVA', '<select id="' + p + 'Iva"><option value="">— no sé —</option><option>Responsable inscripto</option><option>Monotributo</option><option>Exento</option><option>Consumidor final</option></select>') +
+    campo('Qué vende o compra', '<input id="' + p + 'Rub" placeholder="ej. veterinaria, flete, frigorífico">') + '</div>' +
+    '<div class="row">' + campo('Teléfono', '<input id="' + p + 'Tel" inputmode="tel">') + campo('Localidad', '<input id="' + p + 'Loc">') + '</div>';
+}
+function terceroGuardar(p, alListo, tipo) {
+  var o = { RazonSocial: $(p + 'Nom').value, CUIT: $(p + 'Cuit').value, Tipo: tipo || pillVal(p + 'Tipo') || 'Proveedor', CondicionIVA: $(p + 'Iva').value,
+    Rubro: $(p + 'Rub').value, Telefono: $(p + 'Tel').value, Localidad: $(p + 'Loc').value };
+  if (!o.RazonSocial) { msg($(p + 'Msg'), 'err', 'Poné al menos el nombre.'); return; }
+  call('api_crear', S.token, 'D_Tercero', o).then(function (r) { return refrescar().then(function () { alListo(r.id); }); })
+    .catch(function (e) { msg($(p + 'Msg'), 'err', e.message); });
+}
+function vTerceros() {
+  var h = volverBtn() + '<div class="card"><div class="row" style="align-items:center"><div style="flex:1"><h2>Proveedores y clientes</h2><p class="sub" style="margin:0">A quién le compramos y a quién le vendemos.</p></div>' +
+    (puede('D_Tercero', 'crear') ? '<button class="btn" onclick="tNuevoTer()">＋ Agregar</button>' : '') + '</div><div id="terForm"></div><div style="height:12px"></div>' +
+    pills('terFiltro', [['', 'Todos'], ['Proveedor', 'Proveedores'], ['Cliente', 'Clientes']], '') + '<div style="height:10px"></div><input id="terBus" placeholder="Buscar por nombre o CUIT…" oninput="terPintar()"><div id="terLista" style="margin-top:12px"></div></div>';
+  $('main').innerHTML = h; $('terFiltro').setAttribute('data-on', 'terPintar'); terPintar();
+}
+function tNuevoTer() {
+  $('terForm').innerHTML = '<div class="mini" style="margin-top:14px"><b>Nuevo proveedor o cliente</b><div id="tnMsg"></div>' + terceroCampos('tn') +
+    '<div class="row"><button class="btn" onclick="terceroGuardar(\'tn\', terListo)">Guardar</button><button class="btn2" onclick="$(\'terForm\').innerHTML=\'\'">Cancelar</button></div></div>';
+  $('tnNom').focus();
+}
+function terListo(id) { $('terForm').innerHTML = '<div class="msg ok" style="margin-top:12px">Listo: ' + esc(etiqueta('D_Tercero', id)) + ' quedó agregado.</div>'; terPintar(); }
+function terPintar() {
+  var f = pillVal('terFiltro'), q = ($('terBus').value || '').toLowerCase();
+  var rows = L('D_Tercero').filter(function (t) { return (!f || t.tipo === f || t.tipo === 'Cliente y proveedor') && (!q || (t.label + ' ' + t.cuit).toLowerCase().indexOf(q) >= 0); })
+    .sort(function (a, b) { return a.label.localeCompare(b.label); });
+  $('terLista').innerHTML = rows.length ? '<div class="lista">' + rows.map(function (t) { return '<div class="item"><div class="t"><b>' + esc(t.label) + '</b><div>' + (t.cuit ? 'CUIT ' + esc(t.cuit) : 'Sin CUIT') + '</div></div><div class="der"><span class="tag ' + (t.tipo === 'Cliente' ? 'v' : 'g') + '">' + esc(t.tipo) + '</span></div></div>'; }).join('') + '</div>'
+    : '<p class="muted">No hay nada para mostrar.</p>';
+}
+window.terPintar = terPintar;
+
+/* ---------- ANIMALES ---------- */
+function vAnimales() {
+  var cats = {}; activos().forEach(function (a) { cats[nombreCat(a.cat)] = 1; });
+  $('main').innerHTML = volverBtn() + '<div class="card"><h2>Los animales</h2><p class="sub">Tocá un animal para ver su ficha: datos, tratamientos y crías.</p>' +
+    pills('anFiltro', [['', 'Todos (' + activos().length + ')']].concat(Object.keys(cats).map(function (c) { return [c, c]; })).concat([['__car', 'En carencia'], ['__baja', 'Vendidos o muertos']]), '') +
+    '<div style="height:10px"></div><input id="anBus" type="search" inputmode="numeric" placeholder="Buscar caravana…" oninput="anPintar()"><div id="anLista" style="margin-top:12px"></div></div>';
+  $('anFiltro').setAttribute('data-on', 'anPintar'); anPintar();
+}
+function anPintar() {
+  var f = pillVal('anFiltro'), q = ($('anBus').value || '').trim();
+  var base = f === '__baja' ? L('D_Animal').filter(function (a) { return a.estado !== 'Activo'; }) : activos();
+  var rows = base.filter(function (a) { return (!f || f === '__baja' || (f === '__car' ? a.carencia : nombreCat(a.cat) === f)) && (!q || String(a.id).indexOf(q) === 0); })
+    .sort(function (a, b) { return Number(a.id) - Number(b.id); });
+  $('anLista').innerHTML = rows.length ? '<div class="animales">' + rows.map(function (a) {
+    return '<button class="an" onclick="anFicha(' + a.id + ')"><b>' + a.id + '</b><span>' + esc(nombreCat(a.cat)) + (a.sexo ? ' · ' + esc(a.sexo) : '') + (a.peso ? ' · ' + num(a.peso) + ' kg' : '') + '</span>' +
+      (a.estado !== 'Activo' ? '<span class="tag g" style="margin:6px 0 0">' + esc(a.estado) + '</span>' : a.carencia ? '<span class="tag r" style="margin:6px 0 0">Carencia hasta ' + fecha(a.carencia) + '</span>' : '') + '</button>';
+  }).join('') + '</div>' : '<p class="muted">No hay animales con ese filtro.</p>';
+}
+window.anPintar = anPintar;
+function anFicha(car) {
+  var m = document.createElement('div'); m.className = 'modal'; m.onclick = function (e) { if (e.target === m) m.remove(); };
+  m.innerHTML = '<div class="card">Cargando ficha…</div>'; document.body.appendChild(m);
+  call('api_ficha', S.token, car).then(function (r) {
+    var a = r.animal;
+    var fila = function (k, v) { return v === '' || v === undefined || v === null ? '' : '<tr><th style="position:static;width:45%">' + k + '</th><td>' + v + '</td></tr>'; };
+    var h = '<div class="row" style="align-items:center"><h2 style="flex:1">Caravana ' + a.Caravana + '</h2><button class="btn2" onclick="this.closest(\'.modal\').remove()">Cerrar</button></div>' +
+      '<table>' + fila('Categoría', esc(nombreCat(a.IdCategoria))) + fila('Estado', esc(a.Estado) + (a.FechaBaja ? ' (' + fecha(a.FechaBaja) + ')' : '')) + fila('Nació', fecha(a.FechaNac)) + fila('Sexo', esc(a.Sexo)) +
+      fila('Peso', a.PesoKg !== '' ? num(a.PesoKg) + ' kg' : '') + fila('Estado reproductivo', esc(a.EstadoRepro)) + fila('Madre', a.Madre) + fila('Padre', a.Padre) + fila('Observaciones', esc(a.Observaciones)) + '</table>';
+    h += '<h3>Tratamientos</h3>' + (r.sanidad.length ? '<div class="lista">' + r.sanidad.map(function (s) { return '<div class="item"><div class="t"><b>' + esc(s.TipoEvento) + ' · ' + esc(s.Producto) + '</b><div>' + fecha(s.Fecha) + ' · ' + num(s.Dosis) + ' ' + sUmDe(s.IdInsumo) + ' · ' + esc(s.Responsable) + '</div></div><div class="der">' + (s.FinCarencia > hoy() ? '<span class="tag r">Carencia hasta ' + fecha(s.FinCarencia) + '</span>' : '') + '</div></div>'; }).join('') + '</div>' : '<p class="muted">Sin tratamientos cargados.</p>');
+    if (r.hijos.length) h += '<h3>Crías</h3><p>' + r.hijos.map(function (x) { return 'Caravana ' + x.Caravana + ' (' + fecha(x.FechaNac) + ', ' + esc(x.Estado) + ')'; }).join(' · ') + '</p>';
+    if (r.venta.length) h += '<h3>Venta</h3><p>' + r.venta.map(function (v) { return fecha(v.Fecha) + ' · ' + num(v.Kg) + ' kg a ' + pesos(v.PrecioKg) + '/kg · ' + esc(v.Comprobante); }).join('<br>') + '</p>';
+    if (r.muerte.length) h += '<h3>Muerte</h3><p>' + r.muerte.map(function (v) { return fecha(v.Fecha) + ' · ' + esc(v.Causa) + (v.Observaciones ? ' · ' + esc(v.Observaciones) : ''); }).join('<br>') + '</p>';
+    m.querySelector('.card').innerHTML = h;
+  }).catch(function (e) { m.querySelector('.card').innerHTML = '<div class="msg err">' + esc(e.message) + '</div><button class="btn2" onclick="this.closest(\'.modal\').remove()">Cerrar</button>'; });
+}
+
+/* ---------- VENTA ---------- */
+var V = { lineas: [] };
+function vVenta() {
+  V.lineas = [];
+  var subDef = S.u.Rol === 'Responsable de subunidad' ? S.u.IdSubunidad : '';
+  var cli = L('D_Tercero').filter(function (t) { return t.tipo !== 'Proveedor'; });
+  var an = activos().sort(function (a, b) { return a.id - b.id; });
+  var h = volverBtn() + '<div class="card"><h2>Vender animales</h2><p class="sub">Una venta = una factura con uno o más animales. Al guardar, los animales salen del rodeo. Los que están en carencia no se pueden vender.</p><div id="vMsg"></div>' +
+    '<div class="paso"><i>1</i>La factura</div><div class="row">' +
+    campo('Cliente', '<select id="vTer">' + opciones(cli) + '</select>', puede('D_Tercero', 'crear') ? '¿No está? Agregalo en "Proveedores y clientes".' : '', 1) + campo('Fecha', '<input id="vFecha" type="date" value="' + hoy() + '">', '', 1) + campo('Número de factura', '<input id="vComp" placeholder="FAV 0003-00000xxxx">', '', 1) + '</div>' +
+    '<div class="row">' + campo('Producto', '<select id="vProd" onchange="vTotales()">' + opciones(L('D_Producto'), (L('D_Producto')[0] || {}).id, false) + '</select>', '', 1) + campo('Etapa', '<select id="vSub">' + opciones(L('D_Subunidad'), subDef) + '</select>', '', 1) + '</div>' +
+    '<div class="row">' + campo('Precio por kg', '<input id="vPrecio" type="number" step="any" inputmode="decimal" oninput="vTotales()">', '', 1) +
+    campo('¿El precio incluye IVA?', pills('vIncl', ['Sí', 'No'], ''), '', 1) + campo('Cobro', pills('vCobro', [['Cobrado', 'Ya se cobró'], ['Pendiente', 'Falta cobrar']], 'Pendiente'), '', 1) + '</div>' +
+    '<div class="f hide" id="vFPW"><label>¿Cómo se cobró? <span class="req">*</span></label><select id="vFP">' + opciones(L('D_FormaPago')) + '</select><div class="ay">Queda registrado el recibo de cobro.</div></div>' +
+    campo('Fuente', '<input id="vFuente" placeholder="ej. factura, liquidación">') +
+    '<div class="paso"><i>2</i>Los animales</div><div class="row">' + campo('Caravana', '<select id="vCar">' + '<option value="">— elegir —</option>' + an.map(function (a) { return '<option value="' + a.id + '"' + (a.carencia ? ' disabled' : '') + '>' + a.id + ' · ' + esc(nombreCat(a.cat)) + (a.carencia ? ' · EN CARENCIA hasta ' + fecha(a.carencia) : '') + '</option>'; }).join('') + '</select>') +
+    campo('Kg vivos', '<input id="vKg" type="number" step="any" inputmode="decimal">') + '<div class="f" style="flex:0 0 auto"><button class="btn2" onclick="vAgregar()">＋ Agregar</button></div></div><div id="vLin"></div><br>' +
+    '<button class="btn full" id="vBtn" onclick="vGuardar()">Guardar venta</button></div>';
+  $('main').innerHTML = h; $('vIncl').setAttribute('data-on', 'vTotales'); $('vCobro').setAttribute('data-on', 'vCobroCambio'); vTotales();
+}
+function vCobroCambio() { $('vFPW').classList.toggle('hide', pillVal('vCobro') !== 'Cobrado'); 
+}
+function vAgregar() {
+  var c = $('vCar').value, kg = Number($('vKg').value);
+  if (!c || !(kg > 0)) { msg($('vMsg'), 'err', 'Elegí una caravana y cargá los kg.'); return; }
+  if (V.lineas.some(function (l) { return String(l.Caravana) === c; })) { msg($('vMsg'), 'err', 'Esa caravana ya está en la venta.'); return; }
+  V.lineas.push({ Caravana: c, Kg: kg }); $('vKg').value = ''; $('vCar').value = ''; $('vMsg').innerHTML = ''; vTotales();
+}
+function vQuitar(i) { V.lineas.splice(i, 1); vTotales(); }
+function vTotales() {
+  if (!$('vLin')) return;
+  var p = Number($('vPrecio').value) || 0, incl = pillVal('vIncl');
+  var prod = item('D_Producto', $('vProd').value), a = prod ? Number(prod.iva) : 0, kg = 0, bruto = 0;
+  var h = '<table><tr><th>Caravana</th><th class="n">Kg</th><th class="n">Importe</th><th></th></tr>';
+  V.lineas.forEach(function (l, i) { kg += l.Kg; bruto += l.Kg * p; h += '<tr><td>' + esc(l.Caravana) + '</td><td class="n">' + num(l.Kg) + '</td><td class="n">' + pesos(l.Kg * p) + '</td><td><button class="link" onclick="vQuitar(' + i + ')">Quitar</button></td></tr>'; });
+  var neto = incl === 'Sí' ? bruto / (1 + a / 100) : bruto, iva = incl === 'Sí' ? bruto - neto : bruto * a / 100;
+  h += '<tr class="tot"><td>' + V.lineas.length + ' animales</td><td class="n">' + num(kg) + '</td><td class="n">' + pesos(bruto) + '</td><td></td></tr></table>';
+  h += '<p class="muted">Neto ' + pesos(neto) + ' · IVA ' + num(a) + '% ' + pesos(iva) + ' · Total ' + pesos(neto + iva) + (neto + iva && dolarHoy() ? ' (≈ ' + enUSD(neto + iva) + ' al dólar BNA de hoy)' : '') + (incl ? '' : ' · indicá si el precio incluye IVA') + '</p>';
+  $('vLin').innerHTML = h;
+}
+window.vTotales = vTotales;
+function vGuardar() {
+  var v = { Fecha: $('vFecha').value, Comprobante: $('vComp').value, IdTercero: $('vTer').value, IdProducto: $('vProd').value, IdSubunidad: $('vSub').value,
+    PrecioKg: $('vPrecio').value, PrecioIncluyeIVA: pillVal('vIncl'), EstadoCobro: pillVal('vCobro'), IdFormaPago: pillVal('vCobro') === 'Cobrado' ? $('vFP').value : '', Fuente: $('vFuente').value, lineas: V.lineas };
+  var nom = { Comprobante: 'número de factura', IdTercero: 'cliente', IdSubunidad: 'etapa', PrecioKg: 'precio por kg', PrecioIncluyeIVA: 'si el precio incluye IVA' };
+  var falta = Object.keys(nom).filter(function (k) { return !v[k]; }).map(function (k) { return nom[k]; });
+  if (!v.lineas.length) falta.push('los animales');
+  if (v.EstadoCobro === 'Cobrado' && !v.IdFormaPago) falta.push('cómo se cobró');
+  if (falta.length) { msg($('vMsg'), 'err', 'Falta: ' + falta.join(', ') + '.'); return; }
+  var b = $('vBtn'); ocupado(b, true);
+  call('api_registrarVenta', S.token, v).then(function (r) {
+    return refrescar().then(function () { listo('Venta registrada', r.mensaje + ' Neto ' + pesos(r.totales.neto) + ', IVA ' + pesos(r.totales.iva) + ', total ' + pesos(r.totales.total) + '.'); });
+  }).catch(function (e) { msg($('vMsg'), 'err', e.message); ocupado(b, false); });
+}
+
+/* ---------- RESULTADOS (tablero) ---------- */
+function kpi(l, v) { return '<div class="kpi"><div class="l">' + l + '</div><div class="v">' + v + '</div></div>'; }
+function vTablero(idCamp) {
+  var m = $('main'); m.innerHTML = volverBtn() + '<div class="card">Calculando…</div>';
+  call('api_reportes', S.token, idCamp || S.campana || '').then(function (r) {
+    S.campana = r.campana ? r.campana.id : '';
+    var c = r.consolidado;
+    var h = volverBtn() + '<div class="card"><div class="row"><div class="f" style="max-width:300px;margin:0"><label>Campaña</label><select onchange="vTablero(this.value)">' +
+      r.campanas.map(function (x) { return '<option value="' + x.id + '"' + (x.id === S.campana ? ' selected' : '') + '>' + esc(x.nombre) + '</option>'; }).join('') +
+      '</select></div><div class="muted" style="padding-bottom:12px">' + (r.campana ? 'Del ' + fecha(r.campana.desde) + ' al ' + fecha(r.campana.hasta) : '') + '</div></div></div>';
+    var u$ = function (x) { return '<div class="usd">US$ ' + num(x) + (c.usd && !c.usd.completo ? ' <span class="tag">faltan cotizaciones</span>' : '') + '</div>'; };
+    h += '<div class="kpis">' + kpi('Ingresos (sin IVA)', pesos(c.ingresos) + u$(c.usd.ingresos)) + kpi('Costos directos' + (c.tieneSupuestos ? ' <span class="tag">con supuestos</span>' : ''), pesos(c.costosDirectos) + u$(c.usd.costosDirectos)) +
+      kpi('Margen bruto', pesos(c.margenBruto) + u$(c.usd.margenBruto)) + kpi('% sobre costos', c.pctSobreCosto === null ? 'sin costos' : num(c.pctSobreCosto) + ' %') + '</div>';
+    h += '<div class="card"><h2>Lectura rápida</h2><ul class="lect">' + r.lectura.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></div>';
+
+    h += '<div class="card"><h2>¿En qué se gastó?</h2>';
+    if (!r.costosRubro.length) h += '<p class="muted">No hay costos cargados en esta campaña.</p>';
+    else {
+      var tc = r.costosRubro.reduce(function (a, x) { return a + x.total; }, 0);
+      h += '<div class="scroll" style="max-height:none"><table><tr><th>Rubro</th><th>Tipo</th><th class="n">Reales</th><th class="n">Supuestos</th><th class="n">Total</th><th class="n">% del total</th></tr>' +
+        r.costosRubro.map(function (x) { return '<tr' + (x.supuestos ? ' class="sup"' : '') + '><td>' + esc(x.rubro) + '</td><td>' + esc(x.tipo) + '</td><td class="n">' + pesos(x.reales) + '</td><td class="n">' + pesos(x.supuestos) + '</td><td class="n">' + pesos(x.total) + '</td><td class="n">' + (tc ? num(x.total / tc * 100, 1) + ' %' : '—') + '</td></tr>'; }).join('') +
+        '<tr class="tot"><td colspan="4">Total costos (directos + indirectos)</td><td class="n">' + pesos(tc) + '</td><td></td></tr></table></div><p class="muted">Las filas naranjas tienen costos SUPUESTOS (no salen de un comprobante). Las facturas de compra se ven en "Cobros y pagos".</p>';
+    }
+    h += '</div>';
+
+    h += '<div class="card"><h2>Resultado por etapa y total</h2><div class="scroll"><table><tr><th>Etapa</th><th class="n">Kg vendidos</th><th class="n">Ingresos (neto)</th><th class="n">Costos directos reales</th><th class="n">Costos directos supuestos</th><th class="n">Costos directos</th><th class="n">Margen bruto</th><th class="n">Margen bruto (US$)</th><th class="n">% s/ costo</th><th class="n">Costos indirectos (aparte)</th><th class="n">Muertes</th></tr>';
+    r.porSubunidad.concat([c]).forEach(function (s, i, arr) {
+      h += '<tr class="' + (i === arr.length - 1 ? 'tot' : '') + '"><td>' + esc(s.nombre) + (s.tieneSupuestos ? '<span class="tag">supuestos</span>' : '') + '</td><td class="n">' + num(s.kg) + '</td><td class="n">' + pesos(s.ingresos) +
+        '</td><td class="n">' + pesos(s.directosReales) + '</td><td class="n">' + pesos(s.directosSupuestos) + '</td><td class="n">' + pesos(s.costosDirectos) + '</td><td class="n">' + pesos(s.margenBruto) + '</td><td class="n">US$ ' + num(s.usd.margenBruto) +
+        '</td><td class="n">' + (s.pctSobreCosto === null ? '—' : num(s.pctSobreCosto) + ' %') + '</td><td class="n">' + pesos(s.indirectos) + '</td><td class="n">' + num(s.muertes, 0) + '</td></tr>';
+    });
+    h += '</table></div><p class="muted">Margen bruto = ingresos reales − costos directos. % sobre costo = margen bruto ÷ costos directos × 100. Los costos indirectos se muestran aparte y no entran en el margen bruto. IVA débito de la campaña: ' + pesos(c.iva) + ' (no es ingreso). En dólares: cada venta y cada costo se pasa al dólar oficial del Banco Nación (vendedor) del día de la operación, o del último día hábil anterior.</p></div>';
+
+    h += '<div class="card"><h2>Desvío de rinde</h2><div class="scroll"><table><tr><th>Etapa</th><th class="n">Kg producidos</th><th class="n">Cabezas base</th><th class="n">Rinde real</th><th class="n">Rinde estándar</th><th class="n">Desvío</th><th class="n">Desvío %</th><th>Estándar: descripción y fuente</th></tr>';
+    r.rinde.forEach(function (x) {
+      h += '<tr><td>' + esc(x.nombre) + '</td><td class="n">' + num(x.kg) + '</td><td class="n">' + num(x.base) + '</td><td class="n">' + num(x.real) + '</td><td class="n">' + num(x.estandar) +
+        '</td><td class="n">' + num(x.desvio) + '</td><td class="n">' + (x.desvioPct === null ? '—' : num(x.desvioPct) + ' %') + '</td><td>' + esc(x.descripcion) + (x.fuente ? ' · ' + esc(x.fuente) : (x.real !== null ? '<span class="tag">falta el estándar</span>' : '')) + '</td></tr>';
+    });
+    h += '</table></div><p class="muted">Rinde real = kg producidos ÷ cabezas base. Desvío = rinde real − rinde estándar de esa campaña y etapa.</p></div>';
+
+    h += '<div class="card"><h2>Desvío de consumo</h2>';
+    if (!r.consumo.length) h += '<p class="muted">Todavía no hay consumos reales ni dosis técnicas cargadas para esta campaña.</p>';
+    else {
+      h += '<div class="scroll"><table><tr><th>Etapa</th><th>Insumo</th><th class="n">Consumo real</th><th class="n">Base real</th><th class="n">Dosis técnica</th><th class="n">Consumo esperado</th><th class="n">Desvío</th></tr>';
+      r.consumo.forEach(function (x) {
+        h += '<tr><td>' + esc(x.subunidad) + '</td><td>' + esc(x.insumo) + '</td><td class="n">' + num(x.real, 4) + '</td><td class="n">' + num(x.base, 4) + '</td><td class="n">' + num(x.dosis, 4) + (x.baseCalculo ? ' /' + esc(x.baseCalculo.toLowerCase()) : '') +
+          '</td><td class="n">' + (x.esperado === null ? '<span class="tag">falta la dosis técnica</span>' : num(x.esperado, 4)) + '</td><td class="n">' + num(x.desvio, 4) + '</td></tr>';
+      });
+      r.consumoTotal.forEach(function (x) { h += '<tr class="tot"><td>Consolidado</td><td>' + esc(x.insumo) + '</td><td class="n">' + num(x.real, 4) + '</td><td></td><td></td><td class="n">' + num(x.esperado, 4) + '</td><td class="n">' + num(x.desvio, 4) + '</td></tr>'; });
+      h += '</table></div>';
+    }
+    h += '<p class="muted">Consumo esperado = dosis técnica × base real. Desvío = consumo real − consumo esperado. Los consumos de remedios se generan solos al cargar un tratamiento.</p></div>';
+
+    h += '<div class="card"><h2>Rodeo (hoy)</h2><table><tr><th>Categoría</th><th class="n">En el rodeo</th><th class="n">Vendidos</th><th class="n">Muertos</th></tr>';
+    var tA = 0; r.stock.forEach(function (s) { tA += s.activos; h += '<tr><td>' + esc(s.categoria) + '</td><td class="n">' + s.activos + '</td><td class="n">' + s.vendidos + '</td><td class="n">' + s.muertos + '</td></tr>'; });
+    h += '<tr class="tot"><td>Rodeo activo</td><td class="n">' + tA + '</td><td></td><td></td></tr></table></div>';
+
+    h += '<div class="card"><h2>Verificación: de dónde sale cada número</h2><details><summary>Ingresos (' + r.detalleIngresos.length + ' renglones)</summary><div class="scroll"><table><tr><th>Id</th><th>Fecha</th><th>Comprobante</th><th>Caravana</th><th>Etapa</th><th class="n">Kg</th><th class="n">$/kg</th><th>Con IVA</th><th class="n">Neto</th><th class="n">IVA</th><th class="n">Total</th></tr>';
+    var t = { kg:0, neto:0, iva:0, tot:0 };
+    r.detalleIngresos.forEach(function (x) { t.kg += +x.Kg; t.neto += +x.ImporteNeto; t.iva += +x.IVA; t.tot += +x.Total;
+      h += '<tr><td>' + esc(x.IdIngreso) + '</td><td>' + fecha(x.Fecha) + '</td><td>' + esc(x.Comprobante) + '</td><td>' + esc(x.Caravana) + '</td><td>' + esc(etiqueta('D_Subunidad', x.IdSubunidad)) + '</td><td class="n">' + num(x.Kg) + '</td><td class="n">' + num(x.PrecioKg) + '</td><td>' + esc(x.PrecioIncluyeIVA) + '</td><td class="n">' + pesos(x.ImporteNeto) + '</td><td class="n">' + pesos(x.IVA) + '</td><td class="n">' + pesos(x.Total) + '</td></tr>'; });
+    h += '<tr class="tot"><td colspan="5">Total</td><td class="n">' + num(t.kg) + '</td><td></td><td></td><td class="n">' + pesos(t.neto) + '</td><td class="n">' + pesos(t.iva) + '</td><td class="n">' + pesos(t.tot) + '</td></tr></table></div></details>';
+    h += '<details><summary>Costos (' + r.detalleCostos.length + ' renglones)</summary><div class="scroll"><table><tr><th>Id</th><th>Fecha</th><th>Comprobante</th><th>Insumo</th><th>Tipo</th><th>Etapa</th><th class="n">Cantidad</th><th class="n">Precio unit.</th><th class="n">Importe</th><th>Supuesto</th><th>Fuente</th></tr>';
+    r.detalleCostos.forEach(function (x) { h += '<tr class="' + (x.EsSupuesto === 'Sí' ? 'sup' : '') + '"><td>' + esc(x.IdCosto) + '</td><td>' + fecha(x.Fecha) + '</td><td>' + esc(x.Comprobante) + '</td><td>' + esc(x.Insumo) + '</td><td>' + esc(x.TipoCosto) + '</td><td>' + esc(etiqueta('D_Subunidad', x.IdSubunidad)) + '</td><td class="n">' + num(x.Cantidad) + '</td><td class="n">' + pesos(x.PrecioUnit) + '</td><td class="n">' + pesos(x.Importe) + '</td><td>' + esc(x.EsSupuesto) + '</td><td class="muted">' + esc(x.Fuente) + '</td></tr>'; });
+    h += '</table></div></details></div>';
+    m.innerHTML = h;
+  }).catch(function (e) { msg(m, 'err', e.message); });
+}
+
+/* ---------- ADMINISTRACIÓN: formularios genéricos (se arman solos a partir del esquema) ---------- */
+function campoHTML(tabla, c, valor, bloqueado) {
+  var id = 'fld_' + c.n, v = valor === undefined || valor === null ? '' : valor;
+  var lab = '<label>' + esc(c.l || c.n) + (c.req ? ' <span class="req">*</span>' : '') + '</label>';
+  var dis = bloqueado ? ' disabled' : '';
+  var input;
+  if (c.fk) {
+    var ops = L(c.fk);
+    if (c.fk === 'D_Animal') ops = ops.filter(function (x) { return x.estado === 'Activo' || String(x.id) === String(v); });
+    input = '<select id="' + id + '"' + dis + '>' + opciones(ops, v) + '</select>';
+  } else if (c.t === 'enum') {
+    input = '<select id="' + id + '"' + dis + '><option value="">— elegir —</option>' + c.opts.map(function (o) { return '<option' + (o === v ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') + '</select>';
+  } else if (c.t === 'bool') {
+    input = '<select id="' + id + '"' + dis + '><option value="">— elegir —</option><option' + (v === 'Sí' ? ' selected' : '') + '>Sí</option><option' + (v === 'No' ? ' selected' : '') + '>No</option></select>';
+  } else {
+    var type = c.t === 'num' ? 'number" step="any' : c.t === 'date' ? 'date' : c.t === 'email' ? 'email' : 'text';
+    input = '<input id="' + id + '" type="' + type + '" value="' + esc(v) + '"' + dis + '>';
+  }
+  return '<div class="f">' + lab + input + '</div>';
+}
+function formulario(tabla, registro, alGuardar) {
+  var e = S.esq[tabla], edit = !!registro;
+  var cols = e.cols.filter(function (c) { return !c.calc && !(c.n === e.pk && !e.pkManual); });
+  var h = '<div id="fMsg"></div><div class="row">';
+  cols.forEach(function (c) {
+    var bloq = (edit && e.pkManual && c.n === e.pk) || (edit && e.editablesDespues && e.editablesDespues.indexOf(c.n) < 0);
+    var val = registro ? registro[c.n] : '';
+    if (!edit && c.n === 'IdSubunidad' && e.hecho && S.u.Rol === 'Responsable de subunidad') { val = S.u.IdSubunidad; bloq = true; }
+    if (!edit && c.t === 'date' && c.n === 'Fecha') val = hoy();
+    h += campoHTML(tabla, c, val, bloq);
+  });
+  if (tabla === 'S_Usuarios' && !edit) h += '<div class="f"><label>Clave inicial <span class="req">*</span></label><input id="fld_ClaveNueva" type="text" placeholder="mínimo 6 caracteres"></div>';
+  h += '</div><button class="btn" id="fBtn">' + (edit ? 'Guardar cambios' : 'Guardar') + '</button> <span class="muted">Los números de Id, la campaña y los importes los completa el sistema.</span>';
+  return { html: h, enlazar: function () {
+    $('fBtn').onclick = function () {
+      var o = {};
+      cols.forEach(function (c) { var el = $('fld_' + c.n); if (el) o[c.n] = el.value; });
+      if ($('fld_ClaveNueva')) o.ClaveNueva = $('fld_ClaveNueva').value;
+      var faltan = cols.filter(function (c) { return c.req && !o[c.n] && !(edit && e.editablesDespues); }).map(function (c) { return c.l || c.n; });
+      if (faltan.length) { msg($('fMsg'), 'err', 'Falta completar: ' + faltan.join(', ')); return; }
+      $('fBtn').disabled = true;
+      var p = edit ? call('api_editar', S.token, tabla, registro[e.pk], o) : call('api_crear', S.token, tabla, o);
+      p.then(function (r) { msg($('fMsg'), 'ok', r.mensaje); return refrescar().then(function () { if (alGuardar) alGuardar(r); }); })
+       .catch(function (er) { msg($('fMsg'), 'err', er.message); })
+       .then(function () { if ($('fBtn')) $('fBtn').disabled = false; });
+    };
+  } };
+}
+function vTablas(tabla) {
+  var visibles = Object.keys(S.esq).filter(function (t) { return S.esq[t].puede.leer; });
+  tabla = tabla || S.tabla || 'D_Animal';
+  if (visibles.indexOf(tabla) < 0) tabla = visibles[0];
+  S.tabla = tabla;
+  var e = S.esq[tabla];
+  var grupos = {};
+  visibles.forEach(function (t) { (grupos[S.esq[t].grupo] = grupos[S.esq[t].grupo] || []).push(t); });
+  var h = volverBtn() + '<div class="card"><h2>Administración</h2><p class="sub">Acá se ven y se corrigen todas las tablas del sistema. Nada se borra: se da de baja y queda registrado quién lo hizo.</p><div class="row"><div class="f" style="max-width:380px"><label>Tabla</label><select onchange="vTablas(this.value)">' +
+    Object.keys(grupos).map(function (g) { return '<optgroup label="' + g + '">' + grupos[g].map(function (t) { return '<option value="' + t + '"' + (t === tabla ? ' selected' : '') + '>' + esc(S.esq[t].titulo) + ' (' + t + ')</option>'; }).join('') + '</optgroup>'; }).join('') +
+    '</select></div><div class="f" style="max-width:260px"><label>Buscar</label><input id="tBus" oninput="tFiltrar()" placeholder="filtrar filas…"></div><div class="f" style="flex:0 0 auto"><label class="muted"><input type="checkbox" id="tBajas" onchange="tFiltrar()" style="width:auto;min-height:0"> ver dados de baja</label></div>' +
+    '<div class="f" style="flex:0 0 auto"><div class="row"><button class="btn2" onclick="tExportar()">Exportar CSV</button>' + (e.puede.crear && !e.soloFormulario ? '<button class="btn" onclick="tNuevo()">＋ Nuevo</button>' : '') + '</div></div></div>' +
+    (e.soloFormulario ? '<p class="muted">Estos registros se cargan desde su botón en la pantalla de inicio (así se actualiza todo lo relacionado).</p>' : '') + '</div>' +
+    '<div id="tForm"></div><div class="card"><div id="tMsg"></div><div id="tGrid">Cargando…</div></div>';
+  $('main').innerHTML = h;
+  call('api_listar', S.token, tabla).then(function (rows) { S.filas = rows; tFiltrar(); }).catch(function (er) { msg($('tGrid'), 'err', er.message); });
+}
+function tCols() { var e = S.esq[S.tabla]; var c = e.cols.map(function (x) { return x.n; }); return S.tabla === 'S_Auditoria' ? c : c.concat(['CreadoEl', 'CreadoPor', 'ModificadoEl', 'ModificadoPor', 'Activo']); }
+function tTitulo(n) { var col = S.esq[S.tabla].cols.filter(function (k) { return k.n === n; })[0]; return col && col.l ? col.l : n; }
+function tValor(c, x) {
+  var col = S.esq[S.tabla].cols.filter(function (k) { return k.n === c; })[0];
+  var v = x[c];
+  if (col && col.fk && v !== '' && col.fk.indexOf('D_') === 0) return etiqueta(col.fk, v) + (String(etiqueta(col.fk, v)) !== String(v) ? ' (' + v + ')' : '');
+  return v;
+}
+function tFiltrar() {
+  var q = ($('tBus').value || '').toLowerCase(), bajas = $('tBajas').checked, e = S.esq[S.tabla], cols = tCols();
+  var rows = (S.filas || []).filter(function (x) { return (bajas || x.Activo !== 'No') && (!q || JSON.stringify(x).toLowerCase().indexOf(q) >= 0); });
+  var h = '<p class="muted">' + rows.length + ' filas</p><div class="scroll"><table><tr><th></th>' + cols.map(function (c) { return '<th>' + esc(tTitulo(c)) + '</th>'; }).join('') + '</tr>';
+  rows.forEach(function (x) {
+    var id = x[e.pk];
+    var acc = (x._puedeEditar && x.Activo !== 'No' ? '<button class="link" onclick="tEditar(\'' + esc(id) + '\')">Editar</button> ' : '') +
+      (x._puedeBaja ? '<button class="link" onclick="tBaja(\'' + esc(id) + '\',' + (x.Activo === 'No') + ')">' + (x.Activo === 'No' ? 'Reactivar' : 'Dar de baja') + '</button> ' : '') +
+      (S.tabla === 'S_Usuarios' && S.u.Rol === 'Administrador' ? '<button class="link" onclick="tReset(\'' + esc(id) + '\')">Nueva clave</button>' : '');
+    h += '<tr class="' + (x.Activo === 'No' ? 'baja' : '') + (x.EsSupuesto === 'Sí' ? ' sup' : '') + '"><td style="white-space:nowrap">' + acc + '</td>' + cols.map(function (c) { var tv = esc(tValor(c, x)); return '<td title="' + tv + '">' + tv + '</td>'; }).join('') + '</tr>';
+  });
+  $('tGrid').innerHTML = h + '</table></div>';
+}
+function tNuevo() {
+  var f = formulario(S.tabla, null, function () { setTimeout(function () { vTablas(S.tabla); }, 1200); });
+  $('tForm').innerHTML = '<div class="card"><h2>Nuevo registro en ' + esc(S.esq[S.tabla].titulo) + '</h2>' + f.html + ' <button class="btn2" onclick="$(\'tForm\').innerHTML=\'\'">Cancelar</button></div>';
+  f.enlazar(); $('tForm').scrollIntoView();
+}
+function tEditar(id) {
+  var e = S.esq[S.tabla];
+  var r = S.filas.filter(function (x) { return String(x[e.pk]) === String(id); })[0];
+  var f = formulario(S.tabla, r, function () { setTimeout(function () { vTablas(S.tabla); }, 1200); });
+  $('tForm').innerHTML = '<div class="card"><h2>Editar ' + esc(id) + '</h2>' + f.html + ' <button class="btn2" onclick="$(\'tForm\').innerHTML=\'\'">Cancelar</button></div>';
+  f.enlazar(); $('tForm').scrollIntoView();
+}
+function tBaja(id, activar) {
+  var extra = { F_Ingresos: ' El animal vuelve al rodeo.', F_Mortandad: ' El animal vuelve al rodeo.', F_Compras: ' También se dan de baja sus renglones de costo.', F_Sanidad: ' También se da de baja el consumo que generó.' }[S.tabla] || '';
+  var txt = activar ? '¿Reactivar ' + id + '?' : '¿Dar de baja ' + id + '? No se borra: queda marcado como inactivo y registrado en la auditoría.' + extra;
+  if (!window.confirm(txt)) return;
+  call('api_baja', S.token, S.tabla, id, activar).then(function (r) { return refrescar().then(function () { vTablas(S.tabla); setTimeout(function () { msg($('tMsg'), 'ok', r.mensaje); }, 600); }); })
+    .catch(function (er) { msg($('tMsg'), 'err', er.message); });
+}
+function tReset(email) {
+  var c = window.prompt('Nueva clave para ' + email + ' (mínimo 6 caracteres). Pasásela a la persona para que la cambie al entrar:');
+  if (!c) return;
+  call('api_resetearClave', S.token, email, c).then(function (r) { msg($('tMsg'), 'ok', r.mensaje); }).catch(function (er) { msg($('tMsg'), 'err', er.message); });
+}
+function tExportar() {
+  var cols = tCols();
+  var lineas = [cols.join(';')].concat((S.filas || []).map(function (x) { return cols.map(function (c) { var v = String(x[c] === undefined ? '' : x[c]); return /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(';'); }));
+  var blob = new Blob(['﻿' + lineas.join('\n')], { type: 'text/csv;charset=utf-8' });
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = S.tabla + '.csv'; document.body.appendChild(a); a.click(); a.remove();
+}
+
+/* ---------- MI CLAVE ---------- */
+function vClave() {
+  $('main').innerHTML = volverBtn() + '<div class="card" style="max-width:460px"><h2>Cambiar mi clave</h2><div id="kMsg"></div>' + campo('Clave actual', '<input id="kA" type="password">') +
+    campo('Clave nueva (mínimo 6)', '<input id="kN" type="password">') + '<button class="btn full" onclick="kGuardar()">Guardar</button></div>';
+}
+function kGuardar() { call('api_cambiarClave', S.token, $('kA').value, $('kN').value).then(function (r) { msg($('kMsg'), 'ok', r.mensaje); }).catch(function (e) { msg($('kMsg'), 'err', e.message); }); }
+
+if (S.token) iniciar().catch(function () { salir(true); });
+</script>
+</body>
+</html>
