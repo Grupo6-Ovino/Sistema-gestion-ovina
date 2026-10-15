@@ -1,0 +1,24 @@
+name: Publicar en Apps Script
+on:
+  push:
+    branches: [main, master]
+    paths: ['*.gs', '*.html', 'appsscript.json']
+  workflow_dispatch:
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Instalar clasp
+        run: npm install -g @google/clasp@2.4.2
+      - name: Credenciales de la cuenta del grupo
+        env:
+          CLASPRC: ${{ secrets.CLASPRC_JSON }}
+        run: echo "$CLASPRC" > ~/.clasprc.json
+      - name: Subir el código a Apps Script
+        run: clasp push --force
+      - name: Publicar nueva versión (mismo link /exec)
+        run: clasp deploy --deploymentId "AKfycbwxi37sDcfb8AmWaBRuPz7heKJkiltEu4YSXViBNULiPhV9Ev2ZaMu8RwWjHKUf-29u" --description "$(git log -1 --pretty=%s | cut -c1-90)"
