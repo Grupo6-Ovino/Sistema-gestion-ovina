@@ -10,6 +10,10 @@
  * Las columnas se leen y escriben POR NOMBRE de encabezado, así se pueden agregar columnas nuevas
  * sin romper los datos que ya estaban (ver actualizar() en Instalar.gs).
  *
+ * Novedades v3.0 (octubre 2026): menú lateral; INDICADORES (Cuadro de Mando Integral con semáforo, metas editables);
+ *   COTIZACIONES (granos de la Bolsa de Rosario automáticas, Cañuelas experimental, links guardados);
+ *   IMPUESTOS (vencimientos con semáforo); UNIDADES de Pozo del Carril con link a la app de cada grupo;
+ *   responsable de "todas las etapas"; presupuesto por rubro; datos nuevos del dueño (15/10/2026). Ver Version3.gs.
  * Novedades v2.1: cotización del dólar oficial del Banco Nación (se actualiza sola todos los días) e importes en US$;
  *   cobros y pagos (recibos) aplicados a facturas, con saldo pendiente.
  * Novedades v2: sanidad (vacunas y tratamientos con días de carencia), compras con factura y
@@ -18,7 +22,7 @@
  */
 
 var TZ = 'America/Argentina/Buenos_Aires';
-var VERSION = '2.1';
+var VERSION = '3.0';
 var AUDIT_COLS = ['CreadoEl', 'CreadoPor', 'ModificadoEl', 'ModificadoPor', 'Activo'];
 var ROLES = ['Administrador', 'Responsable de subunidad', 'Operador de carga', 'Consulta / auditoría'];
 var SESION_SEGUNDOS = 6 * 60 * 60;
@@ -32,8 +36,13 @@ var RUBROS = {
   'Comercialización': { cuenta: '4.05.07',    tipo: 'Directo',   variab: 'Variable' },
   'Mano de obra':     { cuenta: '4.05.02.05', tipo: 'Indirecto', variab: 'Fijo' },
   'Mantenimiento':    { cuenta: '4.05.02.06', tipo: 'Indirecto', variab: 'Fijo' },
-  'Otros indirectos': { cuenta: '4.05.05',    tipo: 'Indirecto', variab: 'Fijo' }
+  'Otros indirectos': { cuenta: '4.05.05',    tipo: 'Indirecto', variab: 'Fijo' },
+  'Amortización':     { cuenta: '4.05.02.08', tipo: 'Indirecto', variab: 'Fijo' },
+  'Reposición de madres': { cuenta: '4.05.02.09', tipo: 'Indirecto', variab: 'Fijo' }
 };
+var PERSPECTIVAS = ['Financiera', 'Clientes', 'Procesos internos', 'Aprendizaje y desarrollo'];
+var TODAS = '*'; // valor de "Etapa a cargo" cuando el responsable ve todas las etapas
+function miEtapa_(u, sub) { return u.IdSubunidad === TODAS || String(u.IdSubunidad) === String(sub); }
 
 /* =============================================================================================
  * 1. ESQUEMA: qué tablas existen, qué campos tienen y cómo se relacionan.
@@ -44,7 +53,8 @@ var RUBROS = {
 var SCHEMA = {
   // ---------- MAESTRAS ----------
   D_UnidadNeg: { grupo: 'Maestras', titulo: 'Unidades de negocio', pk: 'IdUnidad', prefijo: 'N', label: 'Nombre',
-    cols: [{ n: 'IdUnidad', l: 'Código' }, { n: 'Nombre', req: true, l: 'Nombre' }, { n: 'TipoActividad', l: 'Tipo de actividad' }] },
+    cols: [{ n: 'IdUnidad', l: 'Código' }, { n: 'Nombre', req: true, l: 'Nombre' }, { n: 'TipoActividad', l: 'Tipo de actividad' },
+      { n: 'Descripcion', l: 'Descripción' }, { n: 'LinkApp', l: 'Link de la aplicación de esa unidad (si tiene)' }] },
   D_Subunidad: { grupo: 'Maestras', titulo: 'Subunidades (etapas)', pk: 'IdSubunidad', prefijo: 'SUB', label: 'Nombre',
     cols: [{ n: 'IdSubunidad', l: 'Código' }, { n: 'IdUnidad', req: true, fk: 'D_UnidadNeg', l: 'Unidad de negocio' },
       { n: 'Nombre', req: true, l: 'Nombre' }, { n: 'Descripcion', l: 'Descripción' }] },
@@ -72,7 +82,8 @@ var SCHEMA = {
       { n: 'Variabilidad', t: 'enum', opts: ['Variable', 'Fijo'], l: 'Fijo / variable' }] },
   D_Cuenta: { grupo: 'Maestras', titulo: 'Plan de cuentas (Anexo I)', pk: 'IdCuenta', prefijo: 'CTA', label: ['Codigo', 'Nombre'],
     cols: [{ n: 'IdCuenta', l: 'Id' }, { n: 'Codigo', req: true, unico: true, l: 'Código' }, { n: 'Nombre', req: true, l: 'Nombre' },
-      { n: 'Tipo', t: 'enum', opts: ['C', 'M', 'N'], l: 'Tipo' }, { n: 'SignificadoTipo', l: 'Qué significa el tipo' }] },
+      { n: 'Tipo', t: 'enum', opts: ['C', 'M', 'N'], l: 'Tipo' }, { n: 'SignificadoTipo', l: 'Qué significa el tipo' },
+      { n: 'Observaciones', l: 'Observaciones' }] },
   D_UM: { grupo: 'Maestras', titulo: 'Unidades de medida', pk: 'IdUM', prefijo: 'UM', label: 'Nombre',
     cols: [{ n: 'IdUM', l: 'Id' }, { n: 'Nombre', req: true, l: 'Nombre' }, { n: 'Abreviatura', req: true, l: 'Abreviatura' }] },
   D_Conversion: { grupo: 'Maestras', titulo: 'Conversiones de unidades', pk: 'IdConversion', prefijo: 'CNV', label: 'IdConversion',
@@ -92,6 +103,16 @@ var SCHEMA = {
       { n: 'Observaciones', l: 'Observaciones' }] },
   D_FormaPago: { grupo: 'Maestras', titulo: 'Formas de pago', pk: 'IdFormaPago', prefijo: 'FP', label: 'Nombre',
     cols: [{ n: 'IdFormaPago', l: 'Id' }, { n: 'Nombre', req: true, l: 'Forma de pago' }] },
+  D_LinkCotizacion: { grupo: 'Maestras', titulo: 'Páginas de cotizaciones (links)', pk: 'IdLink', prefijo: 'LNK', label: 'Nombre',
+    cols: [{ n: 'IdLink', l: 'Id' }, { n: 'Nombre', req: true, l: 'Nombre' }, { n: 'URL', req: true, l: 'Link (https://…)' },
+      { n: 'Producto', l: 'Qué cotiza' }, { n: 'Descripcion', l: 'Descripción' }] },
+  D_Impuesto: { grupo: 'Maestras', titulo: 'Impuestos que se pagan', pk: 'IdImpuesto', prefijo: 'IMP', label: 'Nombre',
+    cols: [{ n: 'IdImpuesto', l: 'Id' }, { n: 'Nombre', req: true, l: 'Impuesto' },
+      { n: 'Organismo', t: 'enum', req: true, opts: ['ARCA (nacional)', 'Rentas Córdoba (provincial)', 'Municipalidad', 'Otro'], l: 'Organismo' },
+      { n: 'Periodicidad', t: 'enum', req: true, opts: ['Mensual', 'Bimestral', 'Trimestral', 'Cuatrimestral', 'Semestral', 'Anual'], l: 'Cada cuánto' },
+      { n: 'TipoVencimiento', t: 'enum', req: true, opts: ['Según terminación de CUIT', 'Fecha fija'], l: 'Cómo vence' },
+      { n: 'DiaFijo', t: 'num', min: 1, l: 'Día del mes (si es fecha fija)' }, { n: 'MesesFijos', l: 'Meses en que vence (ej. 3,7,11; vacío = según cada cuánto)' },
+      { n: 'AvisarDiasAntes', t: 'num', min: 0, l: 'Avisar con cuántos días' }, { n: 'LinkConsulta', l: 'Link para consultar' }, { n: 'Descripcion', l: 'Descripción' }] },
   D_TipoComprobante: { grupo: 'Maestras', titulo: 'Tipos de comprobante', pk: 'Codigo', pkManual: true, label: ['Codigo', 'Nombre'],
     cols: [{ n: 'Codigo', req: true, l: 'Código' }, { n: 'Nombre', req: true, l: 'Nombre' },
       { n: 'Circuito', t: 'enum', req: true, opts: ['Venta', 'Compra', 'Cobro', 'Pago'], l: 'Circuito' },
@@ -113,11 +134,34 @@ var SCHEMA = {
   F_PrecioProd: { grupo: 'Parámetros', titulo: 'Precios reales de productos', pk: 'IdPrecioProd', prefijo: 'PPR', label: 'IdPrecioProd',
     cols: [{ n: 'IdPrecioProd', l: 'Id' }, { n: 'IdProducto', req: true, fk: 'D_Producto', l: 'Producto' }, { n: 'Fecha', t: 'date', req: true, l: 'Fecha' },
       { n: 'Precio', t: 'num', req: true, min: 0.0000001, l: 'Precio' }, { n: 'IdMoneda', req: true, fk: 'D_Moneda', l: 'Moneda' },
-      { n: 'PrecioIncluyeIVA', t: 'bool', req: true, l: '¿Incluye IVA?' }, { n: 'Fuente', req: true, l: 'Fuente' }] },
+      { n: 'PrecioIncluyeIVA', t: 'enum', opts: ['Sí', 'No', 'Sin dato'], req: true, l: '¿Incluye IVA?' }, { n: 'Fuente', req: true, l: 'Fuente' },
+      { n: 'TipoPrecio', t: 'enum', opts: ['Venta propia', 'Referencia de mercado'], l: 'Tipo de precio' }, { n: 'Observaciones', l: 'Observaciones' }] },
   F_TipoCambio: { grupo: 'Parámetros', titulo: 'Dólar oficial Banco Nación (cotizaciones)', pk: 'Fecha', pkManual: true, label: 'Fecha',
     cols: [{ n: 'Fecha', t: 'date', req: true, l: 'Fecha' }, { n: 'Comprador', t: 'num', req: true, min: 0.0000001, l: 'Comprador ($ por US$)' },
       { n: 'Vendedor', t: 'num', req: true, min: 0.0000001, l: 'Vendedor ($ por US$)' }, { n: 'Fuente', req: true, l: 'Fuente' },
       { n: 'Origen', t: 'enum', opts: ['Automático', 'Manual'], l: 'Cómo se cargó' }] },
+
+  F_Presupuesto: { grupo: 'Parámetros', titulo: 'Presupuesto por rubro', pk: 'IdPresupuesto', prefijo: 'PRE', label: 'IdPresupuesto',
+    cols: [{ n: 'IdPresupuesto', l: 'Id' }, { n: 'IdCampana', req: true, fk: 'D_Campana', l: 'Campaña' },
+      { n: 'Rubro', t: 'enum', req: true, opts: Object.keys(RUBROS), l: 'Rubro' }, { n: 'IdSubunidad', fk: 'D_Subunidad', l: 'Etapa (opcional)' },
+      { n: 'Importe', t: 'num', req: true, min: 0, l: 'Importe presupuestado ($)' }, { n: 'Fuente', req: true, l: 'Fuente' }] },
+  P_Indicador: { grupo: 'Parámetros', titulo: 'Indicadores: metas y textos (CMI)', pk: 'IdIndicador', pkManual: true, label: 'Nombre',
+    cols: [{ n: 'IdIndicador', req: true, l: 'Código' }, { n: 'Perspectiva', t: 'enum', req: true, opts: PERSPECTIVAS, l: 'Perspectiva' },
+      { n: 'Objetivo', l: 'Objetivo estratégico' }, { n: 'Nombre', req: true, l: 'Indicador' }, { n: 'Formula', l: 'Fórmula' },
+      { n: 'Interpretacion', l: 'Cómo se interpreta' }, { n: 'Unidad', l: 'Unidad' },
+      { n: 'Sentido', t: 'enum', req: true, opts: ['Mayor es mejor', 'Menor es mejor', 'Cerca de cero es mejor'], l: 'Sentido' },
+      { n: 'MetaVerde', t: 'num', l: 'Meta (verde)' }, { n: 'MetaAmarillo', t: 'num', l: 'Alerta (amarillo)' }, { n: 'FuenteMeta', l: 'De dónde sale la meta' },
+      { n: 'Periodicidad', l: 'Cada cuánto se mide' }, { n: 'Responsable', l: 'Responsable' }, { n: 'Decision', l: 'Qué hacer si empeora' },
+      { n: 'ValorManual', t: 'num', l: 'Valor cargado a mano (solo indicadores sin cálculo automático)' }, { n: 'Orden', t: 'num', l: 'Orden' }] },
+  F_Cotizacion: { grupo: 'Parámetros', titulo: 'Cotizaciones (granos y hacienda)', pk: 'IdCotizacion', prefijo: 'COT', label: 'IdCotizacion',
+    cols: [{ n: 'IdCotizacion', l: 'Id' }, { n: 'Fecha', t: 'date', req: true, l: 'Fecha' }, { n: 'Producto', req: true, l: 'Producto' },
+      { n: 'Mercado', req: true, l: 'Mercado o fuente' }, { n: 'Precio', t: 'num', req: true, min: 0.0000001, l: 'Precio' }, { n: 'Unidad', req: true, l: 'Unidad (ej. $/t, $/kg vivo)' },
+      { n: 'Origen', t: 'enum', opts: ['Automático', 'Manual'], l: 'Cómo se cargó' }, { n: 'Link', l: 'Link' }, { n: 'Observaciones', l: 'Observaciones' }] },
+  F_VencImpuesto: { grupo: 'Parámetros', titulo: 'Calendario de vencimientos de impuestos', pk: 'IdVenc', prefijo: 'VEN', label: 'IdVenc',
+    cols: [{ n: 'IdVenc', l: 'Id' }, { n: 'IdImpuesto', req: true, fk: 'D_Impuesto', l: 'Impuesto' }, { n: 'Periodo', req: true, l: 'Período (aaaa-mm)' },
+      { n: 'Terminacion', t: 'enum', req: true, opts: ['Todas', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'], l: 'Terminación de CUIT' },
+      { n: 'FechaVencimiento', t: 'date', req: true, l: 'Vence el' }, { n: 'Estado', t: 'enum', req: true, opts: ['Confirmado', 'Estimado'], l: 'Estado' },
+      { n: 'Fuente', l: 'Fuente' }] },
 
   // ---------- HECHOS ----------
   F_Ingresos: { grupo: 'Hechos', titulo: 'Ingresos (ventas)', pk: 'IdIngreso', prefijo: 'ING', label: 'IdIngreso', hecho: true,
@@ -184,13 +228,21 @@ var SCHEMA = {
       { n: 'CantidadReal', t: 'num', req: true, min: 0, l: 'Cantidad usada' }, { n: 'BaseReal', t: 'num', req: true, min: 0.0000001, l: 'Base real (cabezas o kg)' },
       { n: 'IdOrigen', calc: true, l: 'Origen' }, { n: 'Fuente', req: true, l: 'Fuente' }] },
 
+  F_PagoImpuesto: { grupo: 'Hechos', titulo: 'Impuestos pagados', pk: 'IdPagoImp', prefijo: 'PIM', label: 'IdPagoImp', hecho: true,
+    cols: [{ n: 'IdPagoImp', l: 'Id' }, { n: 'Fecha', t: 'date', req: true, l: 'Fecha de pago' }, { n: 'IdCampana', fk: 'D_Campana', calc: true, l: 'Campaña' },
+      { n: 'IdImpuesto', req: true, fk: 'D_Impuesto', l: 'Impuesto' }, { n: 'Periodo', req: true, l: 'Período que paga (aaaa-mm)' },
+      { n: 'Importe', t: 'num', req: true, min: 0, l: 'Importe ($)' }, { n: 'IdFormaPago', fk: 'D_FormaPago', l: 'Forma de pago' },
+      { n: 'Comprobante', l: 'Comprobante (VEP, ticket)' }, { n: 'Observaciones', l: 'Observaciones' }] },
+
   // ---------- CONTROL ----------
   S_Usuarios: { grupo: 'Control', titulo: 'Usuarios', pk: 'Email', pkManual: true, label: 'Nombre', soloAdminLee: true,
     cols: [{ n: 'Email', t: 'email', req: true, l: 'Email' }, { n: 'Nombre', req: true, l: 'Nombre' }, { n: 'Rol', t: 'enum', req: true, opts: ROLES, l: 'Rol' },
       { n: 'IdSubunidad', fk: 'D_Subunidad', l: 'Etapa a cargo' }, { n: 'ClaveHash', hidden: true }, { n: 'Sal', hidden: true }] },
   S_Auditoria: { grupo: 'Control', titulo: 'Auditoría', pk: 'IdAuditoria', prefijo: 'AUD', label: 'IdAuditoria', sinAuditoria: true, soloLectura: true,
     cols: [{ n: 'IdAuditoria' }, { n: 'FechaHora' }, { n: 'Usuario' }, { n: 'Accion' }, { n: 'Tabla' }, { n: 'IdRegistro' },
-      { n: 'ValorAnterior' }, { n: 'ValorNuevo' }] }
+      { n: 'ValorAnterior' }, { n: 'ValorNuevo' }] },
+  S_Config: { grupo: 'Control', titulo: 'Configuración del sistema', pk: 'Clave', pkManual: true, label: 'Clave',
+    cols: [{ n: 'Clave', req: true, l: 'Dato' }, { n: 'Valor', l: 'Valor' }, { n: 'Descripcion', l: 'Para qué sirve' }] }
 };
 
 function headersDe(tabla) {
@@ -324,7 +376,7 @@ function puede_(u, tabla, accion, registro) {
     if (!s.hecho) return accion === 'crear'; // puede dar de alta nacimientos
     if (!registro) return true;
     if (registro.IdSubunidad === undefined) return accion !== 'baja'; // compras: puede cargarlas y marcar el pago
-    return String(registro.IdSubunidad) === String(u.IdSubunidad);
+    return miEtapa_(u, registro.IdSubunidad);
   }
   return false;
 }
@@ -409,7 +461,7 @@ function validar_(tabla, o, u, idActual) {
     if (c.t === 'date' && !aFecha_(v)) errores.push(nom + ': fecha inválida.');
     if (c.t === 'enum' && c.opts.indexOf(v) < 0) errores.push(nom + ': "' + v + '" no es una opción válida.');
     if (c.t === 'email' && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) errores.push('Email inválido.');
-    if (c.fk && !existeActivo_(c.fk, v)) errores.push(nom + ': "' + v + '" no existe en ' + SCHEMA[c.fk].titulo + ' (o está dado de baja).');
+    if (c.fk && !(tabla === 'S_Usuarios' && c.n === 'IdSubunidad' && v === TODAS) && !existeActivo_(c.fk, v)) errores.push(nom + ': "' + v + '" no existe en ' + SCHEMA[c.fk].titulo + ' (o está dado de baja).');
   });
   if (errores.length) throw new Error(errores.join(' '));
 
@@ -462,7 +514,16 @@ function validar_(tabla, o, u, idActual) {
       if (Number(o[k]) === Number(o.Caravana)) throw new Error('Un animal no puede ser su propia ' + k.toLowerCase() + '.');
     });
   }
-  if (s.hecho && colDe(tabla, 'IdSubunidad') && !colDe(tabla, 'IdSubunidad').calc && u.Rol === 'Responsable de subunidad' && String(o.IdSubunidad) !== String(u.IdSubunidad)) {
+  if (tabla === 'P_Indicador' && o.MetaVerde !== '' && o.MetaAmarillo !== '') {
+    var mv = Number(o.MetaVerde), ma = Number(o.MetaAmarillo);
+    if (o.Sentido === 'Mayor es mejor' && ma > mv) throw new Error('Si "mayor es mejor", la alerta (amarillo) tiene que ser menor o igual a la meta (verde).');
+    if (o.Sentido !== 'Mayor es mejor' && ma < mv) throw new Error('Si "menor es mejor" o "cerca de cero", la alerta (amarillo) tiene que ser mayor o igual a la meta (verde).');
+  }
+  if ((tabla === 'F_VencImpuesto' || tabla === 'F_PagoImpuesto') && !/^\d{4}-(0[1-9]|1[0-2])$/.test(String(o.Periodo))) throw new Error('El período tiene que tener la forma aaaa-mm (ej. 2026-10).');
+  if (tabla === 'D_Impuesto' && o.TipoVencimiento === 'Fecha fija' && !(Number(o.DiaFijo) >= 1 && Number(o.DiaFijo) <= 31)) throw new Error('Para un impuesto de fecha fija, indicá el día del mes (1 a 31).');
+  if ((tabla === 'D_LinkCotizacion' && !/^https?:\/\//i.test(o.URL)) || (tabla === 'D_UnidadNeg' && o.LinkApp && !/^https?:\/\//i.test(o.LinkApp))) throw new Error('El link tiene que empezar con http:// o https://');
+  if (tabla === 'S_Config' && o.Clave === 'CUIT_ESTABLECIMIENTO' && o.Valor && !/^\d{2}-?\d{8}-?\d$/.test(o.Valor)) throw new Error('El CUIT tiene que tener 11 números (ej. 30-12345678-9).');
+  if (s.hecho && colDe(tabla, 'IdSubunidad') && !colDe(tabla, 'IdSubunidad').calc && u.Rol === 'Responsable de subunidad' && !miEtapa_(u, o.IdSubunidad)) {
     throw new Error('Solo podés cargar datos de tu etapa.');
   }
 }
@@ -572,6 +633,7 @@ function api_logout(token) { CacheService.getScriptCache().remove('s_' + token);
 /** Todo lo que la pantalla necesita para armarse: usuario, esquema, listas desplegables y resumen del día. */
 function api_inicio(token) {
   var u = sesion_(token);
+  var migracion = asegurarVersion_();
   var esquema = {};
   Object.keys(SCHEMA).forEach(function (t) {
     var s = SCHEMA[t];
@@ -582,7 +644,7 @@ function api_inicio(token) {
       puede: { leer: puede_(u, t, 'leer'), crear: puede_(u, t, 'crear'), editar: puede_(u, t, 'editar'), baja: puede_(u, t, 'baja') }
     };
   });
-  return { usuario: publico_(u), esquema: esquema, listas: listas_(), resumen: resumen_(), rubros: Object.keys(RUBROS), version: VERSION };
+  return { usuario: publico_(u), esquema: esquema, listas: listas_(), resumen: resumen_(), rubros: Object.keys(RUBROS), version: VERSION, migracion: migracion };
 }
 function enCarencia_() {
   var hoy = hoyStr_(), out = {};
@@ -603,7 +665,8 @@ function resumen_() {
     comprasVencidas: comp.filter(function (x) { return x.Vencimiento && x.Vencimiento < hoy; }).length,
     totalPendiente: Math.round(comp.reduce(function (a, x) { return a + Number(x.Total || 0); }, 0) * 100) / 100,
     porCobrar: pendientesCobro_().length,
-    dolar: ultimaCotizacion_()
+    dolar: ultimaCotizacion_(),
+    impuestos: (function () { try { var v = vencimientos_().lista; return { vencidos: v.filter(function (x) { return x.estado === 'Vencido'; }).length, porVencer: v.filter(function (x) { return x.estado === 'Por vencer'; }).length }; } catch (e) { return null; } })()
   };
 }
 function listas_() {
@@ -623,6 +686,9 @@ function listas_() {
       if (t === 'D_TipoComprobante') { item.circuito = x.Circuito; item.signo = x.Signo; item.nombre = x.Nombre; }
       if (t === 'D_Categoria') { item.sub = x.IdSubunidad; }
       if (t === 'D_UM') { item.abrev = x.Abreviatura; }
+      if (t === 'D_UnidadNeg') { item.link = x.LinkApp || ''; item.desc = x.Descripcion || ''; item.tipo = x.TipoActividad || ''; }
+      if (t === 'D_LinkCotizacion') { item.url = x.URL; item.producto = x.Producto || ''; item.desc = x.Descripcion || ''; }
+      if (t === 'D_Impuesto') { item.organismo = x.Organismo; }
       return item;
     });
   });
@@ -873,7 +939,7 @@ function api_registrarSanidad(token, s) {
       if (an.FechaNac > o.Fecha) throw new Error('La caravana ' + car + ' nació después de esa fecha.');
       if (o.Fecha > hoyStr_()) throw new Error('No se pueden cargar tratamientos con fecha futura.');
       o.IdSubunidad = cats[an.IdCategoria] ? cats[an.IdCategoria].IdSubunidad : '';
-      if (u.Rol === 'Responsable de subunidad' && String(o.IdSubunidad) !== String(u.IdSubunidad)) throw new Error('La caravana ' + car + ' no es de tu etapa.');
+      if (u.Rol === 'Responsable de subunidad' && !miEtapa_(u, o.IdSubunidad)) throw new Error('La caravana ' + car + ' no es de tu etapa.');
       o.IdEvento = idEv;
       o.FinCarencia = sumarDias_(o.Fecha, o.DiasCarencia);
       calcular_('F_Sanidad', o);
@@ -906,7 +972,7 @@ function api_registrarMuerte(token, m) {
     if (o.Fecha > hoyStr_()) throw new Error('La fecha no puede ser posterior a hoy.');
     var cat = leer_('D_Categoria').filter(function (c) { return c.IdCategoria === an.IdCategoria; })[0];
     o.IdSubunidad = cat ? cat.IdSubunidad : '';
-    if (u.Rol === 'Responsable de subunidad' && String(o.IdSubunidad) !== String(u.IdSubunidad)) throw new Error('Ese animal no es de tu etapa.');
+    if (u.Rol === 'Responsable de subunidad' && !miEtapa_(u, o.IdSubunidad)) throw new Error('Ese animal no es de tu etapa.');
     calcular_('F_Mortandad', o);
     var id = insertar_('F_Mortandad', o, u.Email);
     cambiarEstadoAnimal_(o.Caravana, 'Muerto', o.Fecha, u.Email, 'Baja por muerte ' + id);
@@ -1176,7 +1242,9 @@ function actualizarDolar() {
       }
     });
     TC_ = null;
-    return nuevas.length ? 'Cotizaciones nuevas: ' + nuevas.join(' · ') : 'No hacía falta traer cotizaciones nuevas.';
+    var extra = [];
+    try { if (ss_().getSheetByName('F_Cotizacion')) { extra.push(actualizarGranos_()); extra.push(actualizarCanuelas_()); } } catch (e) { extra.push('Cotizaciones de granos: ' + e.message); }
+    return (nuevas.length ? 'Cotizaciones nuevas: ' + nuevas.join(' · ') : 'No hacía falta traer cotizaciones nuevas del dólar.') + (extra.length ? ' | ' + extra.join(' | ') : '');
   });
 }
 function api_actualizarDolar(token) {
@@ -1303,4 +1371,346 @@ function asegurarCotizacion_(fecha) {
       if (t) { t.Origen = 'Automático'; insertar_('F_TipoCambio', t, 'sistema (dólar automático)'); TC_ = null; return; }
     }
   } catch (e) { /* sin conexión: no frena la carga */ }
+}
+/* =============================================================================================
+ * 11. INDICADORES — Cuadro de Mando Integral (Kaplan y Norton), con semáforo (diapositiva 11)
+ *    Las metas, textos y umbrales viven en la tabla P_Indicador (el administrador los cambia desde la app).
+ *    El VALOR de cada indicador lo calcula el sistema con los datos cargados (funciones de CALC_IND).
+ *    Un indicador nuevo que no tenga cálculo automático usa el "Valor cargado a mano".
+ * ============================================================================================= */
+function ctxIndicadores_(idCampana) {
+  var campanas = leer_('D_Campana').filter(activo_).sort(function (a, b) { return a.FechaDesde < b.FechaDesde ? -1 : 1; });
+  var hoy = hoyStr_();
+  if (!idCampana) { var act = campanas.filter(function (c) { return c.FechaDesde <= hoy && hoy <= c.FechaHasta; })[0]; idCampana = act ? act.IdCampana : (campanas.length ? campanas[campanas.length - 1].IdCampana : ''); }
+  var camp = campanas.filter(function (c) { return c.IdCampana === idCampana; })[0] || { FechaDesde: '0000-00-00', FechaHasta: '9999-12-31' };
+  var deCamp = function (x) { return activo_(x) && x.IdCampana === idCampana; };
+  var cats = {}; leer_('D_Categoria').forEach(function (c) { cats[c.IdCategoria] = c.Nombre; });
+  var insumos = {}; leer_('D_Insumo').forEach(function (i) { insumos[i.IdInsumo] = i; });
+  var animales = leer_('D_Animal').filter(activo_);
+  var cat = function (a) { return String(cats[a.IdCategoria] || '').toLowerCase(); };
+  var activos = animales.filter(function (a) { return a.Estado === 'Activo'; });
+  var actual = camp.FechaDesde <= hoy && hoy <= camp.FechaHasta;
+  var prod = leer_('F_Produccion').filter(deCamp);
+  var ovejasHoy = activos.filter(function (a) { return cat(a) === 'oveja'; }).length;
+  var basePrd = prod.reduce(function (m, x) { return Math.max(m, Number(x.CabezasBase) || 0); }, 0);
+  var tryLeer = function (t) { try { return leer_(t); } catch (e) { return []; } };
+  return {
+    id: idCampana, camp: camp, campanas: campanas, hoy: hoy, actual: actual, cats: cats, cat: cat, insumos: insumos,
+    animales: animales, activos: activos,
+    ing: leer_('F_Ingresos').filter(deCamp), cos: leer_('F_Costos').filter(deCamp), mue: leer_('F_Mortandad').filter(deCamp),
+    san: leer_('F_Sanidad').filter(activo_), cons: leer_('F_Consumo').filter(deCamp), dos: leer_('F_Dosis').filter(deCamp), prod: prod,
+    tes: tryLeer('F_Tesoreria').filter(activo_), precios: tryLeer('F_PrecioProd').filter(activo_), presu: tryLeer('F_Presupuesto').filter(deCamp),
+    productos: (function () { var p = {}; leer_('D_Producto').forEach(function (x) { p[x.IdProducto] = x; }); return p; })(),
+    // Ovejas en servicio: la base de la producción de la campaña si está cargada; si no, las ovejas que hay hoy en el rodeo.
+    ovejasBase: basePrd || ovejasHoy, ovejasBaseTxt: basePrd ? 'ovejas en servicio (producción de la campaña)' : 'ovejas en el rodeo hoy',
+    nacidos: animales.filter(function (a) { return a.FechaNac >= camp.FechaDesde && a.FechaNac <= camp.FechaHasta; })
+  };
+}
+var CALC_IND = {
+  COBERTURA: function (c) {
+    var ing = sumar_(c.ing, 'ImporteNeto'), tot = sumar_(c.cos, 'Importe');
+    if (!tot) return { valor: null, detalle: 'No hay costos cargados en la campaña.' };
+    if (!ing && c.actual) return { valor: null, detalle: 'Campaña en curso: todavía no hubo ventas (costos cargados hasta ahora: $' + fmtNum_(tot, 0) + ').' };
+    return { valor: ing / tot * 100, detalle: '$' + fmtNum_(ing, 0) + ' de ingresos (sin IVA) ÷ $' + fmtNum_(tot, 0) + ' de costos totales (directos + indirectos)',
+      nota: supuestos_(c.cos) ? 'Incluye costos SUPUESTOS ($' + fmtNum_(supuestos_(c.cos), 0) + ').' : '' };
+  },
+  MB_MADRE: function (c) {
+    if (!c.ovejasBase) return { valor: null, detalle: 'No hay ovejas cargadas.' };
+    var ing = sumar_(c.ing, 'ImporteNeto'), dir = sumar_(c.cos.filter(function (x) { return tipoCosto_(c, x) === 'Directo'; }), 'Importe');
+    if (!ing && !dir) return { valor: null, detalle: 'Sin ingresos ni costos directos en la campaña.' };
+    if (!ing && c.actual) return { valor: null, detalle: 'Campaña en curso: todavía no hubo ventas.' };
+    return { valor: (ing - dir) / c.ovejasBase, detalle: '($' + fmtNum_(ing, 0) + ' de ingresos − $' + fmtNum_(dir, 0) + ' de costos directos) ÷ ' + c.ovejasBase + ' ' + c.ovejasBaseTxt };
+  },
+  DESVIO_PRESUP: function (c) {
+    if (!c.presu.length) return { valor: null, detalle: 'Falta cargar el presupuesto de la campaña (Administración → Presupuesto por rubro).' };
+    var real = 0, pres = 0, partes = [];
+    var porRubro = {}; c.presu.forEach(function (p) { porRubro[p.Rubro] = (porRubro[p.Rubro] || 0) + Number(p.Importe); });
+    Object.keys(porRubro).forEach(function (r) {
+      var R = c.cos.filter(function (x) { var i = c.insumos[x.IdInsumo] || {}; return x.EsSupuesto !== 'Sí' && i.Rubro === r; });
+      if (!R.length) return; // sin gasto real todavía en ese rubro: no se compara
+      var v = sumar_(R, 'Importe'); real += v; pres += porRubro[r];
+      partes.push(r + ': real $' + fmtNum_(v, 0) + ' vs presupuesto $' + fmtNum_(porRubro[r], 0) + ' (' + (v >= porRubro[r] ? '+' : '') + fmtNum_((v - porRubro[r]) / porRubro[r] * 100, 1) + '%)');
+    });
+    if (!pres) return { valor: null, detalle: 'Hay presupuesto pero todavía no hay gastos reales en esos rubros para comparar.' };
+    return { valor: (real - pres) / pres * 100, detalle: partes.join(' · ') };
+  },
+  PRECIO_REL: function (c) {
+    if (!c.ing.length) return { valor: null, detalle: 'No hubo ventas en la campaña.' };
+    var kg = 0, imp = 0, fechas = [];
+    c.ing.forEach(function (x) { var p = Number(x.PrecioKg), al = Number(x.AlicuotaIVA || 0); kg += Number(x.Kg); imp += Number(x.Kg) * (x.PrecioIncluyeIVA === 'Sí' ? p : p * (1 + al / 100)); fechas.push(x.Fecha); });
+    var obt = imp / kg, fVenta = fechas.sort()[Math.floor(fechas.length / 2)];
+    var prods = {}; c.ing.forEach(function (x) { prods[x.IdProducto] = 1; });
+    var refs = c.precios.filter(function (p) { return p.TipoPrecio === 'Referencia de mercado' && prods[p.IdProducto] && p.PrecioIncluyeIVA !== 'Sin dato'; });
+    if (!refs.length) return { valor: null, detalle: 'Falta un precio de referencia de mercado para ese producto (Administración → Precios de productos).' };
+    var dist = function (p) { return Math.abs(aFecha_(p.Fecha) - aFecha_(fVenta)); };
+    var ref = refs.sort(function (a, b) { return dist(a) - dist(b); })[0];
+    var al = Number((c.productos[ref.IdProducto] || {}).AlicuotaIVA || 0), pr = Number(ref.Precio) * (ref.PrecioIncluyeIVA === 'Sí' ? 1 : 1 + al / 100);
+    var dias = Math.round(dist(ref) / 86400000);
+    return { valor: obt / pr * 100, detalle: '$' + fmtNum_(obt, 2) + '/kg obtenido ÷ $' + fmtNum_(pr, 2) + '/kg de referencia (los dos con IVA). Referencia: ' + ref.Fuente + ' (' + ref.Fecha + ')',
+      nota: dias > 60 ? 'Ojo: la referencia es de ' + dias + ' días de diferencia con la venta; con inflación, la comparación no es exacta.' : '' };
+  },
+  COBRANZA: function (c) {
+    var g = {};
+    c.ing.forEach(function (x) { var k = x.Comprobante + '|' + x.IdTercero; if (!g[k]) g[k] = { comp: x.Comprobante, ter: x.IdTercero, fecha: x.Fecha, total: 0 }; g[k].total += Number(x.Total); });
+    var claves = Object.keys(g); if (!claves.length) return { valor: null, detalle: 'No hubo ventas en la campaña.' };
+    var sumDias = 0, sumImp = 0, pend = 0;
+    claves.forEach(function (k) {
+      var v = g[k], M = c.tes.filter(function (m) { return m.Tipo === 'Cobro' && m.ComprobanteVenta === v.comp && m.IdTercero === v.ter; });
+      var cobrado = 0;
+      M.forEach(function (m) { var d = Math.max(0, Math.round((aFecha_(m.Fecha) - aFecha_(v.fecha)) / 86400000)); sumDias += d * Number(m.Importe); sumImp += Number(m.Importe); cobrado += Number(m.Importe); });
+      var saldo = v.total - cobrado;
+      if (saldo > 0.01) { var dd = Math.max(0, Math.round((aFecha_(c.hoy) - aFecha_(v.fecha)) / 86400000)); sumDias += dd * saldo; sumImp += saldo; pend++; }
+    });
+    return { valor: sumImp ? sumDias / sumImp : null, detalle: claves.length + ' factura' + (claves.length === 1 ? '' : 's') + ' de venta; días entre la venta y el cobro, ponderados por importe',
+      nota: pend ? pend + ' venta' + (pend === 1 ? '' : 's') + ' todavía sin cobrar: se cuentan los días hasta hoy.' : '' };
+  },
+  CORDEROS_MADRE: function (c) {
+    if (!c.ovejasBase) return { valor: null, detalle: 'No hay ovejas cargadas.' };
+    var nac = c.nacidos.length, muertos = c.nacidos.filter(function (a) { return a.Estado === 'Muerto'; }).length;
+    if (!nac) return { valor: null, detalle: 'Todavía no hay nacimientos en la campaña.' };
+    return { valor: (nac - muertos) / c.ovejasBase * 100, detalle: (nac - muertos) + ' corderos logrados (' + nac + ' nacidos − ' + muertos + ' muertos) ÷ ' + c.ovejasBase + ' ' + c.ovejasBaseTxt,
+      nota: c.actual ? 'Campaña en curso: el valor puede cambiar hasta el destete.' : '' };
+  },
+  SUPERVIVENCIA: function (c) {
+    var nac = c.nacidos.length; if (!nac) return { valor: null, detalle: 'Todavía no hay nacimientos en la campaña.' };
+    var muertos = c.nacidos.filter(function (a) { return a.Estado === 'Muerto'; }).length;
+    return { valor: (nac - muertos) / nac * 100, detalle: (nac - muertos) + ' corderos vivos o vendidos ÷ ' + nac + ' nacidos en la campaña' };
+  },
+  KG_MADRE: function (c) {
+    if (!c.ovejasBase) return { valor: null, detalle: 'No hay ovejas cargadas.' };
+    var kg = sumar_(c.ing, 'Kg'); if (!kg) return { valor: null, detalle: 'Todavía no hay kilos vendidos en la campaña.' };
+    return { valor: kg / c.ovejasBase, detalle: fmtNum_(kg, 1) + ' kg vendidos ÷ ' + c.ovejasBase + ' ' + c.ovejasBaseTxt };
+  },
+  PRENEZ: function (c) {
+    var ov = c.activos.filter(function (a) { return c.cat(a) === 'oveja'; }); if (!ov.length) return { valor: null, detalle: 'No hay ovejas en el rodeo.' };
+    var p = ov.filter(function (a) { return a.EstadoRepro === 'Preñada'; }).length;
+    return { valor: p / ov.length * 100, detalle: p + ' ovejas preñadas ÷ ' + ov.length + ' ovejas en el rodeo', nota: 'Es una foto de HOY (según el estado reproductivo cargado en cada oveja), no depende de la campaña elegida.' };
+  },
+  MORTALIDAD: function (c) {
+    var base = c.animales.filter(function (a) { return a.FechaNac <= c.camp.FechaHasta && (!a.FechaBaja || a.FechaBaja >= c.camp.FechaDesde); }).length;
+    if (!base) return { valor: null, detalle: 'Sin animales en la campaña.' };
+    var nd = c.mue.filter(function (m) { return /diferencia de conteo/i.test(String(m.Observaciones)); }).length;
+    return { valor: c.mue.length / base * 100, detalle: c.mue.length + ' muertes ÷ ' + base + ' animales que estuvieron en el rodeo durante la campaña',
+      nota: nd ? nd + ' de esas bajas son por diferencia de conteo con el dueño (causa real desconocida).' : '' };
+  },
+  DESVIO_ALIM: function (c) {
+    var real = 0, esp = 0, partes = [];
+    var claves = {}; c.cons.forEach(function (x) { claves[x.IdSubunidad + '|' + x.IdInsumo] = 1; });
+    Object.keys(claves).forEach(function (k) {
+      var p = k.split('|'), ins = c.insumos[p[1]] || {};
+      if (ins.Rubro !== 'Alimentación') return;
+      var d = c.dos.filter(function (x) { return x.IdSubunidad === p[0] && x.IdInsumo === p[1]; })[0]; if (!d) return;
+      var C = c.cons.filter(function (x) { return x.IdSubunidad === p[0] && x.IdInsumo === p[1]; });
+      var r = sumar_(C, 'CantidadReal'), e = Number(d.DosisPorBase) * sumar_(C, 'BaseReal');
+      real += r; esp += e; partes.push(ins.Nombre + ': ' + fmtNum_(r, 1) + ' real vs ' + fmtNum_(e, 1) + ' esperado');
+    });
+    if (!esp) return { valor: null, detalle: 'Falta el consumo real o la dosis técnica de algún alimento en la campaña.' };
+    return { valor: (real - esp) / esp * 100, detalle: partes.join(' · ') };
+  },
+  SANIDAD_REG: function (c) {
+    if (!c.activos.length) return { valor: null, detalle: 'No hay animales en el rodeo.' };
+    var desde = sumarDias_(c.hoy, -365), con = {};
+    c.san.forEach(function (s) { if (s.Fecha >= desde) con[Number(s.Caravana)] = 1; });
+    var n = c.activos.filter(function (a) { return con[Number(a.Caravana)]; }).length;
+    return { valor: n / c.activos.length * 100, detalle: n + ' animales con al menos un tratamiento registrado en el último año ÷ ' + c.activos.length + ' en el rodeo',
+      nota: 'Foto de HOY. Los corderos sin vacunar bajan este indicador.' };
+  },
+  COSTOS_REALES: function (c) {
+    if (!c.cos.length) return { valor: null, detalle: 'No hay costos cargados en la campaña.' };
+    var r = c.cos.filter(function (x) { return x.EsSupuesto !== 'Sí'; }).length;
+    return { valor: r / c.cos.length * 100, detalle: r + ' renglones de costo con dato real ÷ ' + c.cos.length + ' renglones cargados' };
+  },
+  FICHAS: function (c) {
+    if (!c.activos.length) return { valor: null, detalle: 'No hay animales en el rodeo.' };
+    var ok = c.activos.filter(function (a) { return a.Sexo && a.PesoKg !== '' && a.PesoKg !== null && !/estimad/i.test(String(a.Observaciones)); }).length;
+    return { valor: ok / c.activos.length * 100, detalle: ok + ' fichas completas (sexo, peso y fecha real) ÷ ' + c.activos.length + ' animales en el rodeo', nota: 'Foto de HOY.' };
+  }
+};
+function sumar_(L, k) { return L.reduce(function (a, x) { return a + (Number(x[k]) || 0); }, 0); }
+function supuestos_(cos) { return sumar_(cos.filter(function (x) { return x.EsSupuesto === 'Sí'; }), 'Importe'); }
+function tipoCosto_(c, x) { return c.insumos[x.IdInsumo] ? c.insumos[x.IdInsumo].TipoCosto : 'Directo'; }
+function semaforo_(v, ind) {
+  if (v === null || v === undefined || isNaN(v)) return 'Sin datos';
+  if (ind.MetaVerde === '' || ind.MetaVerde === undefined || ind.MetaVerde === null) return 'Sin meta';
+  var mv = Number(ind.MetaVerde), ma = ind.MetaAmarillo === '' || ind.MetaAmarillo === undefined ? mv : Number(ind.MetaAmarillo);
+  if (ind.Sentido === 'Menor es mejor') return v <= mv ? 'Verde' : v <= ma ? 'Amarillo' : 'Rojo';
+  if (ind.Sentido === 'Cerca de cero es mejor') { var a = Math.abs(v); return a <= mv ? 'Verde' : a <= ma ? 'Amarillo' : 'Rojo'; }
+  return v >= mv ? 'Verde' : v >= ma ? 'Amarillo' : 'Rojo';
+}
+function api_indicadores(token, idCampana) {
+  sesion_(token);
+  var c = ctxIndicadores_(idCampana);
+  var defs = [];
+  try { defs = leer_('P_Indicador').filter(activo_); } catch (e) { throw new Error('Falta la tabla de indicadores: recargá la página para que el sistema se actualice.'); }
+  defs.sort(function (a, b) { return (PERSPECTIVAS.indexOf(a.Perspectiva) - PERSPECTIVAS.indexOf(b.Perspectiva)) || (Number(a.Orden) || 99) - (Number(b.Orden) || 99); });
+  var cuenta = { Verde: 0, Amarillo: 0, Rojo: 0, 'Sin datos': 0, 'Sin meta': 0 };
+  var lista = defs.map(function (d) {
+    var r;
+    try { r = CALC_IND[d.IdIndicador] ? CALC_IND[d.IdIndicador](c) : (d.ValorManual !== '' ? { valor: Number(d.ValorManual), detalle: 'Valor cargado a mano por el administrador.' } : { valor: null, detalle: 'Este indicador no tiene cálculo automático: cargá el valor a mano.' }); }
+    catch (e) { r = { valor: null, detalle: 'No se pudo calcular: ' + e.message }; }
+    var v = r.valor === null || r.valor === undefined || isNaN(r.valor) ? null : Math.round(r.valor * 100) / 100;
+    var est = semaforo_(v, d); cuenta[est]++;
+    return { id: d.IdIndicador, perspectiva: d.Perspectiva, objetivo: d.Objetivo, nombre: d.Nombre, formula: d.Formula, interpretacion: d.Interpretacion,
+      unidad: d.Unidad, sentido: d.Sentido, metaVerde: d.MetaVerde, metaAmarillo: d.MetaAmarillo, fuenteMeta: d.FuenteMeta, periodicidad: d.Periodicidad,
+      responsable: d.Responsable, decision: d.Decision, valor: v, estado: est, detalle: r.detalle || '', nota: r.nota || '', automatico: !!CALC_IND[d.IdIndicador] };
+  });
+  return { campana: { id: c.id, nombre: c.camp.Nombre, desde: c.camp.FechaDesde, hasta: c.camp.FechaHasta, actual: c.actual },
+    campanas: c.campanas.map(function (x) { return { id: x.IdCampana, nombre: x.Nombre }; }), indicadores: lista, cuenta: cuenta };
+}
+
+/* =============================================================================================
+ * 12. COTIZACIONES — granos de la Bolsa de Comercio de Rosario (automático, todos los días con el dólar),
+ *     Mercado Agroganadero de Cañuelas (experimental) y links guardados.
+ * ============================================================================================= */
+var URL_BCR = 'https://www.bcr.com.ar/es/mercados/mercado-de-granos/cotizaciones/cotizaciones-locales-0';
+var URL_MAG = 'http://www.mercadoagroganadero.com.ar/dll/inicio.dll';
+function textoPlano_(html) {
+  var ent = { nbsp: ' ', aacute: 'á', eacute: 'é', iacute: 'í', oacute: 'ó', uacute: 'ú', ntilde: 'ñ', Aacute: 'Á', Eacute: 'É', Iacute: 'Í', Oacute: 'Ó', Uacute: 'Ú', Ntilde: 'Ñ', amp: '&', quot: '"', lt: '<', gt: '>', deg: '°' };
+  return String(html).replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ')
+    .replace(/&#(\d+);/g, function (m, n) { return String.fromCharCode(Number(n)); }).replace(/&([a-zA-Z]+);/g, function (m, n) { return ent[n] !== undefined ? ent[n] : m; })
+    .replace(/\s+/g, ' ');
+}
+function numAR_(s) { return Number(String(s).replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.')); }
+/** Lee la tabla "Precios Cámara Arbitral de Cereales de Rosario" (pesos por tonelada) y devuelve la fecha más reciente y sus precios. */
+function parsearBCR_(html) {
+  var t = textoPlano_(html);
+  var i = t.search(/Fecha\s+Negociaci/i); if (i < 0) i = t.search(/C[aá]mara Arbitral/i); if (i < 0) throw new Error('no se encontró la tabla de precios');
+  var resto = t.slice(i);
+  var f = /(\d{2})\/(\d{2})\/(\d{4})/.exec(resto); if (!f) throw new Error('no se encontró la fecha');
+  var fecha = f[3] + '-' + f[2] + '-' + f[1], precios = {};
+  ['Soja', 'Maíz', 'Trigo', 'Girasol', 'Sorgo'].forEach(function (g) {
+    var re = new RegExp(g.replace('í', '[ií]') + '[^$0-9]{0,60}?(\\$\\s*[\\d\\.]+,\\d{2}|S\\/C)', 'i');
+    var m = re.exec(resto);
+    if (m && m[1] !== 'S/C') { var v = numAR_(m[1]); if (v > 1000 && v < 100000000) precios[g] = v; }
+  });
+  if (!Object.keys(precios).length) throw new Error('no se encontraron precios');
+  return { fecha: fecha, precios: precios };
+}
+function guardarCotizacion_(o, email) {
+  var ya = leer_('F_Cotizacion').some(function (x) { return activo_(x) && x.Fecha === o.Fecha && x.Producto === o.Producto && x.Mercado === o.Mercado; });
+  if (ya) return false;
+  insertar_('F_Cotizacion', o, email || 'sistema (cotización automática)');
+  return true;
+}
+/** Trae los precios de granos de la BCR. Se ejecuta todos los días con actualizarDolar(); también a mano desde Cotizaciones. */
+function actualizarGranos_() {
+  try {
+    var r = UrlFetchApp.fetch(URL_BCR, { muteHttpExceptions: true, followRedirects: true });
+    if (r.getResponseCode() !== 200) return 'BCR: la página respondió ' + r.getResponseCode() + '.';
+    var p = parsearBCR_(r.getContentText());
+    var nuevas = [];
+    Object.keys(p.precios).forEach(function (g) {
+      if (guardarCotizacion_({ Fecha: p.fecha, Producto: g, Mercado: 'Bolsa de Comercio de Rosario (Cámara Arbitral, pizarra)', Precio: p.precios[g], Unidad: '$/t',
+        Origen: 'Automático', Link: URL_BCR, Observaciones: 'Precio pizarra (promedio ponderado del mercado físico)' })) nuevas.push(g + ' $' + fmtNum_(p.precios[g], 0));
+    });
+    return nuevas.length ? 'BCR ' + p.fecha + ': ' + nuevas.join(', ') : 'BCR: ya estaban las cotizaciones del ' + p.fecha + '.';
+  } catch (e) { return 'BCR: no se pudo leer (' + e.message + ').'; }
+}
+/** Mercado Agroganadero de Cañuelas: intenta leer el índice INMAG ($/kg vivo). EXPERIMENTAL: si la página cambia, avisa y no carga nada. */
+function actualizarCanuelas_() {
+  try {
+    var r = UrlFetchApp.fetch(URL_MAG, { muteHttpExceptions: true, followRedirects: true });
+    if (r.getResponseCode() !== 200) return 'Cañuelas: la página respondió ' + r.getResponseCode() + '.';
+    var t = textoPlano_(r.getContentText());
+    var m = /INMAG[^0-9]{0,80}([\d\.]+,\d{1,3})/i.exec(t);
+    if (!m) return 'Cañuelas: no se encontró el INMAG en la página (habrá que revisar la fuente).';
+    var v = numAR_(m[1]);
+    if (!(v > 100 && v < 100000)) return 'Cañuelas: el valor leído (' + m[1] + ') no parece un precio por kg; no se guardó.';
+    var fm = /(\d{2})\/(\d{2})\/(\d{4})/.exec(t.slice(Math.max(0, m.index - 300), m.index + 300));
+    var fecha = fm ? fm[3] + '-' + fm[2] + '-' + fm[1] : hoyStr_();
+    var ok = guardarCotizacion_({ Fecha: fecha, Producto: 'Hacienda bovina (INMAG)', Mercado: 'Mercado Agroganadero de Cañuelas', Precio: v, Unidad: '$/kg vivo',
+      Origen: 'Automático', Link: URL_MAG, Observaciones: 'Lectura automática EXPERIMENTAL del índice INMAG: verificar en la página.' });
+    return ok ? 'Cañuelas ' + fecha + ': INMAG $' + fmtNum_(v, 2) + '/kg' : 'Cañuelas: ya estaba el INMAG del ' + fecha + '.';
+  } catch (e) { return 'Cañuelas: no se pudo leer (' + e.message + ').'; }
+}
+function api_cotizaciones(token) {
+  sesion_(token);
+  var L = leer_('F_Cotizacion').filter(activo_).sort(function (a, b) { return a.Fecha < b.Fecha ? 1 : -1; });
+  var ult = {};
+  L.forEach(function (x) { var k = x.Producto + '|' + x.Mercado; if (!ult[k]) ult[k] = { producto: x.Producto, mercado: x.Mercado, unidad: x.Unidad, fecha: x.Fecha, precio: Number(x.Precio), origen: x.Origen, link: x.Link, obs: x.Observaciones, anterior: null };
+    else if (ult[k].anterior === null) ult[k].anterior = { fecha: x.Fecha, precio: Number(x.Precio) }; });
+  var dolar = cotizaciones_().slice(-15).reverse();
+  return { ultimas: Object.keys(ult).map(function (k) { return ult[k]; }), historial: L.slice(0, 120).map(function (x) { return sinOcultos_('F_Cotizacion', x); }), dolar: dolar };
+}
+function api_actualizarCotizaciones(token) {
+  var u = sesion_(token);
+  if (u.Rol !== 'Administrador') throw new Error('Solo el Administrador puede pedir la actualización a mano (igual se actualiza sola todos los días a las 19 h).');
+  return conBloqueo_(function () { return { ok: true, mensaje: [actualizarGranos_(), actualizarCanuelas_()].join(' · ') }; });
+}
+
+/* =============================================================================================
+ * 13. IMPUESTOS — vencimientos con semáforo
+ *     "Según terminación de CUIT": las fechas salen del calendario cargado (F_VencImpuesto) para la terminación del CUIT
+ *     del establecimiento (S_Config). Si falta el año, se ESTIMA con las fechas del año anterior (se marca "Estimado").
+ *     "Fecha fija": todos los meses (o los indicados) el día elegido.
+ * ============================================================================================= */
+function config_(clave) { try { var r = leer_('S_Config').filter(function (x) { return activo_(x) && x.Clave === clave; })[0]; return r ? String(r.Valor || '') : ''; } catch (e) { return ''; } }
+function habil_(f) { var d = aFecha_(f); while ([0, 6].indexOf(d.getDay()) >= 0) d.setDate(d.getDate() + 1); return Utilities.formatDate(d, TZ, 'yyyy-MM-dd'); }
+function mesesDe_(per) { return { 'Mensual': 1, 'Bimestral': 2, 'Trimestral': 3, 'Cuatrimestral': 4, 'Semestral': 6, 'Anual': 12 }[per] || 1; }
+function vencimientos_() {
+  var hoy = hoyStr_(), desde = sumarDias_(hoy, -90), hasta = sumarDias_(hoy, 150);
+  var cuit = config_('CUIT_ESTABLECIMIENTO').replace(/\D/g, ''), term = cuit ? cuit.slice(-1) : '';
+  var imps = leer_('D_Impuesto').filter(activo_), cal = leer_('F_VencImpuesto').filter(activo_), pagos = leer_('F_PagoImpuesto').filter(activo_);
+  var lista = [], avisos = [];
+  imps.forEach(function (imp) {
+    var fechas = [];
+    if (imp.TipoVencimiento === 'Fecha fija') {
+      var meses = String(imp.MesesFijos || '').split(/[^\d]+/).map(Number).filter(function (m) { return m >= 1 && m <= 12; }), paso = mesesDe_(imp.Periodicidad);
+      var d = aFecha_(desde.slice(0, 8) + '01');
+      for (var k = 0; k < 10; k++) {
+        var y = d.getFullYear(), m = d.getMonth() + 1;
+        var toca = meses.length ? meses.indexOf(m) >= 0 : ((m - 1) % paso === 0);
+        if (toca) {
+          var ult = new Date(y, m, 0, 12).getDate(), dia = Math.min(Number(imp.DiaFijo) || 1, ult);
+          fechas.push({ periodo: y + '-' + ('0' + m).slice(-2), fecha: habil_(y + '-' + ('0' + m).slice(-2) + '-' + ('0' + dia).slice(-2)), estado: 'Fecha fija', fuente: 'Día ' + imp.DiaFijo + ' de cada período (si cae fin de semana, pasa al lunes)' });
+        }
+        d.setMonth(d.getMonth() + 1);
+      }
+    } else {
+      if (!term) { avisos.push(imp.Nombre + ': cargá el CUIT del establecimiento en Configuración para calcular los vencimientos.'); return; }
+      var propios = cal.filter(function (v) { return v.IdImpuesto === imp.IdImpuesto && (v.Terminacion === term || v.Terminacion === 'Todas'); });
+      var porPer = {}; propios.forEach(function (v) { porPer[v.Periodo] = v; });
+      propios.forEach(function (v) { fechas.push({ periodo: v.Periodo, fecha: v.FechaVencimiento, estado: v.Estado, fuente: v.Fuente || '' }); });
+      // Estimación: períodos de la ventana que no están cargados, copiando el día del mismo período del año anterior.
+      var d2 = aFecha_(desde.slice(0, 8) + '01');
+      for (var j = 0; j < 9; j++) {
+        var per = Utilities.formatDate(d2, TZ, 'yyyy-MM'), ant = (Number(per.slice(0, 4)) - 1) + per.slice(4);
+        if (!porPer[per] && porPer[ant]) {
+          var fAnt = porPer[ant].FechaVencimiento, fEst = (Number(fAnt.slice(0, 4)) + 1) + fAnt.slice(4);
+          fechas.push({ periodo: per, fecha: habil_(fEst), estado: 'Estimado', fuente: 'Estimado con el vencimiento del ' + ant + ' (' + fAnt + '): confirmar con el calendario oficial' });
+        }
+        d2.setMonth(d2.getMonth() + 1);
+      }
+      if (!propios.length) avisos.push(imp.Nombre + ': falta cargar el calendario de vencimientos (Administración → Calendario de vencimientos de impuestos).');
+    }
+    fechas.forEach(function (f) {
+      if (f.fecha < desde || f.fecha > hasta) return;
+      var pago = pagos.filter(function (p) { return p.IdImpuesto === imp.IdImpuesto && p.Periodo === f.periodo; })[0];
+      var dias = Math.round((aFecha_(f.fecha) - aFecha_(hoy)) / 86400000);
+      var aviso = imp.AvisarDiasAntes === '' || imp.AvisarDiasAntes === undefined ? 7 : Number(imp.AvisarDiasAntes);
+      lista.push({ IdImpuesto: imp.IdImpuesto, impuesto: imp.Nombre, organismo: imp.Organismo, periodo: f.periodo, fecha: f.fecha, dias: dias, origen: f.estado, fuente: f.fuente,
+        link: imp.LinkConsulta || '', pagado: pago ? { fecha: pago.Fecha, importe: Number(pago.Importe) } : null,
+        estado: pago ? 'Pagado' : dias < 0 ? 'Vencido' : dias <= aviso ? 'Por vencer' : 'Al día' });
+    });
+  });
+  lista.sort(function (a, b) { return a.fecha < b.fecha ? -1 : 1; });
+  return { lista: lista, avisos: avisos, cuit: config_('CUIT_ESTABLECIMIENTO'), terminacion: term };
+}
+function api_impuestos(token) { sesion_(token); return vencimientos_(); }
+/** Copia el calendario de un año al siguiente como "Estimado" (para revisar y confirmar con el calendario oficial). */
+function api_generarCalendario(token, anio) {
+  var u = sesion_(token);
+  if (u.Rol !== 'Administrador') throw new Error('Solo el Administrador puede generar el calendario.');
+  anio = Number(anio); if (!(anio > 2000)) throw new Error('Año inválido.');
+  return conBloqueo_(function () {
+    var cal = leer_('F_VencImpuesto').filter(activo_), n = 0;
+    cal.filter(function (v) { return Number(v.Periodo.slice(0, 4)) === anio - 1; }).forEach(function (v) {
+      var per = anio + v.Periodo.slice(4);
+      if (cal.some(function (x) { return x.IdImpuesto === v.IdImpuesto && x.Periodo === per && x.Terminacion === v.Terminacion; })) return;
+      insertar_('F_VencImpuesto', { IdImpuesto: v.IdImpuesto, Periodo: per, Terminacion: v.Terminacion, FechaVencimiento: habil_((Number(v.FechaVencimiento.slice(0, 4)) + 1) + v.FechaVencimiento.slice(4)),
+        Estado: 'Estimado', Fuente: 'Copiado de ' + v.Periodo + ' (' + v.FechaVencimiento + '): confirmar con el calendario oficial' }, u.Email);
+      n++;
+    });
+    return { ok: true, mensaje: n ? 'Se generaron ' + n + ' vencimientos estimados para ' + anio + '. Revisalos y marcalos como "Confirmado" cuando salga el calendario oficial.' : 'No había vencimientos de ' + (anio - 1) + ' para copiar (o ya estaban).' };
+  });
 }

@@ -127,6 +127,54 @@
   footer { max-width:1600px; margin:10px auto 24px; padding:0 clamp(16px,3vw,40px); display:flex; align-items:center; gap:12px; color:var(--muted); font-size:13px; }
   footer img { height:44px; border-radius:4px; }
 
+  /* ---------- Menú lateral (v3) ---------- */
+  #app { display:block; }
+  #side { position:fixed; top:0; left:0; bottom:0; width:248px; background:var(--brand-d); color:#fff; overflow-y:auto; z-index:40; transform:translateX(-100%); transition:transform .2s ease; display:flex; flex-direction:column; }
+  #side.abierto { transform:none; box-shadow:0 0 40px rgba(0,0,0,.35); }
+  #sideBg { position:fixed; inset:0; background:rgba(10,20,15,.45); z-index:39; }
+  #side .marcaS { padding:16px 16px 10px; font-weight:700; line-height:1.2; border-bottom:1px solid rgba(255,255,255,.12); }
+  #side .marcaS small { display:block; font-weight:400; opacity:.75; font-size:12px; margin-top:2px; }
+  #side .grupoS { font-size:11px; letter-spacing:.08em; text-transform:uppercase; opacity:.6; padding:14px 16px 4px; }
+  #side button.itS { display:flex; gap:10px; align-items:center; width:100%; text-align:left; background:none; border:0; color:#fff; padding:9px 16px; font-size:15px; cursor:pointer; border-left:3px solid transparent; }
+  #side button.itS:hover { background:rgba(255,255,255,.08); }
+  #side button.itS.on { background:rgba(255,255,255,.14); border-left-color:#f0c36d; font-weight:650; }
+  #side button.itS .ic { width:22px; text-align:center; }
+  #side .pieS { margin-top:auto; padding:10px 0 14px; border-top:1px solid rgba(255,255,255,.12); }
+  .hamb { display:inline-grid; place-items:center; width:40px; height:40px; border-radius:10px; border:1px solid rgba(255,255,255,.35); background:rgba(255,255,255,.12); color:#fff; font-size:20px; cursor:pointer; flex:0 0 auto; }
+  @media (min-width:1000px) {
+    #side { transform:none; }
+    #sideBg { display:none !important; }
+    #cont { margin-left:248px; }
+    .hamb { display:none; }
+  }
+
+  /* ---------- Indicadores (semáforo) ---------- */
+  .sem { display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 4px; }
+  .sem span { padding:6px 12px; border-radius:999px; font-weight:650; font-size:14px; }
+  .e-Verde { background:var(--ok-bg); color:var(--ok); } .e-Amarillo { background:#fff4d6; color:#8a5a00; } .e-Rojo { background:var(--bad-bg); color:var(--bad); }
+  .e-Sin { background:#eef0ee; color:#555; }
+  .inds { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px; }
+  .ind { border:1px solid var(--line); border-left:6px solid #c9c9c0; border-radius:12px; padding:14px; background:#fff; }
+  .ind.Verde { border-left-color:#1d7a46; } .ind.Amarillo { border-left-color:#e0a106; } .ind.Rojo { border-left-color:#b42318; }
+  .ind .nom { font-weight:700; font-size:16px; line-height:1.25; }
+  .ind .obj { font-size:13px; color:var(--muted); margin:2px 0 8px; }
+  .ind .val { font-size:28px; font-weight:750; line-height:1.1; font-variant-numeric:tabular-nums; }
+  .ind .meta { font-size:13px; color:var(--muted); margin-top:4px; }
+  .ind .det { font-size:13px; color:#3d4740; margin-top:8px; }
+  .barra { height:8px; border-radius:6px; background:#eceae2; margin-top:8px; overflow:hidden; }
+  .barra i { display:block; height:100%; border-radius:6px; }
+  .que { margin-top:10px; background:var(--bad-bg); color:#6b1d16; border-radius:10px; padding:10px 12px; font-size:14px; }
+  .que.am { background:#fff4d6; color:#5c3d00; }
+  .persp h2 { display:flex; align-items:center; gap:8px; }
+  .cadena { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+  .cadena .pa { border:1px solid var(--line); border-radius:12px; padding:10px 12px; background:#fff; font-weight:650; }
+  .cadena .fl { color:var(--muted); font-size:20px; }
+  .punto { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align:middle; }
+  .cot { border:1px solid var(--line); border-radius:12px; padding:14px; background:#fff; }
+  .cot .p { font-size:24px; font-weight:750; font-variant-numeric:tabular-nums; }
+  .sube { color:var(--bad); } .baja { color:var(--ok); }
+  a.btn2, a.btn { display:inline-flex; align-items:center; text-decoration:none; }
+
   /* Login */
   #login { max-width:440px; margin:6vh auto; padding:0 12px; }
   #login .card { padding:0; overflow:hidden; }
@@ -136,7 +184,7 @@
   #login .cuerpo { padding:18px; }
 
   @media (max-width:640px) {
-    main { padding:12px; } .f { min-width:100%; } .hero.big h1 { font-size:24px; } .hero .chipU .nm { display:none; }
+    main { padding:12px; } .f { min-width:100%; } .inds { grid-template-columns:1fr; } .hero.big h1 { font-size:24px; } .hero .chipU .nm { display:none; }
     .resumen { grid-template-columns:repeat(2,1fr); gap:8px; } .res { padding:10px; } .res .v { font-size:22px; } .res .l { font-size:12px; line-height:1.3; } .tiles { grid-template-columns:1fr; } .tile { min-height:76px; }
   }
 </style>
@@ -156,10 +204,14 @@
 </div>
 
 <div id="app" class="hide">
+  <aside id="side"></aside>
+  <div id="sideBg" class="hide" onclick="menuLateral(false)"></div>
+  <div id="cont">
   <header class="hero" id="hero">
     <img class="foto" id="heroImg" alt="">
     <div class="in">
       <div class="top">
+        <button class="hamb" onclick="menuLateral()" aria-label="Abrir el menú">☰</button>
         <div class="marca"><b>Pozo del Carril</b> · La Aguada · Ovinos Dorper</div>
         <button class="chipU" id="chipU" onclick="menuUsuario()"><span class="av" id="avU"></span><span class="nm" id="nmU"></span></button>
       </div>
@@ -173,6 +225,7 @@
   </header>
   <main id="main"></main>
   <footer><img id="logoPie" alt="UNRC"><div>Sistema de Gestión Ovina · Grupo 6 · Taller de Práctica II · FCE – UNRC<br><span id="verPie"></span></div></footer>
+  </div>
 </div>
 
 <script>
@@ -213,6 +266,10 @@ function pillSel(b) { Array.prototype.forEach.call(b.parentNode.children, functi
 function pillVal(id) { var b = $(id) && $(id).querySelector('.pill.on'); return b ? b.getAttribute('data-v') : ''; }
 function campo(lab, html, ayuda, req) { return '<div class="f"><label>' + lab + (req ? ' <span class="req">*</span>' : '') + '</label>' + html + (ayuda ? '<div class="ay">' + ayuda + '</div>' : '') + '</div>'; }
 function nombreCat(id) { return etiqueta('D_Categoria', id); }
+var TODAS = '*';
+function nomEtapa(id) { return id === TODAS ? 'Todas las etapas' : etiqueta('D_Subunidad', id); }
+/** Etapa que se propone por defecto en los formularios: la del responsable (si tiene una sola). */
+function miSubDef() { return S.u.Rol === 'Responsable de subunidad' && S.u.IdSubunidad !== TODAS ? S.u.IdSubunidad : ''; }
 function activos() { return L('D_Animal').filter(function (a) { return a.estado === 'Activo'; }); }
 function listo(titulo, texto, otraVista, otraTxt) {
   $('main').innerHTML = volverBtn() + '<div class="card listo"><div class="ch">✓</div><h2>' + esc(titulo) + '</h2><p>' + esc(texto) + '</p><div class="row" style="justify-content:center">' +
@@ -239,9 +296,9 @@ function salir(silencioso) {
 }
 function iniciar() {
   return call('api_inicio', S.token).then(function (r) {
-    S.u = r.usuario; S.esq = r.esquema; S.listas = r.listas; S.resumen = r.resumen; S.rubros = r.rubros;
+    S.u = r.usuario; S.esq = r.esquema; S.listas = r.listas; S.resumen = r.resumen; S.rubros = r.rubros; S.aviso = r.migracion || '';
     var ini = String(S.u.Nombre || '?').trim().split(/\s+/).map(function (p) { return p[0]; }).slice(0, 2).join('').toUpperCase();
-    $('avU').textContent = ini; $('nmU').innerHTML = esc(S.u.Nombre) + '<small>' + esc(S.u.Rol) + (S.u.IdSubunidad ? ' · ' + esc(etiqueta('D_Subunidad', S.u.IdSubunidad)) : '') + '</small>';
+    $('avU').textContent = ini; $('nmU').innerHTML = esc(S.u.Nombre) + '<small>' + esc(S.u.Rol) + (S.u.IdSubunidad ? ' · ' + esc(nomEtapa(S.u.IdSubunidad)) : '') + '</small>';
     $('heroFecha').textContent = fechaLarga(); $('verPie').textContent = 'Versión ' + r.version;
     $('login').classList.add('hide'); $('app').classList.remove('hide');
     ir(S.vista);
@@ -249,13 +306,37 @@ function iniciar() {
 }
 function refrescar() { return call('api_inicio', S.token).then(function (r) { S.listas = r.listas; S.esq = r.esquema; S.resumen = r.resumen; }); }
 function menuUsuario() { $('menuU').classList.toggle('hide'); }
+/* ---------- Menú lateral: en la compu queda fijo a la izquierda; en el celular se abre con ☰ ---------- */
+function menuLateral(abrir) {
+  var s = $('side'), si = abrir === undefined ? !s.classList.contains('abierto') : abrir;
+  s.classList.toggle('abierto', si); $('sideBg').classList.toggle('hide', !si);
+}
+function armarMenu() {
+  var it = function (v, ic, txt) { return '<button class="itS' + (S.vista === v ? ' on' : '') + '" onclick="menuLateral(false);ir(\'' + v + '\')"><span class="ic">' + ic + '</span>' + txt + '</button>'; };
+  var carga = [];
+  if (puede('F_Sanidad', 'crear')) carga.push(it('sanidad', '💉', 'Vacunas y tratamientos'));
+  if (puede('D_Animal', 'crear')) carga.push(it('nacimiento', '🐑', 'Nació un cordero'));
+  if (puede('F_Mortandad', 'crear')) carga.push(it('muerte', '🕊️', 'Murió un animal'));
+  if (puede('F_Compras', 'crear')) carga.push(it('compra', '🧾', 'Cargar una compra'));
+  if (puede('F_Ingresos', 'crear')) carga.push(it('venta', '💰', 'Vender animales'));
+  if (puede('F_Tesoreria', 'crear')) carga.push(it('cuentas', '💵', 'Cobros y pagos'));
+  var ver = [it('animales', '🐏', 'Los animales'), it('terceros', '🤝', 'Proveedores y clientes'), it('tablero', '📊', 'Resultados'),
+    it('indicadores', '🚦', 'Indicadores'), it('cotizaciones', '📈', 'Cotizaciones'), it('impuestos', '🗓️', 'Impuestos'), it('unidades', '🗺️', 'Unidades del campo')];
+  if (!puede('F_Tesoreria', 'crear')) ver.splice(2, 0, it('cuentas', '📋', 'Cobros y pagos'));
+  $('side').innerHTML = '<div class="marcaS">Pozo del Carril<small>Sistema de Gestión Ovina</small></div>' + it('inicio', '🏠', 'Inicio') +
+    (carga.length ? '<div class="grupoS">Cargar</div>' + carga.join('') : '') + '<div class="grupoS">Consultar</div>' + ver.join('') +
+    (S.u.Rol === 'Administrador' ? '<div class="grupoS">Administración</div>' + it('tablas', '⚙️', 'Tablas y usuarios') : '') +
+    '<div class="pieS">' + it('clave', '🔑', 'Cambiar mi clave') + '<button class="itS" onclick="salir()"><span class="ic">↩</span>Salir</button></div>';
+}
 document.addEventListener('click', function (e) { if (!e.target.closest('#chipU') && !e.target.closest('#menuU')) $('menuU').classList.add('hide'); });
 
 var VISTAS = {
   inicio:    ['', vInicio], sanidad: ['Vacunas y tratamientos', vSanidad], nacimiento: ['Nació un cordero', vNacimiento],
   muerte:    ['Murió un animal', vMuerte], compra: ['Cargar una compra', vCompra], compras: ['Cobros y pagos', vCuentas], cuentas: ['Cobros y pagos', vCuentas],
   venta:     ['Vender animales', vVenta], terceros: ['Proveedores y clientes', vTerceros], animales: ['Los animales', vAnimales],
-  tablero:   ['Resultados', vTablero], tablas: ['Administración', vTablas], clave: ['Cambiar mi clave', vClave]
+  tablero:   ['Resultados', vTablero], tablas: ['Administración', vTablas], clave: ['Cambiar mi clave', vClave],
+  indicadores: ['Indicadores (Cuadro de Mando Integral)', vIndicadores], cotizaciones: ['Cotizaciones', vCotizaciones],
+  impuestos: ['Impuestos y vencimientos', vImpuestos], unidades: ['Unidades de Pozo del Carril', vUnidades]
 };
 function ir(v) {
   if (!VISTAS[v]) v = 'inicio';
@@ -264,6 +345,7 @@ function ir(v) {
   var h = new Date().getHours(), saludo = h < 13 ? 'Buen día' : h < 20 ? 'Buenas tardes' : 'Buenas noches';
   $('heroTit').textContent = v === 'inicio' ? saludo + ', ' + String(S.u.Nombre).split(' ')[0] : VISTAS[v][0];
   window.scrollTo(0, 0);
+  armarMenu();
   VISTAS[v][1]();
 }
 
@@ -275,7 +357,9 @@ function vInicio() {
     '<div class="res' + (r.enCarencia ? ' aviso' : '') + '" onclick="ir(\'animales\')"><div class="v">' + num(r.enCarencia, 0) + '</div><div class="l">en carencia (no vender)</div></div>' +
     '<div class="res' + (r.comprasVencidas ? ' alerta' : r.comprasPendientes ? ' aviso' : '') + '" onclick="ir(\'cuentas\')"><div class="v">' + num(r.comprasPendientes, 0) + '</div><div class="l">facturas por pagar' + (r.comprasVencidas ? ' · ' + r.comprasVencidas + ' vencida' + (r.comprasVencidas > 1 ? 's' : '') : '') + (r.porCobrar ? ' · ' + r.porCobrar + ' venta' + (r.porCobrar > 1 ? 's' : '') + ' por cobrar' : '') + '</div></div>' +
     '<div class="res dolar"' + (S.u.Rol === 'Administrador' ? ' onclick="dolarAhora(this)" title="Tocá para buscar la cotización de hoy"' : '') + '><div class="v">' + (r.dolar ? pesos0(r.dolar.Vendedor) : '—') + '</div><div class="l">' + (r.dolar ? 'dólar oficial BNA (vendedor) · ' + fecha(r.dolar.Fecha) : 'dólar BNA: todavía sin cotización') + '</div></div>' +
+    (r.impuestos ? '<div class="res' + (r.impuestos.vencidos ? ' alerta' : r.impuestos.porVencer ? ' aviso' : '') + '" onclick="ir(\'impuestos\')"><div class="v">' + num(r.impuestos.vencidos + r.impuestos.porVencer, 0) + '</div><div class="l">impuestos ' + (r.impuestos.vencidos ? 'vencidos o por vencer' : 'por vencer esta semana') + '</div></div>' : '') +
     '</div>';
+  if (S.aviso) { h = '<div class="msg ' + (/^ERROR/.test(S.aviso) ? 'err' : 'ok') + '">' + esc(S.aviso) + '</div>' + h; S.aviso = ''; }
   var t = function (v, ic, tit, sub, carga) { return '<button class="tile' + (carga ? ' carga' : '') + '" onclick="ir(\'' + v + '\')"><span class="ic">' + ic + '</span><span><b>' + tit + '</b><span>' + sub + '</span></span></button>'; };
   var carga = [];
   if (puede('F_Sanidad', 'crear')) carga.push(t('sanidad', '💉', 'Vacuné o traté animales', 'Vacunas, antiparasitarios, remedios', 1));
@@ -285,7 +369,9 @@ function vInicio() {
   if (puede('F_Ingresos', 'crear')) carga.push(t('venta', '💰', 'Vendí animales', 'Factura de venta y salida del rodeo', 1));
   if (puede('F_Tesoreria', 'crear')) carga.push(t('cuentas', '💵', 'Cobré o pagué algo', 'Recibos, lo que se debe y lo que nos deben', 1));
   var ver = [t('animales', '🐏', 'Ver los animales', 'Rodeo, fichas y tratamientos'), 
-    t('terceros', '🤝', 'Proveedores y clientes', puede('D_Tercero', 'crear') ? 'Ver y agregar' : 'Ver la lista'), t('tablero', '📊', 'Resultados', 'Ingresos, costos y margen')];
+    t('terceros', '🤝', 'Proveedores y clientes', puede('D_Tercero', 'crear') ? 'Ver y agregar' : 'Ver la lista'), t('tablero', '📊', 'Resultados', 'Ingresos, costos y margen'),
+    t('indicadores', '🚦', 'Indicadores', 'Semáforo para tomar decisiones'), t('cotizaciones', '📈', 'Cotizaciones', 'Granos, hacienda y dólar'),
+    t('impuestos', '🗓️', 'Impuestos', 'Vencimientos y pagos'), t('unidades', '🗺️', 'Unidades del campo', 'Bovinos, porcinos, maíz, soja')];
   if (!puede('F_Tesoreria', 'crear')) ver.splice(1, 0, t('cuentas', '📋', 'Cobros y pagos', 'Facturas, lo que se debe y lo que nos deben'));
   if (S.u.Rol === 'Administrador') ver.push(t('tablas', '⚙️', 'Administración', 'Tablas, parámetros y usuarios'));
   if (carga.length) h += '<div class="seccion">¿Qué hiciste hoy?</div><div class="tiles t3">' + carga.join('') + '</div>';
@@ -351,7 +437,7 @@ function vSanidad() {
     '<div class="row">' + campo('Días de carencia', '<input id="sCar" type="number" min="0" step="1" inputmode="numeric" value="0">', 'Está en el prospecto del producto. Si no tiene, dejá 0.', 1) +
     campo('Fecha', '<input id="sFecha" type="date" value="' + hoy() + '" max="' + hoy() + '">', '', 1) +
     campo('Quién lo aplicó', '<input id="sResp" value="' + esc(S.u.Nombre) + '">', '', 1) + '</div>' +
-    '<div class="paso" style="margin-top:8px"><i>2</i>¿A qué animales?</div><div id="sAnim">' + selectorAnimales(S.u.Rol === 'Responsable de subunidad' ? S.u.IdSubunidad : '') + '</div>' +
+    '<div class="paso" style="margin-top:8px"><i>2</i>¿A qué animales?</div><div id="sAnim">' + selectorAnimales(miSubDef()) + '</div>' +
     campo('Observaciones', '<textarea id="sObs" placeholder="Opcional"></textarea>') +
     '<div class="contador"><div class="row" style="align-items:center"><div style="flex:1"><b id="selN">Todavía no elegiste animales</b><div class="muted" id="sTot"></div></div><button class="btn" id="sBtn" onclick="sGuardar()">Guardar</button></div></div></div>' +
     '<div class="card"><h2>Últimos tratamientos</h2><div id="sHist" class="muted">Cargando…</div></div>';
@@ -453,7 +539,7 @@ function vCompra() {
   C = { lineas: [] };
   var prov = L('D_Tercero').filter(function (t) { return t.tipo !== 'Cliente'; });
   var tc = L('D_TipoComprobante').filter(function (t) { return t.circuito === 'Compra'; });
-  var subDef = S.u.Rol === 'Responsable de subunidad' ? S.u.IdSubunidad : '';
+  var subDef = miSubDef();
   var h = volverBtn() + '<div class="card"><h2>Cargar una compra</h2><p class="sub">Copiá los datos de la factura del proveedor. Cada renglón es un producto o servicio y a qué etapa corresponde.</p><div id="cMsg"></div>' +
     '<div class="paso"><i>1</i>La factura</div>' +
     '<div class="row">' + campo('Proveedor', '<select id="cProv" onchange="cProvCambio()">' + opciones(prov) + (puede('D_Tercero', 'crear') ? '<option value="__nuevo">＋ Agregar un proveedor nuevo…</option>' : '') + '</select>', '', 1) +
@@ -702,7 +788,7 @@ function anFicha(car) {
 var V = { lineas: [] };
 function vVenta() {
   V.lineas = [];
-  var subDef = S.u.Rol === 'Responsable de subunidad' ? S.u.IdSubunidad : '';
+  var subDef = miSubDef();
   var cli = L('D_Tercero').filter(function (t) { return t.tipo !== 'Proveedor'; });
   var an = activos().sort(function (a, b) { return a.id - b.id; });
   var h = volverBtn() + '<div class="card"><h2>Vender animales</h2><p class="sub">Una venta = una factura con uno o más animales. Al guardar, los animales salen del rodeo. Los que están en carencia no se pueden vender.</p><div id="vMsg"></div>' +
@@ -831,6 +917,7 @@ function campoHTML(tabla, c, valor, bloqueado) {
   if (c.fk) {
     var ops = L(c.fk);
     if (c.fk === 'D_Animal') ops = ops.filter(function (x) { return x.estado === 'Activo' || String(x.id) === String(v); });
+    if (tabla === 'S_Usuarios' && c.n === 'IdSubunidad') ops = [{ id: TODAS, label: 'Todas las etapas' }].concat(ops);
     input = '<select id="' + id + '"' + dis + '>' + opciones(ops, v) + '</select>';
   } else if (c.t === 'enum') {
     input = '<select id="' + id + '"' + dis + '><option value="">— elegir —</option>' + c.opts.map(function (o) { return '<option' + (o === v ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') + '</select>';
@@ -849,7 +936,7 @@ function formulario(tabla, registro, alGuardar) {
   cols.forEach(function (c) {
     var bloq = (edit && e.pkManual && c.n === e.pk) || (edit && e.editablesDespues && e.editablesDespues.indexOf(c.n) < 0);
     var val = registro ? registro[c.n] : '';
-    if (!edit && c.n === 'IdSubunidad' && e.hecho && S.u.Rol === 'Responsable de subunidad') { val = S.u.IdSubunidad; bloq = true; }
+    if (!edit && c.n === 'IdSubunidad' && e.hecho && S.u.Rol === 'Responsable de subunidad' && S.u.IdSubunidad !== TODAS) { val = S.u.IdSubunidad; bloq = true; }
     if (!edit && c.t === 'date' && c.n === 'Fecha') val = hoy();
     h += campoHTML(tabla, c, val, bloq);
   });
@@ -892,6 +979,7 @@ function tTitulo(n) { var col = S.esq[S.tabla].cols.filter(function (k) { return
 function tValor(c, x) {
   var col = S.esq[S.tabla].cols.filter(function (k) { return k.n === c; })[0];
   var v = x[c];
+  if (S.tabla === 'S_Usuarios' && c === 'IdSubunidad' && v === TODAS) return 'Todas las etapas';
   if (col && col.fk && v !== '' && col.fk.indexOf('D_') === 0) return etiqueta(col.fk, v) + (String(etiqueta(col.fk, v)) !== String(v) ? ' (' + v + ')' : '');
   return v;
 }
@@ -937,6 +1025,203 @@ function tExportar() {
   var lineas = [cols.join(';')].concat((S.filas || []).map(function (x) { return cols.map(function (c) { var v = String(x[c] === undefined ? '' : x[c]); return /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(';'); }));
   var blob = new Blob(['﻿' + lineas.join('\n')], { type: 'text/csv;charset=utf-8' });
   var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = S.tabla + '.csv'; document.body.appendChild(a); a.click(); a.remove();
+}
+
+/* ---------- INDICADORES (Cuadro de Mando Integral con semáforo) ---------- */
+var PERSP = {
+  'Financiera': ['💰', '¿Qué resultados económicos logramos?'],
+  'Clientes': ['🤝', '¿Qué valor entregamos a los compradores?'],
+  'Procesos internos': ['⚙️', '¿Qué tenemos que hacer especialmente bien?'],
+  'Aprendizaje y desarrollo': ['📚', '¿Qué capacidades necesitamos fortalecer?']
+};
+function fmtInd(v, u) {
+  if (v === null || v === undefined) return '—';
+  if (/^\$/.test(u || '')) return pesos0(Math.round(v)) + '<small style="font-size:14px;color:var(--muted)"> ' + esc(String(u).replace(/^\$\s*/, '')) + '</small>';
+  if (u === '%') return num(v, 1) + ' %';
+  if (u === 'días') return num(v, 0) + ' días';
+  return num(v, 2) + ' ' + esc(u || '');
+}
+function fmtMeta(x, u) { return u === '%' ? num(x, 1) + ' %' : /^\$/.test(u || '') ? pesos0(x) : num(x, 2) + ' ' + esc(u || ''); }
+function metaTxt(i) {
+  if (i.metaVerde === '' || i.metaVerde === null || i.metaVerde === undefined) return 'Sin meta definida' + (S.u.Rol === 'Administrador' ? ' (cargala en "Cambiar metas")' : '');
+  var a = i.metaAmarillo === '' ? i.metaVerde : i.metaAmarillo;
+  if (i.sentido === 'Menor es mejor') return '🟢 hasta ' + fmtMeta(i.metaVerde, i.unidad) + ' · 🟡 hasta ' + fmtMeta(a, i.unidad) + ' · 🔴 más';
+  if (i.sentido === 'Cerca de cero es mejor') return '🟢 entre −' + fmtMeta(i.metaVerde, i.unidad) + ' y +' + fmtMeta(i.metaVerde, i.unidad) + ' · 🟡 hasta ±' + fmtMeta(a, i.unidad) + ' · 🔴 más';
+  return '🟢 desde ' + fmtMeta(i.metaVerde, i.unidad) + ' · 🟡 desde ' + fmtMeta(a, i.unidad) + ' · 🔴 menos';
+}
+function colorEst(e) { return { Verde: '#1d7a46', Amarillo: '#e0a106', Rojo: '#b42318' }[e] || '#b9bbb5'; }
+function vIndicadores(idCamp) {
+  var m = $('main'); m.innerHTML = volverBtn() + '<div class="card">Calculando los indicadores…</div>';
+  call('api_indicadores', S.token, idCamp || S.campInd || '').then(function (r) {
+    S.campInd = r.campana.id;
+    var c = r.cuenta, I = r.indicadores;
+    var h = volverBtn() + '<div class="card"><div class="row" style="align-items:flex-end"><div class="f" style="max-width:300px;margin:0"><label>Campaña</label><select onchange="vIndicadores(this.value)">' +
+      r.campanas.map(function (x) { return '<option value="' + x.id + '"' + (x.id === r.campana.id ? ' selected' : '') + '>' + esc(x.nombre) + '</option>'; }).join('') + '</select></div>' +
+      '<div class="muted" style="flex:1;padding-bottom:12px">Del ' + fecha(r.campana.desde) + ' al ' + fecha(r.campana.hasta) + (r.campana.actual ? ' · <b>campaña en curso</b>' : '') + '</div>' +
+      (S.u.Rol === 'Administrador' ? '<button class="btn2" style="margin-bottom:12px" onclick="S.tabla=\'P_Indicador\';ir(\'tablas\')">✏️ Cambiar metas y textos</button>' : '') + '</div>' +
+      '<div class="sem"><span class="e-Verde">🟢 ' + c.Verde + ' en meta</span><span class="e-Amarillo">🟡 ' + c.Amarillo + ' en alerta</span><span class="e-Rojo">🔴 ' + c.Rojo + ' a corregir</span>' +
+      (c['Sin datos'] + c['Sin meta'] ? '<span class="e-Sin">⚪ ' + (c['Sin datos'] + c['Sin meta']) + ' sin datos o sin meta</span>' : '') + '</div>' +
+      '<p class="muted" style="margin:6px 0 0">Semáforo como en la diapositiva 11: 🟢 meta alcanzada (mantener) · 🟡 alerta (analizar causas y corregir) · 🔴 desviación importante (priorizar acciones). Los valores se calculan solos con los datos cargados.</p></div>';
+    var mal = I.filter(function (i) { return i.estado === 'Rojo' || i.estado === 'Amarillo'; }).sort(function (a, b) { return (a.estado === 'Rojo' ? 0 : 1) - (b.estado === 'Rojo' ? 0 : 1); });
+    if (mal.length) {
+      h += '<div class="card"><h2>⚠️ Lo que hay que mirar primero</h2><p class="sub">Indicadores fuera de la meta y la decisión que propone el grupo para cada uno.</p><div class="lista">' + mal.map(function (i) {
+        return '<div class="item"><div class="t"><b><span class="punto" style="background:' + colorEst(i.estado) + '"></span>' + esc(i.nombre) + ': ' + fmtInd(i.valor, i.unidad) + '</b><div>' + esc(i.decision || '') + '</div></div><div class="der"><span class="tag ' + (i.estado === 'Rojo' ? 'r' : '') + '">' + esc(i.perspectiva) + '</span></div></div>';
+      }).join('') + '</div></div>';
+    }
+    Object.keys(PERSP).forEach(function (p) {
+      var L = I.filter(function (i) { return i.perspectiva === p; }); if (!L.length) return;
+      h += '<div class="card persp"><h2>' + PERSP[p][0] + ' ' + esc(p) + '</h2><p class="sub">' + PERSP[p][1] + '</p><div class="inds">' + L.map(indCard).join('') + '</div></div>';
+    });
+    var peor = function (p) { var L = I.filter(function (i) { return i.perspectiva === p; }); return L.some(function (i) { return i.estado === 'Rojo'; }) ? 'Rojo' : L.some(function (i) { return i.estado === 'Amarillo'; }) ? 'Amarillo' : L.some(function (i) { return i.estado === 'Verde'; }) ? 'Verde' : 'Sin'; };
+    h += '<div class="card"><h2>🔗 Cadena causa-efecto</h2><p class="sub">Las cuatro perspectivas se conectan (diapositiva 20): lo que se mejora abajo se ve después en los resultados.</p><div class="cadena">' +
+      ['Aprendizaje y desarrollo', 'Procesos internos', 'Clientes', 'Financiera'].map(function (p) { return '<span class="pa"><span class="punto" style="background:' + colorEst(peor(p)) + '"></span>' + esc(p) + '</span>'; }).join('<span class="fl">→</span>') +
+      '</div><p class="muted" style="margin-top:10px">Registrar bien la sanidad y los datos del rodeo → más corderos logrados y menos muertes → un lote más grande para negociar mejor precio → los ingresos cubren más del costo total.</p></div>';
+    m.innerHTML = h;
+  }).catch(function (e) { m.innerHTML = volverBtn(); msg(m.appendChild(document.createElement('div')), 'err', e.message); });
+}
+function indCard(i) {
+  var est = i.estado === 'Sin datos' || i.estado === 'Sin meta' ? 'Sin' : i.estado;
+  var barra = '';
+  if (i.valor !== null && i.unidad === '%' && i.sentido === 'Mayor es mejor') barra = '<div class="barra"><i style="width:' + Math.max(2, Math.min(100, i.valor)) + '%;background:' + colorEst(i.estado) + '"></i></div>';
+  return '<div class="ind ' + i.estado + '"><div class="row" style="gap:6px;align-items:flex-start;flex-wrap:nowrap"><div style="flex:1"><div class="nom">' + esc(i.nombre) + '</div><div class="obj">' + esc(i.objetivo || '') + '</div></div>' +
+    '<span class="tag e-' + est + '" style="margin:0">' + esc(i.estado === 'Sin datos' ? 'Sin datos' : i.estado === 'Sin meta' ? 'Sin meta' : i.estado) + '</span></div>' +
+    '<div class="val" style="color:' + (est === 'Sin' ? 'var(--muted)' : colorEst(i.estado)) + '">' + fmtInd(i.valor, i.unidad) + '</div>' + barra +
+    '<div class="meta">' + metaTxt(i) + '</div>' + (i.detalle ? '<div class="det">' + esc(i.detalle) + '</div>' : '') + (i.nota ? '<div class="det" style="color:var(--warn)">⚠ ' + esc(i.nota) + '</div>' : '') +
+    ((i.estado === 'Rojo' || i.estado === 'Amarillo') && i.decision ? '<div class="que' + (i.estado === 'Amarillo' ? ' am' : '') + '"><b>Qué hacer:</b> ' + esc(i.decision) + '</div>' : '') +
+    '<details><summary>¿Cómo se lee?</summary><div class="det"><b>Fórmula:</b> ' + esc(i.formula || '') + '</div><div class="det">' + esc(i.interpretacion || '') + '</div>' +
+    '<div class="det"><b>Se mide:</b> ' + esc(i.periodicidad || '—') + ' · <b>Responsable:</b> ' + esc(i.responsable || '—') + '</div><div class="det"><b>Meta:</b> ' + esc(i.fuenteMeta || '—') + (i.automatico ? '' : ' · valor cargado a mano') + '</div>' +
+    (i.estado === 'Verde' && i.decision ? '<div class="det"><b>Si empeora:</b> ' + esc(i.decision) + '</div>' : '') + '</details></div>';
+}
+
+/* ---------- COTIZACIONES ---------- */
+function vCotizaciones() {
+  var m = $('main'); m.innerHTML = volverBtn() + '<div class="card">Buscando las cotizaciones…</div>';
+  call('api_cotizaciones', S.token).then(function (r) {
+    var adm = S.u.Rol === 'Administrador';
+    var h = volverBtn() + '<div class="card"><div class="row" style="align-items:center"><div style="flex:1"><h2>Cotizaciones</h2><p class="sub" style="margin:0">Los granos de la Bolsa de Rosario se actualizan solos todos los días a las 19 h, junto con el dólar.</p></div>' +
+      (adm ? '<button class="btn2" id="cotBtn" onclick="cotAhora()">🔄 Buscar ahora</button>' : '') + '</div><div id="cotMsg" style="margin-top:10px"></div></div>';
+    h += '<div class="card"><h2>Últimos precios</h2>' + (r.ultimas.length ? '<div class="tiles">' + r.ultimas.sort(function (a, b) { return a.producto.localeCompare(b.producto); }).map(function (x) {
+      var vari = x.anterior && x.anterior.precio ? (x.precio - x.anterior.precio) / x.anterior.precio * 100 : null;
+      return '<div class="cot"><div class="row" style="align-items:center;gap:6px"><b style="flex:1;font-size:17px">' + esc(x.producto) + '</b><span class="tag ' + (x.origen === 'Automático' ? 'v' : 'g') + '">' + esc((x.origen || '').toLowerCase()) + '</span></div>' +
+        '<div class="p">' + pesos0(x.precio) + ' <small style="font-size:14px;color:var(--muted)">' + esc(String(x.unidad).replace(/^\$/, '')) + '</small></div>' +
+        '<div class="muted">' + fecha(x.fecha) + (vari !== null ? ' · <span class="' + (vari > 0 ? 'sube' : vari < 0 ? 'baja' : '') + '">' + (vari > 0 ? '▲ ' : vari < 0 ? '▼ ' : '') + num(Math.abs(vari), 1) + ' %</span> vs ' + fecha(x.anterior.fecha) : '') + '</div>' +
+        '<div class="muted">' + esc(x.mercado) + (x.link ? ' · <a href="' + esc(x.link) + '" target="_blank" rel="noopener">ver fuente ↗</a>' : '') + '</div>' + (x.obs && /EXPERIMENTAL/.test(x.obs) ? '<div class="muted" style="color:var(--warn)">⚠ ' + esc(x.obs) + '</div>' : '') + '</div>';
+    }).join('') + '</div>' : '<p class="muted">Todavía no hay cotizaciones cargadas.</p>') + '</div>';
+    if (r.dolar && r.dolar.length) h += '<div class="card"><h2>Dólar oficial Banco Nación</h2><div class="scroll" style="max-height:300px"><table><tr><th>Fecha</th><th class="n">Comprador</th><th class="n">Vendedor</th></tr>' +
+      r.dolar.map(function (d) { return '<tr><td>' + fecha(d.Fecha) + '</td><td class="n">' + pesos(d.Comprador) + '</td><td class="n">' + pesos(d.Vendedor) + '</td></tr>'; }).join('') + '</table></div></div>';
+    var links = L('D_LinkCotizacion');
+    h += '<div class="card"><div class="row" style="align-items:center"><div style="flex:1"><h2>Páginas de cotizaciones</h2><p class="sub" style="margin:0">Links guardados para consultar precios. Se abren en otra pestaña.</p></div>' +
+      (puede('D_LinkCotizacion', 'crear') ? '<button class="btn2" onclick="cotLinkForm()">＋ Agregar link</button>' : '') + '</div><div id="cotLinkF"></div><div class="lista" style="margin-top:12px">' +
+      (links.length ? links.map(function (l) { return '<div class="item"><div class="t"><b>' + esc(l.label) + '</b><div>' + esc(l.producto || '') + (l.desc ? ' · ' + esc(l.desc) : '') + '</div></div><div class="der"><a class="btn2" href="' + esc(l.url) + '" target="_blank" rel="noopener">Abrir ↗</a></div></div>'; }).join('') : '<p class="muted">No hay links guardados.</p>') + '</div></div>';
+    if (puede('F_Cotizacion', 'crear')) h += '<div class="card"><h2>Cargar una cotización a mano</h2><p class="sub">Para precios que no se leen solos (por ejemplo, un precio de un consignatario). Queda con fecha y fuente.</p><div id="cmMsg"></div>' +
+      '<div class="row">' + campo('Producto', '<input id="cmProd" placeholder="ej. Cordero liviano">', '', 1) + campo('Mercado o fuente', '<input id="cmMerc" placeholder="ej. Consignataria X">', '', 1) + '</div>' +
+      '<div class="row">' + campo('Precio ($)', '<input id="cmPre" type="number" step="any" inputmode="decimal">', '', 1) + campo('Unidad', '<select id="cmUni"><option>$/kg vivo</option><option>$/t</option><option>$/cabeza</option><option>$/kg</option></select>', '', 1) +
+      campo('Fecha', '<input id="cmFec" type="date" value="' + hoy() + '" max="' + hoy() + '">', '', 1) + '</div>' + campo('Link (opcional)', '<input id="cmLink" placeholder="https://…">') +
+      '<button class="btn" id="cmBtn" onclick="cotManual()">Guardar cotización</button></div>';
+    h += '<div class="card"><details><summary>Historial (' + r.historial.length + ' registros)</summary><div class="scroll"><table><tr><th>Fecha</th><th>Producto</th><th>Mercado</th><th class="n">Precio</th><th>Unidad</th><th>Origen</th></tr>' +
+      r.historial.map(function (x) { return '<tr><td>' + fecha(x.Fecha) + '</td><td>' + esc(x.Producto) + '</td><td>' + esc(x.Mercado) + '</td><td class="n">' + pesos0(x.Precio) + '</td><td>' + esc(x.Unidad) + '</td><td>' + esc(x.Origen) + '</td></tr>'; }).join('') + '</table></div></details></div>';
+    m.innerHTML = h;
+  }).catch(function (e) { m.innerHTML = volverBtn(); msg(m.appendChild(document.createElement('div')), 'err', e.message); });
+}
+function cotAhora() {
+  var b = $('cotBtn'); b.disabled = true; b.textContent = 'Buscando…';
+  call('api_actualizarCotizaciones', S.token).then(function (r) { vCotizaciones(); setTimeout(function () { msg($('cotMsg'), 'ok', r.mensaje); }, 900); })
+    .catch(function (e) { msg($('cotMsg'), 'err', e.message); b.disabled = false; b.textContent = '🔄 Buscar ahora'; });
+}
+function cotLinkForm() {
+  $('cotLinkF').innerHTML = '<div class="mini" style="margin-top:12px"><div id="clMsg"></div><div class="row">' + campo('Nombre', '<input id="clNom" placeholder="ej. Rosgan">', '', 1) + campo('Link', '<input id="clUrl" placeholder="https://…">', '', 1) + '</div>' +
+    campo('Qué cotiza', '<input id="clProd" placeholder="ej. Hacienda bovina">') + '<div class="row"><button class="btn" onclick="cotLinkGuardar()">Guardar link</button><button class="btn2" onclick="$(\'cotLinkF\').innerHTML=\'\'">Cancelar</button></div></div>';
+}
+function cotLinkGuardar() {
+  call('api_crear', S.token, 'D_LinkCotizacion', { Nombre: $('clNom').value, URL: $('clUrl').value, Producto: $('clProd').value, Descripcion: '' })
+    .then(function () { return refrescar().then(vCotizaciones); }).catch(function (e) { msg($('clMsg'), 'err', e.message); });
+}
+function cotManual() {
+  var o = { Producto: $('cmProd').value, Mercado: $('cmMerc').value, Precio: $('cmPre').value, Unidad: $('cmUni').value, Fecha: $('cmFec').value, Link: $('cmLink').value, Origen: 'Manual', Observaciones: 'Cargada a mano por ' + S.u.Nombre };
+  var b = $('cmBtn'); ocupado(b, true);
+  call('api_crear', S.token, 'F_Cotizacion', o).then(function () { vCotizaciones(); }).catch(function (e) { msg($('cmMsg'), 'err', e.message); ocupado(b, false); });
+}
+
+/* ---------- IMPUESTOS ---------- */
+var IMP = null;
+function vImpuestos() {
+  var m = $('main'); m.innerHTML = volverBtn() + '<div class="card">Calculando vencimientos…</div>';
+  call('api_impuestos', S.token).then(function (r) {
+    IMP = r;
+    var adm = S.u.Rol === 'Administrador', hh = hoy();
+    var h = volverBtn() + '<div class="card"><h2>Impuestos y vencimientos</h2><p class="sub">El sistema calcula los próximos vencimientos y avisa con color: 🔴 vencido sin pagar · 🟡 vence en pocos días · 🟢 al día · ⚪ pagado.</p>' +
+      '<div class="row" style="align-items:center"><div style="flex:1">CUIT del establecimiento: <b>' + (r.cuit ? esc(r.cuit) + ' (terminación ' + esc(r.terminacion) + ')' : 'sin cargar') + '</b></div>' + (adm ? '<button class="btn2" onclick="impCuit()">' + (r.cuit ? 'Cambiar CUIT' : 'Cargar CUIT') + '</button>' : '') + '</div><div id="impCuitF"></div>' +
+      (r.avisos.length ? '<div class="msg warn" style="margin-top:12px">' + r.avisos.map(esc).join('<br>') + '</div>' : '') + '<div id="impMsg"></div></div>';
+    var est = { 'Vencido': 'r', 'Por vencer': '', 'Al día': 'v', 'Pagado': 'g' };
+    h += '<div class="card"><h2>Próximos vencimientos</h2>' + (r.lista.length ? '<div class="lista">' + r.lista.map(function (v, i) {
+      var cuando = v.estado === 'Pagado' ? 'Pagado el ' + fecha(v.pagado.fecha) + ' (' + pesos(v.pagado.importe) + ')' : v.dias < 0 ? 'Venció hace ' + (-v.dias) + ' día' + (v.dias === -1 ? '' : 's') : v.dias === 0 ? 'Vence HOY' : 'Faltan ' + v.dias + ' día' + (v.dias === 1 ? '' : 's');
+      return '<div class="item"><div class="t"><b>' + esc(v.impuesto) + ' · período ' + esc(v.periodo) + '</b><div>Vence el ' + fecha(v.fecha) + ' · ' + esc(v.organismo) + (v.origen === 'Estimado' ? ' · <span class="tag">fecha estimada</span>' : '') + '</div><div>' + esc(v.fuente) + '</div></div>' +
+        '<div class="der"><span class="tag ' + est[v.estado] + '">' + esc(v.estado) + '</span><div class="muted" style="margin-top:4px">' + cuando + '</div>' +
+        (v.estado !== 'Pagado' && puede('F_PagoImpuesto', 'crear') ? '<button class="btn2" style="margin-top:6px" onclick="impPagoForm(' + i + ')">Registrar pago</button>' : '') +
+        (v.link ? '<div><a href="' + esc(v.link) + '" target="_blank" rel="noopener" class="muted">consultar ↗</a></div>' : '') + '</div><div id="impPago' + i + '" style="flex-basis:100%"></div></div>';
+    }).join('') + '</div>' : '<p class="muted">No hay vencimientos para mostrar todavía.</p>') + '</div>';
+    var imps = L('D_Impuesto');
+    h += '<div class="card"><div class="row" style="align-items:center"><div style="flex:1"><h2>Impuestos que paga el campo</h2><p class="sub" style="margin:0">Cuando el grupo confirme qué impuestos paga Pozo del Carril, se agregan acá y el sistema calcula solo las fechas.</p></div>' +
+      (puede('D_Impuesto', 'crear') ? '<button class="btn" onclick="impNuevo()">＋ Agregar impuesto</button>' : '') + '</div><div id="impForm"></div><div class="lista" style="margin-top:12px">' +
+      (imps.length ? imps.map(function (x) { return '<div class="item"><div class="t"><b>' + esc(x.label) + '</b><div>' + esc(x.organismo) + '</div></div></div>'; }).join('') : '<p class="muted">Todavía no hay impuestos cargados.</p>') + '</div>' +
+      (adm ? '<h3>Calendario de vencimientos</h3><p class="muted">Los impuestos que vencen "según terminación de CUIT" toman las fechas del calendario. Cada año: tocá "Generar el año que viene" (copia las fechas del año anterior como <b>estimadas</b>) y después confirmalas con el calendario oficial de ARCA o Rentas en Administración.</p>' +
+        '<div class="row"><button class="btn2" onclick="S.tabla=\'F_VencImpuesto\';ir(\'tablas\')">📅 Ver y cargar fechas</button><button class="btn2" onclick="impGenerar(' + (Number(hh.slice(0, 4)) + 1) + ')">Generar ' + (Number(hh.slice(0, 4)) + 1) + ' (estimado)</button></div>' : '') + '</div>';
+    m.innerHTML = h;
+  }).catch(function (e) { m.innerHTML = volverBtn(); msg(m.appendChild(document.createElement('div')), 'err', e.message); });
+}
+function impCuit() {
+  $('impCuitF').innerHTML = '<div class="mini" style="margin-top:12px"><div id="icMsg"></div>' + campo('CUIT del establecimiento (UNRC)', '<input id="icCuit" placeholder="30-12345678-9" inputmode="numeric" value="' + esc(IMP.cuit || '') + '">', 'Con la última cifra se calculan los vencimientos.', 1) +
+    '<div class="row"><button class="btn" onclick="impCuitGuardar()">Guardar</button><button class="btn2" onclick="$(\'impCuitF\').innerHTML=\'\'">Cancelar</button></div></div>';
+}
+function impCuitGuardar() {
+  call('api_editar', S.token, 'S_Config', 'CUIT_ESTABLECIMIENTO', { Clave: 'CUIT_ESTABLECIMIENTO', Valor: $('icCuit').value, Descripcion: 'CUIT del establecimiento (UNRC). Con la última cifra se calculan los vencimientos de impuestos "según terminación de CUIT".' })
+    .then(function () { vImpuestos(); }).catch(function (e) { msg($('icMsg'), 'err', e.message); });
+}
+function impPagoForm(i) {
+  var v = IMP.lista[i];
+  $('impPago' + i).innerHTML = '<div class="mini" style="margin-top:8px"><div id="ipMsg' + i + '"></div><div class="row">' + campo('Fecha de pago', '<input id="ipF' + i + '" type="date" value="' + hoy() + '" max="' + hoy() + '">', '', 1) +
+    campo('Importe ($)', '<input id="ipI' + i + '" type="number" step="any" inputmode="decimal">', '', 1) + campo('Forma de pago', '<select id="ipFP' + i + '">' + opciones(L('D_FormaPago')) + '</select>') + '</div>' +
+    campo('Comprobante (VEP, ticket)', '<input id="ipC' + i + '">') + '<div class="row"><button class="btn" onclick="impPagoGuardar(' + i + ')">Guardar pago</button><button class="btn2" onclick="$(\'impPago' + i + '\').innerHTML=\'\'">Cancelar</button></div></div>';
+}
+function impPagoGuardar(i) {
+  var v = IMP.lista[i];
+  call('api_crear', S.token, 'F_PagoImpuesto', { Fecha: $('ipF' + i).value, IdImpuesto: v.IdImpuesto, Periodo: v.periodo, Importe: $('ipI' + i).value, IdFormaPago: $('ipFP' + i).value, Comprobante: $('ipC' + i).value, Observaciones: '' })
+    .then(function () { return refrescar().then(vImpuestos); }).catch(function (e) { msg($('ipMsg' + i), 'err', e.message); });
+}
+function impNuevo() {
+  var f = formulario('D_Impuesto', null, function () { setTimeout(vImpuestos, 900); });
+  $('impForm').innerHTML = '<div class="mini" style="margin-top:12px">' + f.html + ' <button class="btn2" onclick="$(\'impForm\').innerHTML=\'\'">Cancelar</button></div>'; f.enlazar();
+}
+function impGenerar(anio) {
+  call('api_generarCalendario', S.token, anio).then(function (r) { msg($('impMsg'), 'ok', r.mensaje); }).catch(function (e) { msg($('impMsg'), 'err', e.message); });
+}
+
+/* ---------- UNIDADES DE POZO DEL CARRIL ---------- */
+function vUnidades() {
+  var U = L('D_UnidadNeg'), adm = puede('D_UnidadNeg', 'editar');
+  var h = volverBtn() + '<div class="card"><div class="row" style="align-items:center"><div style="flex:1"><h2>Unidades de Pozo del Carril</h2><p class="sub" style="margin:0">El establecimiento tiene varias unidades de negocio. Cuando otro grupo publique el sistema de su unidad, se carga el link y se abre desde acá.</p></div>' +
+    (puede('D_UnidadNeg', 'crear') ? '<button class="btn2" onclick="uniForm()">＋ Agregar unidad</button>' : '') + '</div><div id="uniF"></div></div><div class="tiles">' +
+    U.map(function (u) {
+      var ic = { 'Ovino': '🐑', 'Bovino': '🐄', 'Porcino': '🐖', 'Maíz': '🌽', 'Soja': '🌱' }[u.label] || '🏠', aca = u.id === 'N1';
+      return '<div class="cot"><div class="row" style="align-items:center;gap:10px"><span style="font-size:30px">' + ic + '</span><div style="flex:1"><b style="font-size:18px">' + esc(u.label) + '</b><div class="muted">' + esc(u.tipo || '') + (u.desc ? ' · ' + esc(u.desc) : '') + '</div></div>' + (aca ? '<span class="tag v">Estás acá</span>' : '') + '</div>' +
+        '<div class="row" style="margin-top:12px">' + (u.link && !aca ? '<a class="btn" href="' + esc(u.link) + '" target="_blank" rel="noopener">Abrir su sistema ↗</a>' : !aca ? '<span class="muted">Todavía no tiene link cargado.</span>' : '') +
+        (adm ? '<button class="btn2" onclick="uniLink(\'' + esc(u.id) + '\')">' + (u.link ? 'Cambiar link' : 'Cargar link') + '</button>' : '') + '</div><div id="uniL' + esc(u.id) + '"></div></div>';
+    }).join('') + '</div>';
+  $('main').innerHTML = h;
+}
+function uniLink(id) {
+  var u = item('D_UnidadNeg', id);
+  $('uniL' + id).innerHTML = '<div class="mini" style="margin-top:10px"><div id="ulMsg' + id + '"></div>' + campo('Link de su sistema', '<input id="ulUrl' + id + '" placeholder="https://script.google.com/…" value="' + esc(u.link || '') + '">') +
+    '<div class="row"><button class="btn" onclick="uniLinkGuardar(\'' + id + '\')">Guardar</button><button class="btn2" onclick="$(\'uniL' + id + '\').innerHTML=\'\'">Cancelar</button></div></div>';
+}
+function uniLinkGuardar(id) {
+  var u = item('D_UnidadNeg', id);
+  call('api_editar', S.token, 'D_UnidadNeg', id, { Nombre: u.label, TipoActividad: u.tipo, Descripcion: u.desc, LinkApp: $('ulUrl' + id).value })
+    .then(function () { return refrescar().then(vUnidades); }).catch(function (e) { msg($('ulMsg' + id), 'err', e.message); });
+}
+function uniForm() {
+  var f = formulario('D_UnidadNeg', null, function () { setTimeout(vUnidades, 900); });
+  $('uniF').innerHTML = '<div class="mini" style="margin-top:12px">' + f.html + ' <button class="btn2" onclick="$(\'uniF\').innerHTML=\'\'">Cancelar</button></div>'; f.enlazar();
 }
 
 /* ---------- MI CLAVE ---------- */
