@@ -22,7 +22,7 @@
  */
 
 var TZ = 'America/Argentina/Buenos_Aires';
-var VERSION = '3.1';
+var VERSION = '3.2';
 var AUDIT_COLS = ['CreadoEl', 'CreadoPor', 'ModificadoEl', 'ModificadoPor', 'Activo'];
 var ROLES = ['Administrador', 'Responsable de subunidad', 'Operador de carga', 'Consulta / auditoría'];
 var SESION_SEGUNDOS = 6 * 60 * 60;
@@ -258,12 +258,17 @@ function colDe(tabla, nombre) {
 /* =============================================================================================
  * 2. ACCESO A LA PLANILLA
  * ============================================================================================= */
+var SS_ = null, HOJAS_ = {};
 function ss_() {
+  if (SS_) return SS_;
   var id = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
-  return id ? SpreadsheetApp.openById(id) : SpreadsheetApp.getActiveSpreadsheet();
+  SS_ = id ? SpreadsheetApp.openById(id) : SpreadsheetApp.getActiveSpreadsheet();
+  return SS_;
 }
 function hoja_(tabla) {
+  if (HOJAS_[tabla]) return HOJAS_[tabla];
   var sh = ss_().getSheetByName(tabla);
+  if (sh) HOJAS_[tabla] = sh;
   if (!sh) throw new Error('No existe la hoja ' + tabla + '. Ejecutá "Sistema Ovino > Actualizar" en la planilla.');
   return sh;
 }
@@ -297,8 +302,51 @@ function headersHoja_(tabla) {
 /** Lee una tabla completa como lista de objetos. Las fechas salen como 'yyyy-mm-dd'. */
 function leer_(tabla) {
   if (CACHE_[tabla]) return copiar_(CACHE_[tabla]);
-  CACHE_[tabla] = leerHoja_(tabla);
+  var g = genTabla_(tabla), r = memLeer_(tabla, g);
+  if (!r) { r = leerHoja_(tabla); memGuardar_(tabla, g, r); }
+  CACHE_[tabla] = r;
   return copiar_(CACHE_[tabla]);
+}
+
+/* ---------- v3.2 · Memoria entre pedidos (CacheService) ----------
+ * Leer una hoja de Google Sheets tarda; guardamos cada tabla ya leída (comprimida) hasta 15 minutos.
+ * Cada tabla tiene una "generación": toda escritura la cambia, y lo que quedó guardado con otra generación
+ * se descarta. Así nunca se muestra un dato viejo después de guardar algo. */
+var MEM_SEG = 900, MEM_NO = { S_Auditoria: 1 }, MEM_TROZO = 90000;
+function genTabla_(tabla) {
+  var c = CacheService.getScriptCache(), g = c.get('G_' + tabla);
+  if (!g) { g = Utilities.getUuid().slice(0, 8); c.put('G_' + tabla, g, 21600); }
+  return g;
+}
+function invalidar_(tabla) {
+  delete CACHE_[tabla];
+  try { CacheService.getScriptCache().put('G_' + tabla, Utilities.getUuid().slice(0, 8), 21600); } catch (e) {}
+}
+function invalidarTodo_() { CACHE_ = {}; HEAD_ = {}; Object.keys(SCHEMA).forEach(invalidar_); }
+function memLeer_(tabla, g) {
+  if (MEM_NO[tabla]) return null;
+  try {
+    var c = CacheService.getScriptCache(), meta = c.get('T_' + tabla);
+    if (!meta) return null;
+    var p = meta.split('|'); if (p[0] !== g) return null;
+    var n = Number(p[1]), keys = [];
+    for (var i = 0; i < n; i++) keys.push('T_' + tabla + '_' + g + '_' + i);
+    var got = c.getAll(keys), b64 = '';
+    for (var j = 0; j < n; j++) { if (got[keys[j]] === undefined || got[keys[j]] === null) return null; b64 += got[keys[j]]; }
+    var txt = Utilities.ungzip(Utilities.newBlob(Utilities.base64Decode(b64), 'application/x-gzip')).getDataAsString();
+    return JSON.parse(txt);
+  } catch (e) { return null; }
+}
+function memGuardar_(tabla, g, filas) {
+  if (MEM_NO[tabla]) return;
+  try {
+    var b64 = Utilities.base64Encode(Utilities.gzip(Utilities.newBlob(JSON.stringify(filas), 'application/json')).getBytes());
+    var c = CacheService.getScriptCache(), trozos = {}, n = 0;
+    for (var i = 0; i < b64.length; i += MEM_TROZO) trozos['T_' + tabla + '_' + g + '_' + (n++)] = b64.slice(i, i + MEM_TROZO);
+    if (n > 40) return; // tabla demasiado grande: se lee siempre de la hoja
+    c.putAll(trozos, MEM_SEG);
+    c.put('T_' + tabla, g + '|' + n, MEM_SEG);
+  } catch (e) {}
 }
 function leerHoja_(tabla) {
   var sh = hoja_(tabla);
@@ -397,7 +445,7 @@ function auditar_(email, accion, tabla, id, antes, despues) {
   var idA = 'AUD-' + ('000000' + n).slice(-6);
   var corta = function (o) { if (!o) return ''; var s = JSON.stringify(o); return s.length > 40000 ? s.slice(0, 40000) + '…' : s; };
   sh.appendRow([idA, new Date(), email, accion, tabla, String(id), corta(antes), corta(despues)]);
-  delete CACHE_['S_Auditoria'];
+  invalidar_('S_Auditoria');
 }
 function nuevoId_(tabla, filas, prefijo) {
   var s = SCHEMA[tabla] || {};
@@ -566,7 +614,7 @@ function insertar_(tabla, o, email) {
   if (!s.pkManual) o[s.pk] = nuevoId_(tabla, leer_(tabla));
   if (!s.sinAuditoria) { o.CreadoEl = ahora; o.CreadoPor = email; o.ModificadoEl = ''; o.ModificadoPor = ''; o.Activo = 'Sí'; }
   hoja_(tabla).appendRow(aFila_(tabla, o));
-  delete CACHE_[tabla];
+  invalidar_(tabla);
   if (!s.sinAuditoria) auditar_(email, 'Alta', tabla, o[s.pk], null, sinOcultos_(tabla, o));
   return o[s.pk];
 }
@@ -574,7 +622,7 @@ function reescribir_(tabla, fila, o) {
   var sh = hoja_(tabla);
   var h = headersHoja_(tabla);
   sh.getRange(fila, 1, 1, h.length).setValues([aFila_(tabla, o)]);
-  delete CACHE_[tabla];
+  invalidar_(tabla);
 }
 function buscar_(tabla, id) {
   var pk = SCHEMA[tabla].pk;
@@ -650,13 +698,23 @@ function api_reingreso(code) {
   if (!u || !activo_(u)) throw new Error('Sesión vencida. Volvé a entrar.');
   return nuevaSesion_(email);
 }
+/** Mantiene vivo el código de reingreso de esta pestaña (o crea uno nuevo si no hay o es de otro usuario). */
+function codigoVigente_(code, email) {
+  var c = CacheService.getScriptCache(), k = String(code || '').replace(/[^0-9a-f]/gi, '');
+  if (k && c.get('r_' + k) === email) { c.put('r_' + k, email, SESION_SEGUNDOS); return k; }
+  k = Utilities.getUuid().replace(/-/g, ''); c.put('r_' + k, email, SESION_SEGUNDOS); return k;
+}
 /** El navegador sí guarda la sesión: el código de la dirección ya no hace falta y se invalida. */
 function api_olvidarCodigo(code) { CacheService.getScriptCache().remove('r_' + String(code || '').replace(/[^0-9a-f]/gi, '')); return true; }
 function api_logout(token, code) { var c = CacheService.getScriptCache(); c.remove('s_' + token); if (code) c.remove('r_' + String(code).replace(/[^0-9a-f]/gi, '')); return true; }
 
 /** Todo lo que la pantalla necesita para armarse: usuario, esquema, listas desplegables y resumen del día. */
-function api_inicio(token) {
-  var u = sesion_(token);
+function api_inicio(token, code) {
+  // v3.2: si el token no sirve (el navegador no lo guardó o se perdió), se retoma con el código de la dirección.
+  var ses = null, u;
+  try { u = sesion_(token); }
+  catch (e) { if (!code) throw e; ses = api_reingreso(code); token = ses.token; u = sesion_(token); }
+  if (!ses) ses = { token: token, code: codigoVigente_(code, u.Email) };
   var migracion = asegurarVersion_();
   var esquema = {};
   Object.keys(SCHEMA).forEach(function (t) {
@@ -668,7 +726,7 @@ function api_inicio(token) {
       puede: { leer: puede_(u, t, 'leer'), crear: puede_(u, t, 'crear'), editar: puede_(u, t, 'editar'), baja: puede_(u, t, 'baja') }
     };
   });
-  return { usuario: publico_(u), esquema: esquema, listas: listas_(), resumen: resumen_(), rubros: Object.keys(RUBROS), version: VERSION, migracion: migracion };
+  return { usuario: publico_(u), esquema: esquema, listas: listas_(), resumen: resumen_(), rubros: Object.keys(RUBROS), version: VERSION, migracion: migracion, sesion: ses };
 }
 function enCarencia_() {
   var hoy = hoyStr_(), out = {};
