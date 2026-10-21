@@ -22,7 +22,7 @@
  */
 
 var TZ = 'America/Argentina/Buenos_Aires';
-var VERSION = '3.0';
+var VERSION = '3.1';
 var AUDIT_COLS = ['CreadoEl', 'CreadoPor', 'ModificadoEl', 'ModificadoPor', 'Activo'];
 var ROLES = ['Administrador', 'Responsable de subunidad', 'Operador de carga', 'Consulta / auditoría'];
 var SESION_SEGUNDOS = 6 * 60 * 60;
@@ -165,7 +165,7 @@ var SCHEMA = {
 
   // ---------- HECHOS ----------
   F_Ingresos: { grupo: 'Hechos', titulo: 'Ingresos (ventas)', pk: 'IdIngreso', prefijo: 'ING', label: 'IdIngreso', hecho: true,
-    soloFormulario: true, editablesDespues: ['Comprobante', 'EstadoCobro', 'Fuente'],
+    soloFormulario: true, editablesDespues: ['EstadoCobro', 'Fuente'] /* el número de factura lo pone el sistema: no se edita */,
     cols: [{ n: 'IdIngreso', l: 'Id' }, { n: 'Fecha', t: 'date', req: true, l: 'Fecha' }, { n: 'IdCampana', fk: 'D_Campana', calc: true, l: 'Campaña' },
       { n: 'Comprobante', req: true, l: 'Comprobante' }, { n: 'IdTercero', req: true, fk: 'D_Tercero', l: 'Cliente' }, { n: 'IdProducto', req: true, fk: 'D_Producto', l: 'Producto' },
       { n: 'IdSubunidad', req: true, fk: 'D_Subunidad', l: 'Etapa' }, { n: 'Caravana', req: true, fk: 'D_Animal', l: 'Caravana' },
@@ -479,6 +479,10 @@ function validar_(tabla, o, u, idActual) {
   });
 
   // Reglas propias de la cátedra y del negocio
+  if (tabla === 'F_Ingresos' && o.Comprobante !== undefined && o.Comprobante !== '') {
+    if (!RE_FACTURA.test(String(o.Comprobante))) throw new Error('El número de factura tiene que tener el formato FAV 0003-000005859 (prefijo, espacio, 4 cifras, guion, 9 cifras).');
+    if (otros.some(function (x) { return x.Comprobante === o.Comprobante && x.IdTercero !== o.IdTercero; })) throw new Error('La factura ' + o.Comprobante + ' ya está usada en una venta a otro cliente.');
+  }
   if (tabla === 'F_EstandarRinde' && otros.some(function (x) { return x.IdCampana === o.IdCampana && x.IdSubunidad === o.IdSubunidad; })) {
     throw new Error('Ya hay un rinde estándar para esa campaña y etapa. La cátedra exige UNA sola referencia: editá la existente.');
   }
@@ -623,12 +627,32 @@ function api_login(email, clave) {
   if (!u || !activo_(u) || !u.ClaveHash || hash_(u.Sal, String(clave)) !== u.ClaveHash) {
     throw new Error('Email o clave incorrectos.');
   }
-  var token = Utilities.getUuid();
-  CacheService.getScriptCache().put('s_' + token, String(u.Email).toLowerCase(), SESION_SEGUNDOS);
+  var ses = nuevaSesion_(String(u.Email).toLowerCase());
   conBloqueo_(function () { auditar_(String(u.Email).toLowerCase(), 'Ingreso', 'S_Usuarios', u.Email, null, null); });
-  return { token: token, usuario: publico_({ Email: String(u.Email).toLowerCase(), Nombre: u.Nombre, Rol: u.Rol, IdSubunidad: u.IdSubunidad }) };
+  return { token: ses.token, code: ses.code, usuario: publico_({ Email: String(u.Email).toLowerCase(), Nombre: u.Nombre, Rol: u.Rol, IdSubunidad: u.IdSubunidad }) };
 }
-function api_logout(token) { CacheService.getScriptCache().remove('s_' + token); return true; }
+/**
+ * v3.1 — Sesión que sobrevive a F5. Además del token (que el navegador guarda), se entrega un código de reingreso
+ * de un solo uso. Solo se usa si el navegador no guardó el token: se canjea por un token y un código nuevos.
+ */
+function nuevaSesion_(email) {
+  var c = CacheService.getScriptCache(), token = Utilities.getUuid(), code = Utilities.getUuid().replace(/-/g, '');
+  c.put('s_' + token, email, SESION_SEGUNDOS);
+  c.put('r_' + code, email, SESION_SEGUNDOS);
+  return { token: token, code: code };
+}
+function api_reingreso(code) {
+  var c = CacheService.getScriptCache(), k = 'r_' + String(code || '').replace(/[^0-9a-f]/gi, '');
+  var email = c.get(k);
+  if (!email) throw new Error('Sesión vencida. Volvé a entrar.');
+  c.remove(k); // un solo uso
+  var u = usuarioPorEmail_(email);
+  if (!u || !activo_(u)) throw new Error('Sesión vencida. Volvé a entrar.');
+  return nuevaSesion_(email);
+}
+/** El navegador sí guarda la sesión: el código de la dirección ya no hace falta y se invalida. */
+function api_olvidarCodigo(code) { CacheService.getScriptCache().remove('r_' + String(code || '').replace(/[^0-9a-f]/gi, '')); return true; }
+function api_logout(token, code) { var c = CacheService.getScriptCache(); c.remove('s_' + token); if (code) c.remove('r_' + String(code).replace(/[^0-9a-f]/gi, '')); return true; }
 
 /** Todo lo que la pantalla necesita para armarse: usuario, esquema, listas desplegables y resumen del día. */
 function api_inicio(token) {
@@ -798,12 +822,25 @@ function api_baja(token, tabla, id, activar) {
   });
 }
 
+/* ---------- Numeración automática de facturas de venta (v3.1) ---------- */
+var RE_FACTURA = /^[A-Z]{2,4} \d{4}-\d{9}$/;
+function proximaFactura_() {
+  var pre = (config_('FACTURA_PREFIJO') || 'FAV').trim().toUpperCase(), pv = ('0000' + (config_('FACTURA_PUNTO_VENTA') || '0003').trim()).slice(-4);
+  var re = new RegExp('^' + pre + ' ' + pv + '-(\\d{9})$'), max = 0;
+  leer_('F_Ingresos').forEach(function (x) { var m = re.exec(String(x.Comprobante).trim()); if (m) max = Math.max(max, Number(m[1])); }); // también las anuladas: un número usado no se reutiliza
+  var forzado = Number(config_('FACTURA_PROXIMO_NUMERO')) || 0;
+  var n = Math.max(max + 1, forzado);
+  return pre + ' ' + pv + '-' + ('000000000' + n).slice(-9);
+}
+function api_proximaFactura(token) { var u = sesion_(token); exigir_(u, 'F_Ingresos', 'crear'); return proximaFactura_(); }
+
 /** Venta: un comprobante con uno o varios animales. Valida TODO antes de escribir. */
 function api_registrarVenta(token, v) {
   var u = sesion_(token);
   exigir_(u, 'F_Ingresos', 'crear');
   return conBloqueo_(function () {
     if (!v.lineas || !v.lineas.length) throw new Error('Agregá al menos un animal a la venta.');
+    v.Comprobante = proximaFactura_(); // el número lo pone el sistema (dentro del bloqueo: nunca se repite)
     var vistos = {};
     var animales = leer_('D_Animal');
     var san = leer_('F_Sanidad').filter(activo_);
@@ -837,7 +874,7 @@ function api_registrarVenta(token, v) {
       validar_('F_Tesoreria', mv, u); calcular_('F_Tesoreria', mv); insertar_('F_Tesoreria', mv, u.Email);
     }
     asegurarCotizacion_(filas[0].o.Fecha);
-    return { ok: true, ids: ids, totales: tot, mensaje: 'Venta registrada: ' + ids.length + (ids.length === 1 ? ' animal, ' : ' animales, ') + tot.kg + ' kg.' };
+    return { ok: true, ids: ids, comprobante: v.Comprobante, totales: tot, mensaje: 'Venta registrada: ' + ids.length + (ids.length === 1 ? ' animal, ' : ' animales, ') + tot.kg + ' kg.' };
   });
 }
 

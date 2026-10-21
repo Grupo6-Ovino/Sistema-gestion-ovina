@@ -26,8 +26,10 @@ function asegurarVersion_() {
   try {
     return conBloqueo_(function () {
       if (p.getProperty('VERSION_DATOS') === VERSION) return null;
+      var antes = p.getProperty('VERSION_DATOS');
       var log = migrarV3_();
       p.setProperty('VERSION_DATOS', VERSION);
+      if (antes === '3.0') return 'Sistema actualizado a la versión ' + VERSION + ': pantalla renovada, la sesión ya no se cierra con F5 ni con la flecha de atrás, y el número de factura de venta sale solo. Se anularon las 2 ventas de prueba. El detalle quedó en Administración → Auditoría.';
       return 'Sistema actualizado a la versión ' + VERSION + ': menú lateral, indicadores, cotizaciones, impuestos, unidades del campo y los datos nuevos del dueño (rodeo de 47 ovejas, 1 carnero y 37 corderos; maíz). El detalle de cada cambio quedó en Administración → Auditoría.';
     });
   } catch (e) {
@@ -287,6 +289,30 @@ function migrarV3_() {
   paso('granos', function () { try { return actualizarGranos_(); } catch (e) { return 'BCR: ' + e.message; } });
 
   auditar_(QUIEN, 'Actualización a v' + VERSION, '(estructura y datos)', '', null, { pasos: log });
+  // ---------- v3.1 ----------
+  // 3.1.a Numeración automática de facturas de venta (pedido de la cátedra, 21/10/2026). Sigue desde la última real: FAV 0003-000005858.
+  paso('factura31', function () {
+    var cfg = leer_('S_Config'), n = 0;
+    [['FACTURA_PREFIJO', 'FAV', 'Prefijo de las facturas de venta (FAV = factura de venta). Lo usa la numeración automática.'],
+     ['FACTURA_PUNTO_VENTA', '0003', 'Punto de venta de las facturas de venta (4 cifras). Sale de la factura real FAV 0003-000005858.'],
+     ['FACTURA_PROXIMO_NUMERO', '', 'Vacío = sigue sola desde la última factura cargada. Escribir un número solo si hay que saltar a otro (ej. 5900).']
+    ].forEach(function (c) { if (!cfg.some(function (x) { return x.Clave === c[0]; })) { insertar_('S_Config', { Clave: c[0], Valor: c[1], Descripcion: c[2] }, QUIEN); n++; } });
+    return 'Numeración automática de facturas de venta: ' + n + ' parámetros nuevos en Configuración';
+  });
+  // 3.1.b Ventas cargadas como prueba por el grupo (confirmado el 21/10/2026): se anulan y los animales vuelven al rodeo.
+  paso('pruebas31', function () {
+    var PRUEBAS = ['0003-00000012', 'Fav 003 8888'], n = 0, m = 0;
+    leer_('F_Ingresos').filter(function (x) { return activo_(x) && PRUEBAS.indexOf(String(x.Comprobante).trim()) >= 0; }).forEach(function (x) {
+      var an = buscar_('D_Animal', x.Caravana);
+      if (an && an.Estado === 'Vendido') { cambiarEstadoAnimal_(x.Caravana, 'Activo', '', QUIEN, 'Anulación de venta de prueba ' + x.IdIngreso); m++; }
+      cambiarActivo_('F_Ingresos', x, false, QUIEN, 'Baja: venta de prueba (confirmado por el grupo 21/10/2026)'); n++;
+    });
+    leer_('F_Tesoreria').filter(function (x) { return activo_(x) && PRUEBAS.indexOf(String(x.ComprobanteVenta).trim()) >= 0; }).forEach(function (x) {
+      cambiarActivo_('F_Tesoreria', x, false, QUIEN, 'Baja: cobro de una venta de prueba');
+    });
+    return 'Ventas de prueba anuladas: ' + n + ' renglones; ' + m + ' animales volvieron al rodeo';
+  });
+
   return log;
 }
 
