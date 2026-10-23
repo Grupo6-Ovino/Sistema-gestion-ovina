@@ -270,6 +270,21 @@
   .uni { display:flex; gap:12px; align-items:flex-start; }
   .uni .ic { flex:0 0 44px; height:44px; border-radius:11px; display:grid; place-items:center; background:var(--verde-s); color:var(--verde); }
 
+  /* La ovejita del asistente */
+  .oveja { position:fixed; right:18px; bottom:18px; z-index:45; width:64px; height:64px; border-radius:50%; border:0; background:var(--amarillo); box-shadow:var(--sh-alta); display:grid; place-items:center; cursor:pointer; transition:transform .15s; }
+  .oveja:hover { transform:translateY(-2px) rotate(-4deg); } .oveja:focus-visible { outline:3px solid var(--monte); outline-offset:3px; }
+  .chat { position:fixed; right:18px; bottom:92px; z-index:46; width:min(380px, calc(100vw - 24px)); height:min(560px, calc(100vh - 120px)); background:var(--panel); border:1px solid var(--linea); border-radius:16px; box-shadow:var(--sh-alta); display:flex; flex-direction:column; overflow:hidden; opacity:0; transform:translateY(12px) scale(.98); pointer-events:none; transition:opacity .18s, transform .18s; }
+  .chat.abierto { opacity:1; transform:none; pointer-events:auto; }
+  .chatH { display:flex; align-items:center; gap:10px; background:var(--monte); color:#fff; padding:10px 12px; }
+  .chatH small { display:block; color:var(--monte-tx2); font-size:12px; } .chatAv { width:40px; height:40px; border-radius:50%; background:var(--amarillo); display:grid; place-items:center; flex:0 0 auto; } .chatAv svg { width:32px; height:32px; }
+  .chatX { background:rgba(255,255,255,.1); border:0; color:#fff; width:36px; height:36px; border-radius:9px; cursor:pointer; display:grid; place-items:center; transform:rotate(-90deg); }
+  .chatL { flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:8px; background:var(--fondo); }
+  .chatM { max-width:88%; padding:9px 12px; border-radius:12px; font-size:14.5px; line-height:1.45; background:#fff; border:1px solid var(--linea); align-self:flex-start; overflow-wrap:anywhere; }
+  .chatM.yo { align-self:flex-end; background:var(--verde); color:#fff; border-color:var(--verde); } .chatM.err { background:var(--bad-bg); color:#8c1b12; border-color:#f3c3bd; }
+  .chatT { display:block; margin-top:6px; color:var(--monte); } .chatP { display:block; margin-top:6px; color:var(--tinta-3); font-size:12px; }
+  .chatS { display:flex; flex-wrap:wrap; gap:6px; padding:0 12px 8px; background:var(--fondo); } .chatS .pill { min-height:36px; padding:6px 12px; font-size:13.5px; text-align:left; }
+  .chatF { display:flex; gap:8px; padding:10px; border-top:1px solid var(--linea); align-items:flex-end; } .chatF textarea { min-height:44px; resize:none; font-size:15px; } .chatF .btn { min-height:44px; padding:8px 14px; font-size:15px; }
+  @media (max-width:640px) { .chat { right:8px; left:8px; width:auto; bottom:88px; height:calc(100vh - 110px); } .oveja { right:12px; bottom:12px; } footer { padding-bottom:70px; } }
   /* Carga mientras busca datos */
   .cargando { display:grid; gap:10px; }
   .cargando i { display:block; height:16px; border-radius:6px; background:linear-gradient(90deg,#e8eee9 0%,#f4f7f4 50%,#e8eee9 100%); background-size:200% 100%; animation:brillo 1.2s ease-in-out infinite; }
@@ -457,7 +472,7 @@ function salir(silencioso) {
   if (S.token && !silencioso) call('api_logout', S.token, S.code).catch(function () {});
   S.token = null; S.code = null; guardar('ovToken', null); guardar('ovLugar', null);
   if (HIST) { try { HIST.replace({ v: 'inicio' }, {}, ''); } catch (e) {} }
-  $('menuU').classList.add('hide'); $('app').classList.add('hide'); $('login').classList.remove('hide');
+  $('menuU').classList.add('hide'); $('app').classList.add('hide'); $('login').classList.remove('hide'); if ($('oveja')) { $('oveja').classList.add('hide'); chatAbrir(false); CHAT = []; chatPintar(); }
   if (silencioso) msg($('loginMsg'), 'warn', 'La sesión venció. Volvé a entrar.');
 }
 function iniciar() {
@@ -467,7 +482,7 @@ function iniciar() {
     var ini = String(S.u.Nombre || '?').trim().split(/\s+/).map(function (p) { return p[0]; }).slice(0, 2).join('').toUpperCase();
     $('avU').textContent = ini; $('nmU').innerHTML = esc(S.u.Nombre) + '<small>' + esc(S.u.Rol) + (S.u.IdSubunidad ? ' · ' + esc(nomEtapa(S.u.IdSubunidad)) : '') + '</small>';
     $('heroFecha').textContent = fechaLarga(); $('verPie').textContent = 'Versión ' + r.version;
-    $('login').classList.add('hide'); $('app').classList.remove('hide');
+    $('login').classList.add('hide'); $('app').classList.remove('hide'); ovejaMontar(); $('oveja').classList.remove('hide');
     ir(S.vista, 'arranque');
   });
 }
@@ -488,7 +503,7 @@ function armarMenu() {
   if (puede('F_Ingresos', 'crear')) carga.push(it('venta', 'venta', 'Vender animales'));
   if (puede('F_Tesoreria', 'crear')) carga.push(it('cuentas', 'cuentas', 'Cobros y pagos'));
   var ver = [it('animales', 'caravana', 'Los animales'), it('terceros', 'terceros', 'Proveedores y clientes'), it('tablero', 'tablero', 'Resultados'),
-    it('indicadores', 'indicadores', 'Indicadores'), it('cotizaciones', 'cotizaciones', 'Cotizaciones'), it('impuestos', 'impuestos', 'Impuestos'), it('unidades', 'unidades', 'Unidades del campo')];
+    it('indicadores', 'indicadores', 'Indicadores'), it('panel', 'tablero', 'Panel decisional'), it('cotizaciones', 'cotizaciones', 'Cotizaciones'), it('impuestos', 'impuestos', 'Impuestos'), it('unidades', 'unidades', 'Unidades del campo')];
   if (!puede('F_Tesoreria', 'crear')) ver.splice(2, 0, it('cuentas', 'cuentas', 'Cobros y pagos'));
   $('side').innerHTML = '<div class="marcaS"><span class="cvn">PdC</span><div>Pozo del Carril<small>Sistema de Gestión Ovina</small></div></div><div style="height:6px"></div>' + it('inicio', 'inicio', 'Inicio') +
     (carga.length ? '<div class="grupoS">Cargar</div>' + carga.join('') : '') + '<div class="grupoS">Consultar</div>' + ver.join('') +
@@ -503,7 +518,7 @@ var VISTAS = {
   venta:     ['Vender animales', vVenta], terceros: ['Proveedores y clientes', vTerceros], animales: ['Los animales', vAnimales],
   tablero:   ['Resultados', vTablero], tablas: ['Administración', vTablas], clave: ['Cambiar mi clave', vClave],
   indicadores: ['Indicadores (Cuadro de Mando Integral)', vIndicadores], cotizaciones: ['Cotizaciones', vCotizaciones],
-  impuestos: ['Impuestos y vencimientos', vImpuestos], unidades: ['Unidades de Pozo del Carril', vUnidades]
+  impuestos: ['Impuestos y vencimientos', vImpuestos], panel: ['Panel decisional', vPanel], unidades: ['Unidades de Pozo del Carril', vUnidades]
 };
 function ir(v, origen) {
   if (!VISTAS[v]) v = 'inicio';
@@ -513,7 +528,7 @@ function ir(v, origen) {
   document.body.classList.toggle('enInicio', v === 'inicio');
   $('hero').classList.toggle('big', v === 'inicio');
   var h = new Date().getHours(), saludo = h < 13 ? 'Buen día' : h < 20 ? 'Buenas tardes' : 'Buenas noches';
-  var ICV = { sanidad:'sanidad', nacimiento:'oveja', muerte:'baja', compra:'compra', compras:'cuentas', cuentas:'cuentas', venta:'venta', terceros:'terceros', animales:'caravana', tablero:'tablero', tablas:'tablas', clave:'clave', indicadores:'indicadores', cotizaciones:'cotizaciones', impuestos:'impuestos', unidades:'unidades' };
+  var ICV = { sanidad:'sanidad', nacimiento:'oveja', muerte:'baja', compra:'compra', compras:'cuentas', cuentas:'cuentas', venta:'venta', terceros:'terceros', animales:'caravana', tablero:'tablero', tablas:'tablas', clave:'clave', indicadores:'indicadores', panel:'cotizaciones', cotizaciones:'cotizaciones', impuestos:'impuestos', unidades:'unidades' };
   $('heroTit').innerHTML = v === 'inicio' ? esc(saludo + ', ' + String(S.u.Nombre).split(' ')[0]) : '<span class="icT">' + ic(ICV[v]) + '</span>' + esc(VISTAS[v][0]);
   $('heroFecha').classList.toggle('hide', v !== 'inicio'); $('heroExtra').innerHTML = '';
   document.title = (v === 'inicio' ? '' : VISTAS[v][0] + ' · ') + 'Pozo del Carril';
@@ -558,7 +573,7 @@ function vInicio() {
   if (puede('F_Tesoreria', 'crear')) carga.push(t('cuentas', 'cuentas', 'Cobré o pagué algo', 'Recibos, lo que se debe y lo que nos deben', 1));
   var ver = [t('animales', 'caravana', 'Los animales', 'Rodeo, fichas y tratamientos'),
     t('terceros', 'terceros', 'Proveedores y clientes', puede('D_Tercero', 'crear') ? 'Ver y agregar' : 'Ver la lista'), t('tablero', 'tablero', 'Resultados', 'Ingresos, costos y margen'),
-    t('indicadores', 'indicadores', 'Indicadores', 'Semáforo para tomar decisiones'), t('cotizaciones', 'cotizaciones', 'Cotizaciones', 'Granos, hacienda y dólar'),
+    t('indicadores', 'indicadores', 'Indicadores', 'Semáforo para tomar decisiones'), t('panel', 'cotizaciones', 'Panel decisional', 'Escenarios y asistente con IA'), t('cotizaciones', 'cotizaciones', 'Cotizaciones', 'Granos, hacienda y dólar'),
     t('impuestos', 'impuestos', 'Impuestos', 'Vencimientos y pagos'), t('unidades', 'unidades', 'Unidades del campo', 'Bovinos, porcinos, maíz, soja')];
   if (!puede('F_Tesoreria', 'crear')) ver.splice(1, 0, t('cuentas', 'cuentas', 'Cobros y pagos', 'Facturas, lo que se debe y lo que nos deben'));
   if (S.u.Rol === 'Administrador') ver.push(t('tablas', 'tablas', 'Administración', 'Tablas, parámetros y usuarios'));
@@ -1389,6 +1404,159 @@ function impNuevo() {
 }
 function impGenerar(anio) {
   call('api_generarCalendario', S.token, anio).then(function (r) { msg($('impMsg'), 'ok', r.mensaje); }).catch(function (e) { msg($('impMsg'), 'err', e.message); });
+}
+
+
+/* ---------- PANEL DECISIONAL (v3.3) ---------- */
+var PD = { tab: 'resumen', d: null, esc: null };
+var PD_TABS = [['resumen', 'Resumen'], ['etapas', 'Etapas y unidades'], ['rendimiento', 'Rendimiento'], ['consumo', 'Consumo'], ['campanas', 'Campañas'], ['escenarios', 'Escenarios']];
+var ESC_VARS = [
+  ['madres', 'Madres en servicio', 'cabezas', 1], ['corderosPorMadre', 'Corderos logrados por madre', 'corderos', 0.01], ['supervivencia', 'Corderos que llegan a la venta', '%', 1],
+  ['kgPorCordero', 'Kilos por cordero vendido', 'kg', 0.1], ['precioKg', 'Precio de venta (sin IVA)', '$/kg', 1], ['maizKgDia', 'Maíz por cabeza por día', 'kg', 0.01],
+  ['dias', 'Días de suplementación', 'días', 1], ['precioMaiz', 'Precio del maíz', '$/kg', 1], ['otrosDirectosPorMadre', 'Otros costos directos por madre', '$', 1], ['indirectos', 'Costos indirectos', '$', 1]];
+function vPanel(idCamp) {
+  var m = $('main'); m.innerHTML = volverBtn() + '<div class="card"><div class="cargando"><i></i><i></i><i></i><i></i></div></div>';
+  call('api_panel', S.token, idCamp || S.campPanel || '').then(function (d) {
+    PD.d = d; S.campPanel = d.indicadores.campana.id;
+    if (!PD.esc || PD.esc._camp !== S.campPanel) { PD.esc = JSON.parse(JSON.stringify(d.escenario.base)); PD.esc._camp = S.campPanel; }
+    pdPintar();
+  }).catch(function (e) { m.innerHTML = volverBtn(); msg(m.appendChild(document.createElement('div')), 'err', e.message); });
+}
+function pdPintar() {
+  var d = PD.d, c = d.indicadores.campana;
+  var h = volverBtn() + '<div class="card"><div class="row" style="align-items:center"><div class="f" style="max-width:300px;margin:0"><label for="pdCamp">Campaña</label><select id="pdCamp" onchange="PD.esc=null;vPanel(this.value)">' +
+    d.indicadores.campanas.map(function (x) { return '<option value="' + esc(x.id) + '"' + (x.id === c.id ? ' selected' : '') + '>' + esc(x.nombre) + '</option>'; }).join('') + '</select></div>' +
+    '<p class="sub" style="flex:1;margin:0">Un panel para decidir: qué pasó (resumen, etapas, rendimiento y consumo), qué pasaría si cambian los supuestos (escenarios) y preguntas a la IA. Los escenarios nunca cambian los datos reales.</p></div>' +
+    '<div class="pills" style="margin-top:14px" role="tablist">' + PD_TABS.map(function (t) { return '<button type="button" role="tab" class="pill' + (PD.tab === t[0] ? ' on' : '') + '" onclick="PD.tab=\'' + t[0] + '\';pdPintar()">' + t[1] + '</button>'; }).join('') + '</div></div><div id="pdCuerpo"></div>';
+  $('main').innerHTML = h;
+  ({ resumen: pdResumen, etapas: pdEtapas, rendimiento: pdRendimiento, consumo: pdConsumo, campanas: pdCampanas, escenarios: pdEscenarios })[PD.tab] ? ({ resumen: pdResumen, etapas: pdEtapas, rendimiento: pdRendimiento, consumo: pdConsumo, campanas: pdCampanas, escenarios: pdEscenarios })[PD.tab]() : pdResumen();
+}
+function pdSerie(id) { return PD.d.historia.filter(function (x) { return x.id === id && x.v !== null; }).sort(function (a, b) { return a.f < b.f ? -1 : 1; }); }
+function pdMini(id, color) {
+  var L = pdSerie(id); if (L.length < 2) return '<span class="muted">Se arma día a día</span>';
+  var vs = L.map(function (x) { return x.v; }), mn = Math.min.apply(null, vs), mx = Math.max.apply(null, vs), w = 120, hh = 28;
+  var pts = L.map(function (x, i) { return (i / (L.length - 1) * w).toFixed(1) + ',' + (mx === mn ? hh / 2 : hh - (x.v - mn) / (mx - mn) * hh).toFixed(1); }).join(' ');
+  return '<svg width="' + w + '" height="' + hh + '" viewBox="0 0 ' + w + ' ' + hh + '" aria-label="Evolución desde el ' + fecha(L[0].f) + '"><polyline fill="none" stroke="' + color + '" stroke-width="2" points="' + pts + '"/></svg>';
+}
+function pdResumen() {
+  var d = PD.d, I = d.indicadores, cu = I.cuenta;
+  var h = '<div class="card"><h2>Resumen</h2><div class="sem"><span class="e-Verde">' + P('Verde') + cu.Verde + ' en meta</span><span class="e-Amarillo">' + P('Amarillo') + cu.Amarillo + ' en alerta</span><span class="e-Rojo">' + P('Rojo') + cu.Rojo + ' a corregir</span></div>' +
+    '<div class="scroll" style="margin-top:12px;max-height:none"><table><thead><tr><th>Indicador</th><th>Perspectiva</th><th class="n">Valor</th><th>Meta (verde)</th><th>Evolución</th></tr></thead><tbody>' +
+    I.indicadores.map(function (i) { return '<tr><td>' + P(i.estado === 'Sin datos' || i.estado === 'Sin meta' ? 'Sin' : i.estado) + esc(i.nombre) + '</td><td>' + esc(i.perspectiva) + '</td><td class="n">' + (i.valor === null ? '—' : fmtInd(i.valor, i.unidad)) + '</td><td>' + (i.metaVerde === '' ? '—' : fmtMeta(i.metaVerde, i.unidad)) + '</td><td>' + pdMini(i.id, colorEst(i.estado)) + '</td></tr>'; }).join('') +
+    '</tbody></table></div><p class="muted" style="margin-top:8px">La evolución sale de la copia analítica diaria: todos los días a las 19 h el sistema guarda una foto de cada indicador.</p></div>';
+  h += '<div class="card"><h2>' + ic('alerta') + ' Hallazgos</h2><p class="sub">Lo que el sistema detectó solo, con reglas: indicadores en rojo, desvíos de consumo y de rinde, y cambios fuertes contra la última foto.</p>' +
+    (d.hallazgos.length ? '<div class="lista">' + d.hallazgos.map(function (x) { return '<div class="item"><div class="t"><b>' + P(x.tipo === 'Cambio' ? 'Sin' : x.tipo) + esc(x.titulo) + '</b><div>' + esc(x.texto) + '</div></div></div>'; }).join('') + '</div>' : '<p class="muted">No hay nada fuera de lo normal en esta campaña.</p>') + '</div>';
+  $('pdCuerpo').innerHTML = h;
+}
+function pdEtapas() {
+  var r = PD.d.reportes, h = '<div class="card"><h2>Resultado por etapa</h2><p class="sub">Comparación de las etapas de la unidad ovina en la campaña elegida.</p><div class="scroll" style="max-height:none"><table><thead><tr><th>Etapa</th><th class="n">Ingresos</th><th class="n">Costos directos</th><th class="n">Margen bruto</th><th class="n">Muertes</th></tr></thead><tbody>' +
+    (r.porSub || []).map(function (s) { return '<tr><td>' + esc(s.nombre) + '</td><td class="n">' + pesos(s.ingresos) + '</td><td class="n">' + pesos(s.costosDirectos) + (s.tieneSupuestos ? '<span class="tag">Con supuestos</span>' : '') + '</td><td class="n">' + pesos(s.margenBruto) + '</td><td class="n">' + num(s.muertes, 0) + '</td></tr>'; }).join('') +
+    '<tr class="tot"><td>Consolidado</td><td class="n">' + pesos(r.consolidado.ingresos) + '</td><td class="n">' + pesos(r.consolidado.costosDirectos) + '</td><td class="n">' + pesos(r.consolidado.margenBruto) + '</td><td class="n">' + num(r.consolidado.muertes, 0) + '</td></tr></tbody></table></div>' +
+    '<p class="muted" style="margin-top:8px">Costos indirectos de la campaña: ' + pesos(r.consolidado.indirectos) + ' (no se reparten por etapa).</p></div>';
+  h += '<div class="card"><h2>Otras unidades de Pozo del Carril</h2><p class="sub">Cada grupo maneja su unidad en su propio sistema. Cuando carguen el link en "Unidades del campo", se abre desde acá.</p><div class="lista">' +
+    PD.d.unidades.map(function (u) { return '<div class="item"><div class="t"><b>' + esc(u.nombre) + '</b><div>' + esc(u.tipo || '') + '</div></div><div class="der">' + (u.link ? '<a class="btn2" href="' + esc(u.link) + '" target="_blank" rel="noopener">Abrir ' + ic('externo') + '</a>' : '<span class="muted">Sin link todavía</span>') + '</div></div>'; }).join('') + '</div></div>';
+  $('pdCuerpo').innerHTML = h;
+}
+function pdRendimiento() {
+  var R = PD.d.reportes.rinde || [];
+  $('pdCuerpo').innerHTML = '<div class="card"><h2>Rendimiento: estándar, real y desvío</h2><p class="sub">Kilos producidos por cabeza en cada etapa contra el rinde estándar cargado para la campaña.</p><div class="scroll" style="max-height:none"><table><thead><tr><th>Etapa</th><th class="n">Estándar</th><th class="n">Real</th><th class="n">Desvío</th><th>Fuente del estándar</th></tr></thead><tbody>' +
+    R.map(function (r) { var dv = r.desvioPct; return '<tr><td>' + esc(r.nombre) + '</td><td class="n">' + (r.estandar === null ? '—' : num(r.estandar)) + '</td><td class="n">' + (r.real === null ? '—' : num(r.real)) + '</td><td class="n">' + (dv === null ? '—' : P(dv >= 0 ? 'Verde' : dv > -10 ? 'Amarillo' : 'Rojo') + (dv > 0 ? '+' : '') + num(dv, 1) + ' %') + '</td><td>' + esc(r.fuente || (r.estandar === null ? 'Falta cargar el estándar' : '')) + '</td></tr>'; }).join('') +
+    '</tbody></table></div><p class="muted" style="margin-top:8px">El real sale de la producción registrada (kilos ÷ cabezas base). Si falta, cargala en Administración → Producción.</p></div>';
+}
+function pdConsumo() {
+  var r = PD.d.reportes, C = r.consumo || [];
+  $('pdCuerpo').innerHTML = '<div class="card"><h2>Consumo: estimado, real y desvío</h2><p class="sub">Lo que se debería haber consumido según la dosis técnica (estimado) contra lo que se registró (real).</p><div class="scroll" style="max-height:none"><table><thead><tr><th>Etapa</th><th>Insumo</th><th class="n">Estimado</th><th class="n">Real</th><th class="n">Desvío</th></tr></thead><tbody>' +
+    (C.length ? C.map(function (x) { var pc = x.esperado ? (x.real - x.esperado) / x.esperado * 100 : null; return '<tr><td>' + esc(x.subunidad) + '</td><td>' + esc(x.insumo) + '</td><td class="n">' + (x.esperado === null ? '—' : num(x.esperado) + ' ' + esc(x.um)) + '</td><td class="n">' + num(x.real) + ' ' + esc(x.um) + '</td><td class="n">' + (pc === null ? '—' : P(Math.abs(pc) <= 5 ? 'Verde' : Math.abs(pc) <= 10 ? 'Amarillo' : 'Rojo') + (pc > 0 ? '+' : '') + num(pc, 1) + ' %') + '</td></tr>'; }).join('') : '<tr><td colspan="5" class="muted">No hay consumos ni dosis cargados en esta campaña.</td></tr>') +
+    '</tbody></table></div></div>';
+}
+/* Escenarios: el cálculo es el de la diapositiva 16 (producción, ingresos, costos y margen simulados) */
+function pdCalc(v) {
+  var corderos = v.madres * v.corderosPorMadre * v.supervivencia / 100, kg = corderos * v.kgPorCordero, ingresos = kg * v.precioKg;
+  var maizKg = v.madres * v.maizKgDia * v.dias, maiz = maizKg * v.precioMaiz, otros = v.otrosDirectosPorMadre * v.madres, directos = maiz + otros, mb = ingresos - directos;
+  return { corderos: corderos, kg: kg, ingresos: ingresos, maizKg: maizKg, maiz: maiz, otros: otros, directos: directos, mb: mb, mbMadre: v.madres ? mb / v.madres : 0, resultado: mb - v.indirectos };
+}
+function pdEscenarios() {
+  var B = PD.d.escenario.base, F = PD.d.escenario.fuentes, V = PD.esc;
+  var h = '<div class="card"><h2>Escenarios: ¿qué pasaría si…?</h2><p class="sub">Cambiá uno o varios supuestos y mirá cómo cambian la producción, los costos y el margen. La columna "Base" usa los datos reales y los estándares de la campaña; el escenario no modifica nada guardado.</p>' +
+    (!PD.d.escenario.conVentas ? '<div class="msg warn">' + ic('alerta') + '<div>Esta campaña todavía no tiene ventas: el precio y los kilos por cordero salen de la última campaña con ventas.' + (B.precioRef ? ' Referencia de mercado: ' + pesos(B.precioRef) + ' por kg sin IVA.' : '') + '</div></div>' : '') +
+    '<div class="scroll" style="max-height:none"><table><thead><tr><th>Supuesto</th><th class="n">Base</th><th class="n">Escenario</th><th>De dónde sale la base</th></tr></thead><tbody>' +
+    ESC_VARS.map(function (x) { return '<tr><td><label for="esc_' + x[0] + '">' + x[1] + '</label> <span class="muted">(' + x[2] + ')</span></td><td class="n">' + num(B[x[0]]) + '</td><td class="n" style="min-width:150px"><input id="esc_' + x[0] + '" type="number" step="' + x[3] + '" inputmode="decimal" value="' + V[x[0]] + '" oninput="PD.esc[\'' + x[0] + '\']=Number(this.value)||0;pdResultado()" style="text-align:right;min-height:40px;padding:6px 10px"></td><td class="muted">' + esc(F[x[0]] || '') + '</td></tr>'; }).join('') +
+    '</tbody></table></div><div class="row" style="margin-top:12px"><button class="btn2" onclick="PD.esc=JSON.parse(JSON.stringify(PD.d.escenario.base));PD.esc._camp=S.campPanel;pdEscenarios()">' + ic('recargar') + 'Volver a la base</button>' +
+    '<button class="btn2" onclick="pdAjuste(\'precioMaiz\',1.2)">Maíz 20 % más caro</button><button class="btn2" onclick="pdAjuste(\'precioKg\',0.9)">Precio 10 % más bajo</button><button class="btn2" onclick="pdAjuste(\'corderosPorMadre\',1.15)">15 % más corderos por madre</button></div></div>' +
+    '<div class="card"><h2>Resultado del escenario</h2><div id="pdRes"></div></div>' +
+    '<div class="card"><h2>Sensibilidad</h2><p class="sub">Cambia una sola variable y deja todas las demás como están en el escenario.</p><div class="row"><div class="f" style="max-width:340px"><label for="sensVar">Variable</label><select id="sensVar" onchange="pdSens()">' + ESC_VARS.map(function (x) { return '<option value="' + x[0] + '"' + (x[0] === 'precioKg' ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('') + '</select></div></div><div id="pdSens"></div></div>' +
+    '<div class="card"><h2>Guardar este escenario</h2><div class="row"><div class="f"><label for="escNom">Nombre</label><input id="escNom" placeholder="Ej.: Maíz más caro y menos corderos"></div><div class="f" style="flex:0 0 auto"><button class="btn" onclick="pdGuardar()">Guardar escenario</button></div></div><div id="escMsg"></div>' +
+    (PD.d.escenarios.length ? '<h3>Guardados</h3><div class="lista">' + PD.d.escenarios.map(function (e) { return '<div class="item"><div class="t"><b>' + esc(e.nombre) + '</b><div>' + fecha(e.fecha) + ' · ' + esc(e.por) + '</div></div><div class="der"><button class="btn2" onclick="pdAbrir(\'' + esc(e.id) + '\')">Abrir</button></div></div>'; }).join('') + '</div>' : '') + '</div>';
+  $('pdCuerpo').innerHTML = h; pdResultado(); pdSens();
+}
+function pdAjuste(k, f) { PD.esc[k] = Math.round(PD.d.escenario.base[k] * f * 100) / 100; pdEscenarios(); }
+function pdResultado() {
+  var b = pdCalc(PD.d.escenario.base), e = pdCalc(PD.esc), R = PD.d.escenario.real, meta = PD.d.escenario.base.metaMBMadre;
+  var fila = function (t, k, din, realV) { var dif = e[k] - b[k]; return '<tr><td>' + t + '</td><td class="n">' + (realV === undefined ? '' : pesos(realV)) + '</td><td class="n">' + (din ? pesos(b[k]) : num(b[k], 1)) + '</td><td class="n"><b>' + (din ? pesos(e[k]) : num(e[k], 1)) + '</b></td><td class="n ' + (dif > 0.5 ? (k === 'directos' || k === 'maiz' ? 'sube' : 'baja') : dif < -0.5 ? (k === 'directos' || k === 'maiz' ? 'baja' : 'sube') : '') + '">' + (Math.abs(dif) < 0.5 ? '—' : (dif > 0 ? '+' : '') + (din ? pesos(dif) : num(dif, 1))) + '</td></tr>'; };
+  $('pdRes').innerHTML = '<div class="scroll" style="max-height:none"><table><thead><tr><th>Resultado</th><th class="n">Real registrado</th><th class="n">Base</th><th class="n">Escenario</th><th class="n">Diferencia</th></tr></thead><tbody>' +
+    fila('Corderos vendidos', 'corderos', false) + fila('Kilos vendidos', 'kg', false) + fila('Ingresos (sin IVA)', 'ingresos', true, R.ingresos) + fila('Maíz consumido (kg)', 'maizKg', false) +
+    fila('Costo del maíz', 'maiz', true) + fila('Costos directos', 'directos', true, R.directos) + fila('Margen bruto', 'mb', true, R.mb) + fila('Margen bruto por madre', 'mbMadre', true) + fila('Resultado (margen − indirectos)', 'resultado', true, R.resultado) +
+    '</tbody></table></div>' + (meta !== null ? '<p style="margin-top:10px">' + P(e.mbMadre >= meta ? 'Verde' : 'Rojo') + 'Meta de margen bruto por madre: ' + pesos(meta) + '. ' + (e.mbMadre >= meta ? 'Este escenario la alcanza.' : 'A este escenario le faltan ' + pesos(meta - e.mbMadre) + ' por madre.') + '</p>' : '<p class="muted" style="margin-top:10px">Para comparar con una meta, el administrador puede cargar la meta del indicador "Margen bruto por madre" en Indicadores → Cambiar metas.</p>') +
+    '<p class="muted">Cálculo (diapositiva 16): corderos = madres × corderos por madre × % que llega a la venta · ingresos = corderos × kg × precio · maíz = madres × kg por día × días × precio · margen = ingresos − costos directos. "Real registrado" son los números cargados de la campaña.</p>';
+}
+function pdSens() {
+  var k = $('sensVar').value, def = ESC_VARS.filter(function (x) { return x[0] === k; })[0], base = PD.esc[k];
+  var pasos = [-20, -10, 0, 10, 20];
+  $('pdSens').innerHTML = '<div class="scroll" style="max-height:none"><table><thead><tr><th>' + esc(def[1]) + '</th><th class="n">Valor</th><th class="n">Margen bruto</th><th class="n">Margen por madre</th><th class="n">Resultado</th></tr></thead><tbody>' +
+    pasos.map(function (p) { var v = JSON.parse(JSON.stringify(PD.esc)); v[k] = base * (1 + p / 100); var r = pdCalc(v); return '<tr' + (p === 0 ? ' class="tot"' : '') + '><td>' + (p === 0 ? 'Escenario actual' : (p > 0 ? '+' : '') + p + ' %') + '</td><td class="n">' + num(v[k], 2) + ' ' + esc(def[2]) + '</td><td class="n">' + pesos(r.mb) + '</td><td class="n">' + pesos(r.mbMadre) + '</td><td class="n">' + pesos(r.resultado) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+}
+function pdGuardar() {
+  var n = $('escNom').value.trim(); if (!n) { msg($('escMsg'), 'err', 'Poné un nombre al escenario.'); marcarFaltan(['escNom']); return; }
+  var sup = {}; ESC_VARS.forEach(function (x) { sup[x[0]] = PD.esc[x[0]]; });
+  call('api_crear', S.token, 'F_Escenario', { Nombre: n, IdCampana: S.campPanel, Supuestos: JSON.stringify(sup), Resultado: JSON.stringify(pdCalc(PD.esc)), Observaciones: '' })
+    .then(function () { vPanel(S.campPanel); }).catch(function (e) { msg($('escMsg'), 'err', e.message); });
+}
+function pdAbrir(id) { var e = PD.d.escenarios.filter(function (x) { return x.id === id; })[0]; if (!e) return; try { var s = JSON.parse(e.supuestos); Object.keys(s).forEach(function (k) { PD.esc[k] = Number(s[k]); }); } catch (x) {} pdEscenarios(); window.scrollTo(0, 0); }
+function pdCampanas() {
+  var C = PD.d.comparacion, defs = PD.d.indicadores.indicadores;
+  if (C.length < 2) { $('pdCuerpo').innerHTML = '<div class="card"><h2>Mejoras entre campañas</h2><p class="muted">Hace falta al menos dos campañas cargadas para comparar.</p></div>'; return; }
+  var val = function (c, id) { var x = c.ind.filter(function (i) { return i.id === id; })[0]; return x || { valor: null, estado: 'Sin datos' }; };
+  var mejor = function (d, a, b) { if (a === null || b === null) return 0; var dif = b - a; if (Math.abs(dif) < 1e-9) return 0; if (d.sentido === 'Menor es mejor') return dif < 0 ? 1 : -1; if (d.sentido === 'Cerca de cero es mejor') return Math.abs(b) < Math.abs(a) ? 1 : -1; return dif > 0 ? 1 : -1; };
+  var ult = C[C.length - 1], ant = C[C.length - 2], mej = 0, emp = 0;
+  var filas = defs.map(function (d) {
+    var a = val(ant, d.id).valor, b = val(ult, d.id).valor, m = mejor(d, a, b); if (m > 0) mej++; if (m < 0) emp++;
+    return '<tr><td>' + esc(d.nombre) + '</td>' + C.map(function (c) { var x = val(c, d.id); return '<td class="n">' + P(x.estado === 'Sin datos' || x.estado === 'Sin meta' ? 'Sin' : x.estado) + (x.valor === null ? '—' : fmtInd(x.valor, d.unidad)) + '</td>'; }).join('') +
+      '<td>' + (m > 0 ? '<span class="tag v">Mejoró</span>' : m < 0 ? '<span class="tag r">Empeoró</span>' : '<span class="tag g">Sin cambio o sin datos</span>') + '</td></tr>';
+  }).join('');
+  $('pdCuerpo').innerHTML = '<div class="card"><h2>Mejoras entre campañas</h2><p class="sub">Cada indicador en cada campaña. La última columna compara ' + esc(ult.nombre) + ' contra ' + esc(ant.nombre) + ' según si en ese indicador conviene subir o bajar.</p>' +
+    '<div class="sem"><span class="e-Verde">' + P('Verde') + mej + ' mejoraron</span><span class="e-Rojo">' + P('Rojo') + emp + ' empeoraron</span></div>' +
+    '<div class="scroll" style="max-height:none;margin-top:12px"><table><thead><tr><th>Indicador</th>' + C.map(function (c) { return '<th class="n">' + esc(c.nombre) + '</th>'; }).join('') + '<th>Cambio</th></tr></thead><tbody>' + filas + '</tbody></table></div>' +
+    '<p class="muted" style="margin-top:8px">Una campaña en curso puede mostrar valores parciales (por ejemplo, sin ventas todavía).</p></div>';
+}
+
+/* ---------- La ovejita: asistente IA en cualquier pantalla ---------- */
+var OVEJA = '<svg viewBox="0 0 64 64" aria-hidden="true" width="40" height="40"><g fill="#fff" stroke="#16201a" stroke-width="2"><circle cx="24" cy="30" r="9"/><circle cx="34" cy="26" r="10"/><circle cx="44" cy="31" r="9"/><circle cx="38" cy="39" r="9"/><circle cx="26" cy="40" r="9"/></g><g stroke="#16201a" stroke-width="3" stroke-linecap="round"><path d="M27 48v7M39 48v7"/></g><ellipse cx="15" cy="32" rx="8" ry="9" fill="#16201a"/><ellipse cx="10" cy="26" rx="4" ry="2.4" fill="#16201a" transform="rotate(-25 10 26)"/><circle cx="13" cy="31" r="1.6" fill="#fff"/><circle cx="17.5" cy="31" r="1.6" fill="#fff"/><rect x="14" y="20" width="5" height="6" rx="1.5" fill="#f4c430" stroke="#16201a" stroke-width="1.2"/></svg>';
+var CHAT = [];
+function ovejaMontar() {
+  if ($('oveja')) return;
+  var b = document.createElement('button'); b.id = 'oveja'; b.className = 'oveja'; b.setAttribute('aria-label', 'Abrir el asistente con IA'); b.innerHTML = OVEJA; b.onclick = function () { chatAbrir(!$('chat').classList.contains('abierto')); };
+  var c = document.createElement('section'); c.id = 'chat'; c.className = 'chat'; c.setAttribute('aria-label', 'Asistente con IA');
+  c.innerHTML = '<div class="chatH"><span class="chatAv">' + OVEJA + '</span><div style="flex:1"><b>Preguntale a la oveja</b><small>Asistente con IA sobre los datos del campo</small></div><button class="chatX" onclick="chatAbrir(false)" aria-label="Cerrar">' + ic('volver') + '</button></div>' +
+    '<div class="chatL" id="chatL"></div><div class="chatS" id="chatS"></div><div class="chatF"><textarea id="chatQ" rows="2" maxlength="600" placeholder="Escribí tu pregunta…"></textarea><button class="btn" id="chatB" onclick="chatEnviar()">Enviar</button></div>';
+  document.body.appendChild(b); document.body.appendChild(c);
+  $('chatQ').addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); chatEnviar(); } });
+  chatPintar();
+}
+function chatAbrir(si) { $('chat').classList.toggle('abierto', si); if (si) setTimeout(function () { $('chatQ').focus(); }, 150); }
+function chatPintar() {
+  $('chatL').innerHTML = (CHAT.length ? '' : '<div class="chatM ia">¡Hola! Soy la oveja del sistema. Preguntame sobre los indicadores, los resultados o un escenario del Panel decisional. Te respondo separando <b>hechos</b>, <b>cálculos</b> e <b>hipótesis a validar</b>.</div>') +
+    CHAT.map(function (m) { return '<div class="chatM ' + m.de + '">' + m.html + '</div>'; }).join('');
+  $('chatS').innerHTML = CHAT.length ? '' : ['¿Qué indicadores hay que mirar primero?', '¿Qué explica el resultado de la campaña?', '¿Conviene el escenario que armé?', '¿A cuánto tendría que vender el kilo para cubrir los costos?'].map(function (q) { return '<button type="button" class="pill" onclick="$(\'chatQ\').value=this.textContent;chatEnviar()">' + esc(q) + '</button>'; }).join('');
+  $('chatL').scrollTop = $('chatL').scrollHeight;
+}
+function chatEnviar() {
+  var q = $('chatQ').value.trim(); if (q.length < 3 || $('chatB').disabled) return;
+  CHAT.push({ de: 'yo', html: esc(q) }); CHAT.push({ de: 'ia', html: '<span class="muted">Pensando…</span>' }); $('chatQ').value = ''; $('chatB').disabled = true; chatPintar();
+  var sup = null; if (PD.esc && S.vista === 'panel') { sup = {}; ESC_VARS.forEach(function (x) { sup[x[0]] = PD.esc[x[0]]; }); sup.resultado = pdCalc(PD.esc); }
+  call('api_asistente', S.token, q, S.campPanel || '', sup).then(function (r) {
+    var html = esc(r.respuesta).replace(/^(Hechos|Cálculos|Hipótesis y acciones a validar):?\s*$/gm, '<b class="chatT">$1</b>').replace(/^- (.*)$/gm, '• $1').replace(/\n+/g, '<br>').replace(/<\/b><br>/g, '</b>').replace(/^<br>/, '');
+    CHAT[CHAT.length - 1] = { de: 'ia', html: html + '<small class="chatP">' + esc(r.modelo) + ' · te quedan ' + r.quedan + ' preguntas hoy</small>' };
+  }).catch(function (e) { CHAT[CHAT.length - 1] = { de: 'ia err', html: esc(e.message) }; }).then(function () { $('chatB').disabled = false; chatPintar(); });
 }
 
 /* ---------- UNIDADES DE POZO DEL CARRIL ---------- */

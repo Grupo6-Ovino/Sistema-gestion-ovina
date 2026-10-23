@@ -22,7 +22,7 @@
  */
 
 var TZ = 'America/Argentina/Buenos_Aires';
-var VERSION = '3.2';
+var VERSION = '3.3';
 var AUDIT_COLS = ['CreadoEl', 'CreadoPor', 'ModificadoEl', 'ModificadoPor', 'Activo'];
 var ROLES = ['Administrador', 'Responsable de subunidad', 'Operador de carga', 'Consulta / auditoría'];
 var SESION_SEGUNDOS = 6 * 60 * 60;
@@ -128,6 +128,12 @@ var SCHEMA = {
       { n: 'IdCampana', req: true, fk: 'D_Campana', l: 'Campaña' }, { n: 'DosisPorBase', t: 'num', req: true, min: 0.0000001, l: 'Dosis por base' },
       { n: 'BaseCalculo', t: 'enum', req: true, opts: ['Cabeza', 'Kg'], l: 'Base' }, { n: 'Fuente', req: true, l: 'Fuente' },
       { n: 'FechaFuente', t: 'date', req: true, l: 'Fecha de la fuente' }] },
+  F_Escenario: { grupo: 'Hechos', titulo: 'Escenarios guardados (qué pasaría si…)', pk: 'IdEscenario', prefijo: 'ESC', label: 'Nombre',
+    cols: [{ n: 'IdEscenario', l: 'Id' }, { n: 'Nombre', req: true, l: 'Nombre del escenario' }, { n: 'IdCampana', fk: 'D_Campana', l: 'Campaña base' },
+      { n: 'Supuestos', req: true, l: 'Supuestos (JSON)' }, { n: 'Resultado', l: 'Resultado (JSON)' }, { n: 'Observaciones', l: 'Observaciones' }] },
+  F_HistoriaInd: { grupo: 'Control', titulo: 'Historia de indicadores (copia analítica diaria)', pk: 'IdHistoria', prefijo: 'HIS', label: 'IdHistoria', soloLectura: true, sinAuditoria: true,
+    cols: [{ n: 'IdHistoria', l: 'Id' }, { n: 'Fecha', t: 'date', req: true, l: 'Fecha' }, { n: 'IdCampana', l: 'Campaña' }, { n: 'IdIndicador', req: true, l: 'Indicador' },
+      { n: 'Valor', t: 'num', l: 'Valor' }, { n: 'Estado', l: 'Semáforo' }] },
   F_PrecioIns: { grupo: 'Parámetros', titulo: 'Precios reales de insumos', pk: 'IdPrecioIns', prefijo: 'PIN', label: 'IdPrecioIns',
     cols: [{ n: 'IdPrecioIns', l: 'Id' }, { n: 'IdInsumo', req: true, fk: 'D_Insumo', l: 'Insumo' }, { n: 'Fecha', t: 'date', req: true, l: 'Fecha' },
       { n: 'Precio', t: 'num', req: true, min: 0.0000001, l: 'Precio' }, { n: 'IdMoneda', req: true, fk: 'D_Moneda', l: 'Moneda' }, { n: 'Fuente', req: true, l: 'Fuente' }] },
@@ -417,6 +423,7 @@ function puede_(u, tabla, accion, registro) {
   // Proveedores, clientes y productos nuevos: cualquiera que carga datos los puede DAR DE ALTA
   // (para no frenar la carga en el campo). Editarlos o darlos de baja queda para el Administrador.
   if (tabla === 'D_Tercero' || tabla === 'D_Insumo') return accion === 'crear';
+  if (tabla === 'F_Escenario') return accion === 'crear'; // cualquiera que carga datos puede guardar un escenario
   var esCargaHacienda = s.hecho || tabla === 'D_Animal';
   if (!esCargaHacienda) return false; // resto de maestras, parámetros y usuarios: solo Administrador
   if (rol === 'Operador de carga') return accion === 'crear';
@@ -1339,6 +1346,7 @@ function actualizarDolar() {
     TC_ = null;
     var extra = [];
     try { if (ss_().getSheetByName('F_Cotizacion')) { extra.push(actualizarGranos_()); extra.push(actualizarCanuelas_()); } } catch (e) { extra.push('Cotizaciones de granos: ' + e.message); }
+    try { extra.push(fotoIndicadores_()); } catch (e) { extra.push('Historia de indicadores: ' + e.message); }
     return (nuevas.length ? 'Cotizaciones nuevas: ' + nuevas.join(' · ') : 'No hacía falta traer cotizaciones nuevas del dólar.') + (extra.length ? ' | ' + extra.join(' | ') : '');
   });
 }
@@ -1634,6 +1642,9 @@ function semaforo_(v, ind) {
 }
 function api_indicadores(token, idCampana) {
   sesion_(token);
+  return indicadoresDe_(idCampana);
+}
+function indicadoresDe_(idCampana) {
   var c = ctxIndicadores_(idCampana);
   var defs = [];
   try { defs = leer_('P_Indicador').filter(activo_); } catch (e) { throw new Error('Falta la tabla de indicadores: recargá la página para que el sistema se actualice.'); }
