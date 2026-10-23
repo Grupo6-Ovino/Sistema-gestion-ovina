@@ -141,8 +141,9 @@ function api_asistente(token, pregunta, idCampana, escenario) {
   var cuerpo = { systemInstruction: { parts: [{ text: sistema }] },
     contents: [{ role: 'user', parts: [{ text: 'Contexto (JSON):\n' + JSON.stringify(ctx) + '\n\nPregunta: ' + pregunta }] }],
     generationConfig: { temperature: 0.3, maxOutputTokens: 1200 } };
-  var modelos = [config_('GEMINI_MODELO'), 'gemini-flash-latest', 'gemini-2.5-flash'].filter(Boolean), ultimo = '';
+  var modelos = [config_('GEMINI_MODELO'), 'gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'].filter(Boolean), ultimo = '', ocupados = 0;
   for (var i = 0; i < modelos.length; i++) {
+    if (i > 0 && ocupados) Utilities.sleep(800);
     var res = UrlFetchApp.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + modelos[i] + ':generateContent', {
       method: 'post', contentType: 'application/json', headers: { 'x-goog-api-key': key }, payload: JSON.stringify(cuerpo), muteHttpExceptions: true });
     var code = res.getResponseCode(), txt = res.getContentText();
@@ -157,8 +158,10 @@ function api_asistente(token, pregunta, idCampana, escenario) {
     ultimo = code + ' ' + txt.slice(0, 200);
     if (code === 429) throw new Error('Se alcanzó el límite gratuito de Gemini por ahora. Probá en unos minutos.');
     if (code === 400 && /API key/i.test(txt)) throw new Error('La clave de Gemini no es válida. Revisala en Propiedades del script (GEMINI_API_KEY).');
+    if (code === 503 || code === 500 || code === 504) { ocupados++; continue; } // modelo saturado: se prueba otro
     if (code !== 404) break; // 404 = ese modelo no existe: se prueba el siguiente
   }
+  if (ocupados) throw new Error('Gemini está con mucha demanda en este momento (no es un error del sistema). Probá de nuevo en uno o dos minutos.');
   throw new Error('No se pudo consultar a la IA (' + ultimo + ').');
 }
 function pick_(o, ks) { var r = {}; (ks || []).forEach(function (k) { if (o && o[k] !== undefined) r[k] = o[k]; }); return r; }
