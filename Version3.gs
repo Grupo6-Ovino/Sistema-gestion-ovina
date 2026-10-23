@@ -31,6 +31,7 @@ function asegurarVersion_() {
       var log = migrarV3_();
       invalidarTodo_();
       p.setProperty('VERSION_DATOS', VERSION);
+      if (antes === '3.5') return 'Sistema actualizado a la versión 3.6: al tocar F5 la página espera en la misma sección (ya no pasa por el inicio) y el historial de cambios lo ve solo el administrador.';
       if (antes === '3.4') return 'Sistema actualizado a la versión 3.5: se quitó el rol Responsable de subunidad (quien lo tenía ahora es Operador de carga), cada registro muestra quién lo cargó y quién lo modificó, y hay un Historial de cambios en Administración.';
       if (antes === '3.3') return 'Sistema actualizado a la versión 3.4: ahora podés corregir datos con el lapicito (Cargar → Corregir un dato y en la ficha de cada animal).';
       if (antes === '3.2') return 'Sistema actualizado a la versión 3.3: nuevo Panel decisional (resumen, etapas, rendimiento, consumo, mejoras entre campañas y escenarios) y la ovejita del asistente con IA, abajo a la derecha.';

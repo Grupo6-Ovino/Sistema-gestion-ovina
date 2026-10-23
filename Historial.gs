@@ -3,7 +3,7 @@
  * ---------------------------------------------------------------------------------------------
  * Lee la auditoría (S_Auditoria), que ya registra cada alta, modificación, corrección y baja con el usuario,
  * la fecha y hora, el valor anterior y el nuevo, y la muestra entendible: qué campo cambió, de qué a qué.
- * La ven el Administrador y Consulta / auditoría (los demás ven quién cargó y quién modificó cada registro).
+ * La ve solo el Administrador (los demás ven quién cargó y quién modificó cada registro).
  */
 var NOMBRES_TABLA_ = null;
 function nombreUsuario_(email) {
@@ -19,7 +19,7 @@ function quien_(r) {
 }
 function api_historial(token, f) {
   var u = sesion_(token);
-  if (u.Rol !== 'Administrador' && u.Rol !== 'Consulta / auditoría') throw new Error('El historial lo ven el Administrador y Consulta / auditoría.');
+  if (u.Rol !== 'Administrador') throw new Error('El historial de cambios lo ve solo el Administrador.');
   f = f || {};
   var desde = f.desde || '', hasta = f.hasta || '', tabla = f.tabla || '', quien = String(f.usuario || '').toLowerCase(), q = String(f.texto || '').toLowerCase();
   var tit = function (t) { return SCHEMA[t] ? SCHEMA[t].titulo : t; };

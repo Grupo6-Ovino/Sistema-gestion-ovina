@@ -297,6 +297,8 @@
   .chatS { display:flex; flex-wrap:wrap; gap:6px; padding:0 12px 8px; background:var(--fondo); } .chatS .pill { min-height:36px; padding:6px 12px; font-size:13.5px; text-align:left; }
   .chatF { display:flex; gap:8px; padding:10px; border-top:1px solid var(--linea); align-items:flex-end; } .chatF textarea { min-height:44px; resize:none; font-size:15px; } .chatF .btn { min-height:44px; padding:8px 14px; font-size:15px; }
   @media (max-width:640px) { .chat { right:8px; left:8px; width:auto; bottom:88px; height:calc(100vh - 110px); } .oveja { right:12px; bottom:12px; } footer { padding-bottom:70px; } }
+  .carga { min-height:100vh; background:var(--fondo); }
+  @media (min-width:1000px) { .carga main { padding-left:calc(var(--side) + 36px); } .carga.inicio main { padding-left:clamp(16px,3vw,36px); } }
   /* Carga mientras busca datos */
   .cargando { display:grid; gap:10px; }
   .cargando i { display:block; height:16px; border-radius:6px; background:linear-gradient(90deg,#e8eee9 0%,#f4f7f4 50%,#e8eee9 100%); background-size:200% 100%; animation:brillo 1.2s ease-in-out infinite; }
@@ -318,7 +320,9 @@
 </style>
 </head>
 <body>
-<div id="login">
+<div id="carga" class="carga"><header class="hero"><div class="in"><div class="top"><div class="marca"><b>Pozo del Carril</b> · La Aguada · Ovinos Dorper</div></div><h1 id="cargaTit">&nbsp;</h1></div></header>
+<main><div class="card"><div class="cargando"><i></i><i></i><i></i><i></i></div></div><div class="card"><div class="cargando"><i></i><i></i><i></i></div></div></main></div>
+<div id="login" class="hide">
   <div class="card">
     <div class="ft" id="loginFoto"><div><span class="cvn" style="margin-bottom:10px">PdC</span><b>Pozo del Carril</b>Sistema de Gestión Ovina · Rodeo Dorper</div></div>
     <div class="cuerpo">
@@ -484,7 +488,7 @@ function salir(silencioso) {
   if (S.token && !silencioso) call('api_logout', S.token, S.code).catch(function () {});
   S.token = null; S.code = null; guardar('ovToken', null); guardar('ovLugar', null);
   if (HIST) { try { HIST.replace({ v: 'inicio' }, {}, ''); } catch (e) {} }
-  $('menuU').classList.add('hide'); $('app').classList.add('hide'); $('login').classList.remove('hide'); if ($('oveja')) { $('oveja').classList.add('hide'); chatAbrir(false); CHAT = []; chatPintar(); }
+  $('menuU').classList.add('hide'); $('app').classList.add('hide'); $('carga').classList.add('hide'); $('login').classList.remove('hide'); if ($('oveja')) { $('oveja').classList.add('hide'); chatAbrir(false); CHAT = []; chatPintar(); }
   if (silencioso) msg($('loginMsg'), 'warn', 'La sesión venció. Volvé a entrar.');
 }
 function iniciar() {
@@ -494,7 +498,7 @@ function iniciar() {
     var ini = String(S.u.Nombre || '?').trim().split(/\s+/).map(function (p) { return p[0]; }).slice(0, 2).join('').toUpperCase();
     $('avU').textContent = ini; $('nmU').innerHTML = esc(S.u.Nombre) + '<small>' + esc(S.u.Rol) + (S.u.IdSubunidad ? ' · ' + esc(nomEtapa(S.u.IdSubunidad)) : '') + '</small>';
     $('heroFecha').textContent = fechaLarga(); $('verPie').textContent = 'Versión ' + r.version;
-    $('login').classList.add('hide'); $('app').classList.remove('hide'); ovejaMontar(); $('oveja').classList.remove('hide');
+    $('login').classList.add('hide'); $('carga').classList.add('hide'); $('app').classList.remove('hide'); ovejaMontar(); $('oveja').classList.remove('hide');
     ir(S.vista, 'arranque');
   });
 }
@@ -520,7 +524,7 @@ function armarMenu() {
   if (!puede('F_Tesoreria', 'crear')) ver.splice(2, 0, it('cuentas', 'cuentas', 'Cobros y pagos'));
   $('side').innerHTML = '<div class="marcaS"><span class="cvn">PdC</span><div>Pozo del Carril<small>Sistema de Gestión Ovina</small></div></div><div style="height:6px"></div>' + it('inicio', 'inicio', 'Inicio') +
     (carga.length ? '<div class="grupoS">Cargar</div>' + carga.join('') : '') + '<div class="grupoS">Consultar</div>' + ver.join('') +
-    (S.u.Rol === 'Administrador' || S.u.Rol === 'Consulta / auditoría' ? '<div class="grupoS">Administración</div>' + (S.u.Rol === 'Administrador' ? it('tablas', 'tablas', 'Tablas y usuarios') : '') + it('historial', 'libro', 'Historial de cambios') : '') +
+    (S.u.Rol === 'Administrador' ? '<div class="grupoS">Administración</div>' + it('tablas', 'tablas', 'Tablas y usuarios') + it('historial', 'libro', 'Historial de cambios') : '') +
     '<div class="pieS">' + it('clave', 'clave', 'Cambiar mi clave') + '<button class="itS" onclick="salir()">' + ic('salir') + 'Salir</button></div>';
 }
 document.addEventListener('click', function (e) { if (!e.target.closest('#chipU') && !e.target.closest('#menuU')) $('menuU').classList.add('hide'); });
@@ -538,6 +542,7 @@ function ir(v, origen) {
   if (origen !== 'arranque' && origen !== 'historia') guardarLugar();
   var nueva = origen !== 'historia' && origen !== 'arranque' && v !== S.vista;
   S.vista = v; $('menuU').classList.add('hide'); menuLateral(false);
+  try { var lg = JSON.parse(leer('ovLugar') || '{}'); lg._v = v; guardar('ovLugar', JSON.stringify(lg)); } catch (e) {}
   document.body.classList.toggle('enInicio', v === 'inicio');
   $('hero').classList.toggle('big', v === 'inicio');
   var h = new Date().getHours(), saludo = h < 13 ? 'Buen día' : h < 20 ? 'Buenas tardes' : 'Buenas noches';
@@ -591,7 +596,7 @@ function vInicio() {
     t('impuestos', 'impuestos', 'Impuestos', 'Vencimientos y pagos'), t('unidades', 'unidades', 'Unidades del campo', 'Bovinos, porcinos, maíz, soja')];
   if (!puede('F_Tesoreria', 'crear')) ver.splice(1, 0, t('cuentas', 'cuentas', 'Cobros y pagos', 'Facturas, lo que se debe y lo que nos deben'));
   if (S.u.Rol === 'Administrador') ver.push(t('tablas', 'tablas', 'Administración', 'Tablas, parámetros y usuarios'));
-  if (S.u.Rol === 'Administrador' || S.u.Rol === 'Consulta / auditoría') ver.push(t('historial', 'libro', 'Historial de cambios', 'Quién cambió qué y cuándo'));
+  if (S.u.Rol === 'Administrador') ver.push(t('historial', 'libro', 'Historial de cambios', 'Quién cambió qué y cuándo'));
   if (carga.length) h += '<h2 class="seccion">¿Qué hiciste hoy?</h2><div class="tiles t3">' + carga.join('') + '</div>';
   h += '<h2 class="seccion">Consultar</h2><div class="tiles t4">' + ver.join('') + '</div>';
   $('main').innerHTML = h;
@@ -1734,18 +1739,22 @@ function vClave() {
 function kGuardar() { call('api_cambiarClave', S.token, $('kA').value, $('kN').value).then(function (r) { msg($('kMsg'), 'ok', r.mensaje); }).catch(function (e) { msg($('kMsg'), 'err', e.message); }); }
 
 /* Arranque: vuelve a la misma sección después de F5; si el navegador no guardó la sesión, usa el código de la dirección */
+function verLogin() { $('carga').classList.add('hide'); $('login').classList.remove('hide'); }
 function arrancar(loc) {
   var par = (loc && loc.parameter) || {}, lugar = {};
   try { lugar = JSON.parse(leer('ovLugar') || '{}'); } catch (e) {}
   S.vista = VISTAS[par.v] ? par.v : (VISTAS[lugar._v] ? lugar._v : 'inicio');
   S.code = par.k || null;
-  if (!S.token && !S.code) return; // nunca entró en esta pestaña: pantalla de ingreso
-  $('loginMsg').innerHTML = '<div class="msg ok">Retomando tu sesión…</div>';
+  if (!S.token && !S.code) { verLogin(); return; } // nunca entró en esta pestaña: pantalla de ingreso
+  $('cargaTit').textContent = S.vista === 'inicio' ? 'Cargando…' : VISTAS[S.vista][0];
+  $('carga').classList.toggle('inicio', S.vista === 'inicio');
   iniciar().catch(function (e) {
+    verLogin();
     if (/Sesión vencida|inexistente/.test(e.message)) salir(true);
     else msg($('loginMsg'), 'err', 'No se pudo cargar el sistema (' + e.message + '). Probá de nuevo con F5.');
   });
 }
+(function () { try { var l = JSON.parse(leer('ovLugar') || '{}'); if (VISTAS[l._v] && l._v !== 'inicio') { $('cargaTit').textContent = VISTAS[l._v][0]; } else $('carga').classList.add('inicio'); } catch (e) {} })();
 if (typeof google !== 'undefined' && google.script && google.script.url) google.script.url.getLocation(arrancar); else arrancar(null);
 </script>
 </body>

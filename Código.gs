@@ -22,7 +22,7 @@
  */
 
 var TZ = 'America/Argentina/Buenos_Aires';
-var VERSION = '3.5';
+var VERSION = '3.6';
 var AUDIT_COLS = ['CreadoEl', 'CreadoPor', 'ModificadoEl', 'ModificadoPor', 'Activo'];
 var ROLES = ['Administrador', 'Operador de carga', 'Consulta / auditoría']; // v3.5: se quitó "Responsable de subunidad" (el Operador de carga hace lo mismo)
 var SESION_SEGUNDOS = 6 * 60 * 60;
