@@ -297,8 +297,8 @@
   .chatS { display:flex; flex-wrap:wrap; gap:6px; padding:0 12px 8px; background:var(--fondo); } .chatS .pill { min-height:36px; padding:6px 12px; font-size:13.5px; text-align:left; }
   .chatF { display:flex; gap:8px; padding:10px; border-top:1px solid var(--linea); align-items:flex-end; } .chatF textarea { min-height:44px; resize:none; font-size:15px; } .chatF .btn { min-height:44px; padding:8px 14px; font-size:15px; }
   @media (max-width:640px) { .chat { right:8px; left:8px; width:auto; bottom:88px; height:calc(100vh - 110px); } .oveja { right:12px; bottom:12px; } footer { padding-bottom:70px; } }
-  .carga { min-height:100vh; background:var(--fondo); }
-  @media (min-width:1000px) { .carga main { padding-left:calc(var(--side) + 36px); } .carga.inicio main { padding-left:clamp(16px,3vw,36px); } }
+  #carga { min-height:100vh; background:var(--fondo); }
+  @media (min-width:1000px) { #carga main { padding-left:calc(var(--side) + 36px); } #carga.inicio main { padding-left:clamp(16px,3vw,36px); } }
   /* Carga mientras busca datos */
   .cargando { display:grid; gap:10px; }
   .cargando i { display:block; height:16px; border-radius:6px; background:linear-gradient(90deg,#e8eee9 0%,#f4f7f4 50%,#e8eee9 100%); background-size:200% 100%; animation:brillo 1.2s ease-in-out infinite; }
@@ -320,7 +320,7 @@
 </style>
 </head>
 <body>
-<div id="carga" class="carga"><header class="hero"><div class="in"><div class="top"><div class="marca"><b>Pozo del Carril</b> · La Aguada · Ovinos Dorper</div></div><h1 id="cargaTit">&nbsp;</h1></div></header>
+<div id="carga"><header class="hero"><div class="in"><div class="top"><div class="marca"><b>Pozo del Carril</b> · La Aguada · Ovinos Dorper</div></div><h1 id="cargaTit">&nbsp;</h1></div></header>
 <main><div class="card"><div class="cargando"><i></i><i></i><i></i><i></i></div></div><div class="card"><div class="cargando"><i></i><i></i><i></i></div></div></main></div>
 <div id="login" class="hide">
   <div class="card">
