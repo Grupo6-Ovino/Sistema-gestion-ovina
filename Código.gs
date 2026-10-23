@@ -22,9 +22,9 @@
  */
 
 var TZ = 'America/Argentina/Buenos_Aires';
-var VERSION = '3.4';
+var VERSION = '3.5';
 var AUDIT_COLS = ['CreadoEl', 'CreadoPor', 'ModificadoEl', 'ModificadoPor', 'Activo'];
-var ROLES = ['Administrador', 'Responsable de subunidad', 'Operador de carga', 'Consulta / auditoría'];
+var ROLES = ['Administrador', 'Operador de carga', 'Consulta / auditoría']; // v3.5: se quitó "Responsable de subunidad" (el Operador de carga hace lo mismo)
 var SESION_SEGUNDOS = 6 * 60 * 60;
 
 /** Rubros de gasto: cada producto nuevo hereda la cuenta del Anexo I y la clasificación del costo. */
@@ -1094,7 +1094,7 @@ function api_ficha(token, caravana) {
   var c = Number(caravana);
   var insumos = {}; leer_('D_Insumo').forEach(function (i) { insumos[i.IdInsumo] = i.Nombre; });
   return {
-    animal: sinOcultos_('D_Animal', an),
+    animal: sinOcultos_('D_Animal', an), quien: quien_(an),
     sanidad: leer_('F_Sanidad').filter(function (x) { return activo_(x) && Number(x.Caravana) === c; })
       .map(function (x) { return { Fecha: x.Fecha, TipoEvento: x.TipoEvento, IdInsumo: x.IdInsumo, Producto: insumos[x.IdInsumo] || x.IdInsumo, Dosis: x.Dosis, FinCarencia: x.FinCarencia, Responsable: x.Responsable }; }),
     venta: leer_('F_Ingresos').filter(function (x) { return activo_(x) && Number(x.Caravana) === c; }).map(function (x) { return { Fecha: x.Fecha, Kg: x.Kg, PrecioKg: x.PrecioKg, Comprobante: x.Comprobante }; }),

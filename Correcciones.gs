@@ -44,7 +44,7 @@ function api_corregibles(token) {
       else if (t === 'F_Sanidad') txt = 'Sanidad · caravana ' + r.Caravana + ' · ' + lab('D_Insumo', r.IdInsumo) + ' · dosis ' + r.Dosis;
       else if (t === 'F_Mortandad') txt = 'Muerte · caravana ' + r.Caravana + ' · ' + r.Causa;
       else txt = (r.Tipo || 'Movimiento') + ' · $' + fmtNum_(r.Importe, 2) + ' · ' + lab('D_Tercero', r.IdTercero);
-      out.push({ tabla: t, id: r[pk], fecha: r.Fecha || String(r.CreadoEl).slice(0, 10), texto: txt, creado: String(r.CreadoEl).slice(0, 10) });
+      out.push({ tabla: t, id: r[pk], fecha: r.Fecha || String(r.CreadoEl).slice(0, 10), texto: txt, creado: String(r.CreadoEl).slice(0, 10), quien: quien_(r) });
     });
   });
   out.sort(function (a, b) { return String(a.fecha) < String(b.fecha) ? 1 : -1; });

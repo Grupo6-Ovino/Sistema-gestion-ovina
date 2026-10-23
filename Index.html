@@ -520,7 +520,7 @@ function armarMenu() {
   if (!puede('F_Tesoreria', 'crear')) ver.splice(2, 0, it('cuentas', 'cuentas', 'Cobros y pagos'));
   $('side').innerHTML = '<div class="marcaS"><span class="cvn">PdC</span><div>Pozo del Carril<small>Sistema de Gestión Ovina</small></div></div><div style="height:6px"></div>' + it('inicio', 'inicio', 'Inicio') +
     (carga.length ? '<div class="grupoS">Cargar</div>' + carga.join('') : '') + '<div class="grupoS">Consultar</div>' + ver.join('') +
-    (S.u.Rol === 'Administrador' ? '<div class="grupoS">Administración</div>' + it('tablas', 'tablas', 'Tablas y usuarios') : '') +
+    (S.u.Rol === 'Administrador' || S.u.Rol === 'Consulta / auditoría' ? '<div class="grupoS">Administración</div>' + (S.u.Rol === 'Administrador' ? it('tablas', 'tablas', 'Tablas y usuarios') : '') + it('historial', 'libro', 'Historial de cambios') : '') +
     '<div class="pieS">' + it('clave', 'clave', 'Cambiar mi clave') + '<button class="itS" onclick="salir()">' + ic('salir') + 'Salir</button></div>';
 }
 document.addEventListener('click', function (e) { if (!e.target.closest('#chipU') && !e.target.closest('#menuU')) $('menuU').classList.add('hide'); });
@@ -531,7 +531,7 @@ var VISTAS = {
   venta:     ['Vender animales', vVenta], terceros: ['Proveedores y clientes', vTerceros], animales: ['Los animales', vAnimales],
   tablero:   ['Resultados', vTablero], tablas: ['Administración', vTablas], clave: ['Cambiar mi clave', vClave],
   indicadores: ['Indicadores (Cuadro de Mando Integral)', vIndicadores], cotizaciones: ['Cotizaciones', vCotizaciones],
-  impuestos: ['Impuestos y vencimientos', vImpuestos], corregir: ['Corregir un dato', vCorregir], panel: ['Panel decisional', vPanel], unidades: ['Unidades de Pozo del Carril', vUnidades]
+  impuestos: ['Impuestos y vencimientos', vImpuestos], corregir: ['Corregir un dato', vCorregir], historial: ['Historial de cambios', vHistorial], panel: ['Panel decisional', vPanel], unidades: ['Unidades de Pozo del Carril', vUnidades]
 };
 function ir(v, origen) {
   if (!VISTAS[v]) v = 'inicio';
@@ -541,7 +541,7 @@ function ir(v, origen) {
   document.body.classList.toggle('enInicio', v === 'inicio');
   $('hero').classList.toggle('big', v === 'inicio');
   var h = new Date().getHours(), saludo = h < 13 ? 'Buen día' : h < 20 ? 'Buenas tardes' : 'Buenas noches';
-  var ICV = { sanidad:'sanidad', nacimiento:'oveja', muerte:'baja', compra:'compra', compras:'cuentas', cuentas:'cuentas', venta:'venta', terceros:'terceros', animales:'caravana', tablero:'tablero', tablas:'tablas', clave:'clave', indicadores:'indicadores', panel:'cotizaciones', corregir:'lapiz', cotizaciones:'cotizaciones', impuestos:'impuestos', unidades:'unidades' };
+  var ICV = { sanidad:'sanidad', nacimiento:'oveja', muerte:'baja', compra:'compra', compras:'cuentas', cuentas:'cuentas', venta:'venta', terceros:'terceros', animales:'caravana', tablero:'tablero', tablas:'tablas', clave:'clave', indicadores:'indicadores', panel:'cotizaciones', corregir:'lapiz', historial:'libro', cotizaciones:'cotizaciones', impuestos:'impuestos', unidades:'unidades' };
   $('heroTit').innerHTML = v === 'inicio' ? esc(saludo + ', ' + String(S.u.Nombre).split(' ')[0]) : '<span class="icT">' + ic(ICV[v]) + '</span>' + esc(VISTAS[v][0]);
   $('heroFecha').classList.toggle('hide', v !== 'inicio'); $('heroExtra').innerHTML = '';
   document.title = (v === 'inicio' ? '' : VISTAS[v][0] + ' · ') + 'Pozo del Carril';
@@ -591,6 +591,7 @@ function vInicio() {
     t('impuestos', 'impuestos', 'Impuestos', 'Vencimientos y pagos'), t('unidades', 'unidades', 'Unidades del campo', 'Bovinos, porcinos, maíz, soja')];
   if (!puede('F_Tesoreria', 'crear')) ver.splice(1, 0, t('cuentas', 'cuentas', 'Cobros y pagos', 'Facturas, lo que se debe y lo que nos deben'));
   if (S.u.Rol === 'Administrador') ver.push(t('tablas', 'tablas', 'Administración', 'Tablas, parámetros y usuarios'));
+  if (S.u.Rol === 'Administrador' || S.u.Rol === 'Consulta / auditoría') ver.push(t('historial', 'libro', 'Historial de cambios', 'Quién cambió qué y cuándo'));
   if (carga.length) h += '<h2 class="seccion">¿Qué hiciste hoy?</h2><div class="tiles t3">' + carga.join('') + '</div>';
   h += '<h2 class="seccion">Consultar</h2><div class="tiles t4">' + ver.join('') + '</div>';
   $('main').innerHTML = h;
@@ -998,7 +999,7 @@ function anFicha(car) {
     var fila = function (k, v) { return v === '' || v === undefined || v === null ? '' : '<tr><th style="position:static;width:45%">' + k + '</th><td>' + v + '</td></tr>'; };
     var h = '<div class="row" style="align-items:center"><h2 style="flex:1">Caravana ' + a.Caravana + '</h2>' + (S.u.Rol !== 'Consulta / auditoría' ? '<button class="btn2" onclick="coAbrir(\'D_Animal\',\'' + a.Caravana + '\',\'fichaCorr\',function(x){ document.querySelector(\'.modal\').remove(); anFicha(' + a.Caravana + '); })" aria-label="Corregir la ficha">' + ic('lapiz') + 'Corregir</button>' : '') + '<button class="btn2" onclick="this.closest(\'.modal\').remove()">Cerrar</button></div><div id="fichaCorr"></div>' +
       '<table>' + fila('Categoría', esc(nombreCat(a.IdCategoria))) + fila('Estado', esc(a.Estado) + (a.FechaBaja ? ' (' + fecha(a.FechaBaja) + ')' : '')) + fila('Nació', fecha(a.FechaNac)) + fila('Sexo', esc(a.Sexo)) +
-      fila('Peso', a.PesoKg !== '' ? num(a.PesoKg) + ' kg' : '') + fila('Estado reproductivo', esc(a.EstadoRepro)) + fila('Madre', a.Madre) + fila('Padre', a.Padre) + fila('Observaciones', esc(a.Observaciones)) + '</table>';
+      fila('Peso', a.PesoKg !== '' ? num(a.PesoKg) + ' kg' : '') + fila('Estado reproductivo', esc(a.EstadoRepro)) + fila('Madre', a.Madre) + fila('Padre', a.Padre) + fila('Observaciones', esc(a.Observaciones)) + fila('Cargado por', r.quien && r.quien.cargo ? esc(r.quien.cargo) + ' · ' + fecha(r.quien.cargoEl.slice(0, 10)) : '') + fila('Última modificación', r.quien && r.quien.modifico ? esc(r.quien.modifico) + ' · ' + fecha(r.quien.modificoEl.slice(0, 10)) + ' ' + esc(r.quien.modificoEl.slice(11, 16)) + ' h' : '') + '</table>';
     h += '<h3>Tratamientos</h3>' + (r.sanidad.length ? '<div class="lista">' + r.sanidad.map(function (s) { return '<div class="item"><div class="t"><b>' + esc(s.TipoEvento) + ' · ' + esc(s.Producto) + '</b><div>' + fecha(s.Fecha) + ' · ' + num(s.Dosis) + ' ' + sUmDe(s.IdInsumo) + ' · ' + esc(s.Responsable) + '</div></div><div class="der">' + (s.FinCarencia > hoy() ? '<span class="tag r">Carencia hasta ' + fecha(s.FinCarencia) + '</span>' : '') + '</div></div>'; }).join('') + '</div>' : '<p class="muted">Sin tratamientos cargados.</p>');
     if (r.hijos.length) h += '<h3>Crías</h3><p>' + r.hijos.map(function (x) { return 'Caravana ' + x.Caravana + ' (' + fecha(x.FechaNac) + ', ' + esc(x.Estado) + ')'; }).join(' · ') + '</p>';
     if (r.venta.length) h += '<h3>Venta</h3><p>' + r.venta.map(function (v) { return fecha(v.Fecha) + ' · ' + num(v.Kg) + ' kg a ' + pesos(v.PrecioKg) + '/kg · ' + esc(v.Comprobante); }).join('<br>') + '</p>';
@@ -1645,7 +1646,7 @@ function coPintar() {
   Array.prototype.forEach.call(document.querySelectorAll('#coTipos .pill'), function (b, i) { b.classList.toggle('on', CO_TIPOS[i][0] === CO.filtro); });
   var q = CO.busca.toLowerCase().trim(), L = CO.items.filter(function (x) { return (!CO.filtro || x.tabla === CO.filtro) && (!q || x.texto.toLowerCase().indexOf(q) >= 0); });
   $('coLista').innerHTML = L.length ? '<div class="lista">' + L.slice(0, 120).map(function (x, k) {
-    return '<div class="item"><div class="t"><b>' + esc(x.texto) + '</b><div>' + fecha(x.fecha) + '</div></div><div class="der"><button class="btn2" onclick="coAbrir(\'' + x.tabla + '\',\'' + esc(x.id) + '\',\'coF' + k + '\')" aria-label="Corregir">' + ic('lapiz') + 'Corregir</button></div><div id="coF' + k + '" style="flex-basis:100%"></div></div>';
+    return '<div class="item"><div class="t"><b>' + esc(x.texto) + '</b><div>' + fecha(x.fecha) + ' · ' + quienTxt(x.quien) + '</div></div><div class="der"><button class="btn2" onclick="coAbrir(\'' + x.tabla + '\',\'' + esc(x.id) + '\',\'coF' + k + '\')" aria-label="Corregir">' + ic('lapiz') + 'Corregir</button></div><div id="coF' + k + '" style="flex-basis:100%"></div></div>';
   }).join('') + '</div>' + (L.length > 120 ? '<p class="muted">Mostrando 120 de ' + L.length + '. Usá el buscador para encontrar el resto.</p>' : '') : '<p class="muted">No hay registros para corregir con ese filtro.</p>';
 }
 /** Abre el formulario de corrección de un registro dentro del contenedor indicado. */
@@ -1671,6 +1672,31 @@ function coAbrir(tabla, id, cont, alListo) {
     };
   }).catch(function (e) { el.innerHTML = ''; msg(el, 'err', e.message); });
 }
+
+
+/* ---------- HISTORIAL DE CAMBIOS (v3.5) ---------- */
+var HI = { f: {} };
+function quienTxt(q) { if (!q) return ''; return (q.cargo ? 'Cargó: ' + esc(q.cargo) + (q.cargoEl ? ' (' + fecha(q.cargoEl.slice(0, 10)) + ' ' + esc(q.cargoEl.slice(11, 16)) + ')' : '') : '') + (q.modifico ? ' · Modificó: ' + esc(q.modifico) + (q.modificoEl ? ' (' + fecha(q.modificoEl.slice(0, 10)) + ' ' + esc(q.modificoEl.slice(11, 16)) + ')' : '') : ''); }
+function vHistorial() {
+  var m = $('main'); m.innerHTML = volverBtn() + '<div class="card"><div class="cargando"><i></i><i></i><i></i><i></i></div></div>';
+  call('api_historial', S.token, HI.f).then(function (r) {
+    var f = HI.f, val = function (v) { return v === null || v === undefined || v === '' ? '<span class="muted">(vacío)</span>' : esc(String(v)); };
+    var h = volverBtn() + '<div class="card"><h2>' + ic('libro') + ' Historial de cambios</h2><p class="sub">Todo lo que se cargó, se corrigió o se dio de baja: quién lo hizo, cuándo y qué cambió. Sale de la auditoría del sistema y no se puede borrar.</p>' +
+      '<div class="row">' + campo('Desde', '<input id="hiD" type="date" value="' + esc(f.desde || '') + '">') + campo('Hasta', '<input id="hiH" type="date" value="' + esc(f.hasta || '') + '">') +
+      campo('Usuario', '<select id="hiU"><option value="">Todos</option>' + r.usuarios.map(function (u) { return '<option value="' + esc(u.email) + '"' + (u.email === f.usuario ? ' selected' : '') + '>' + esc(u.nombre) + '</option>'; }).join('') + '</select>') +
+      campo('Qué', '<select id="hiT"><option value="">Todo</option>' + r.tablas.map(function (t) { return '<option value="' + esc(t.id) + '"' + (t.id === f.tabla ? ' selected' : '') + '>' + esc(t.nombre) + '</option>'; }).join('') + '</select>') + '</div>' +
+      '<div class="row">' + campo('Buscar', '<input id="hiQ" placeholder="Ej.: caravana 45, kilos, FAV 0003…" value="' + esc(f.texto || '') + '">') +
+      '<div class="f" style="flex:0 0 auto"><label><input type="checkbox" id="hiI" style="width:auto;min-height:0;margin-right:6px"' + (f.conIngresos ? ' checked' : '') + '>Incluir ingresos al sistema</label></div>' +
+      '<div class="f" style="flex:0 0 auto"><button class="btn" onclick="hiFiltrar()">Buscar</button></div></div>' +
+      '<p class="muted">Mostrando ' + r.items.length + (r.total > r.items.length ? ' de ' + r.total : '') + ' movimientos, del más nuevo al más viejo.</p><div class="lista">' +
+      (r.items.length ? r.items.map(function (x) {
+        return '<div class="item"><div class="t"><b>' + esc(x.accion) + ' · ' + esc(x.tabla) + (x.registro ? ' · ' + esc(x.registro) : '') + '</b><div>' + fecha(x.fecha.slice(0, 10)) + ' ' + esc(x.fecha.slice(11, 16)) + ' h · ' + esc(x.usuario) + '</div>' +
+          (x.cambios.length ? '<table style="margin-top:8px"><thead><tr><th>Campo</th><th>Antes</th><th>Después</th></tr></thead><tbody>' + x.cambios.map(function (c) { return '<tr><td>' + esc(c.campo) + '</td><td>' + val(c.antes) + '</td><td><b>' + val(c.despues) + '</b></td></tr>'; }).join('') + '</tbody></table>' : '') + '</div></div>';
+      }).join('') : '<p class="muted">No hay movimientos con esos filtros.</p>') + '</div></div>';
+    m.innerHTML = h;
+  }).catch(function (e) { m.innerHTML = volverBtn(); msg(m.appendChild(document.createElement('div')), 'err', e.message); });
+}
+function hiFiltrar() { HI.f = { desde: $('hiD').value, hasta: $('hiH').value, usuario: $('hiU').value, tabla: $('hiT').value, texto: $('hiQ').value, conIngresos: $('hiI').checked }; vHistorial(); }
 
 /* ---------- UNIDADES DE POZO DEL CARRIL ---------- */
 function vUnidades() {

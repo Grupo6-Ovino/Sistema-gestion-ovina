@@ -31,6 +31,7 @@ function asegurarVersion_() {
       var log = migrarV3_();
       invalidarTodo_();
       p.setProperty('VERSION_DATOS', VERSION);
+      if (antes === '3.4') return 'Sistema actualizado a la versión 3.5: se quitó el rol Responsable de subunidad (quien lo tenía ahora es Operador de carga), cada registro muestra quién lo cargó y quién lo modificó, y hay un Historial de cambios en Administración.';
       if (antes === '3.3') return 'Sistema actualizado a la versión 3.4: ahora podés corregir datos con el lapicito (Cargar → Corregir un dato y en la ficha de cada animal).';
       if (antes === '3.2') return 'Sistema actualizado a la versión 3.3: nuevo Panel decisional (resumen, etapas, rendimiento, consumo, mejoras entre campañas y escenarios) y la ovejita del asistente con IA, abajo a la derecha.';
       if (antes === '3.1') return 'Sistema actualizado a la versión 3.2: más rápido, F5 sin perder la sesión en cualquier navegador, avisos al lado de cada botón y textos corregidos.';
@@ -316,6 +317,17 @@ function migrarV3_() {
       cambiarActivo_('F_Tesoreria', x, false, QUIEN, 'Baja: cobro de una venta de prueba');
     });
     return 'Ventas de prueba anuladas: ' + n + ' renglones; ' + m + ' animales volvieron al rodeo';
+  });
+
+  // ---------- v3.5 ----------
+  // Se quita el rol "Responsable de subunidad" (pedido del grupo, 23/10/2026): quien lo tenía pasa a Operador de carga.
+  paso('roles35', function () {
+    var n = 0;
+    leer_('S_Usuarios').forEach(function (x) {
+      if (x.Rol !== 'Responsable de subunidad') return;
+      actualizarFila('S_Usuarios', x, { Rol: 'Operador de carga', IdSubunidad: '' }, 'Rol cambiado: se eliminó "Responsable de subunidad" (v3.5)'); n++;
+    });
+    return 'Roles: ' + n + ' usuario(s) pasaron de Responsable de subunidad a Operador de carga';
   });
 
   return log;
