@@ -31,6 +31,7 @@ function asegurarVersion_() {
       var log = migrarV3_();
       invalidarTodo_();
       p.setProperty('VERSION_DATOS', VERSION);
+      if (antes === '3.3') return 'Sistema actualizado a la versión 3.4: ahora podés corregir datos con el lapicito (Cargar → Corregir un dato y en la ficha de cada animal).';
       if (antes === '3.2') return 'Sistema actualizado a la versión 3.3: nuevo Panel decisional (resumen, etapas, rendimiento, consumo, mejoras entre campañas y escenarios) y la ovejita del asistente con IA, abajo a la derecha.';
       if (antes === '3.1') return 'Sistema actualizado a la versión 3.2: más rápido, F5 sin perder la sesión en cualquier navegador, avisos al lado de cada botón y textos corregidos.';
       if (antes === '3.0') return 'Sistema actualizado a la versión ' + VERSION + ': pantalla renovada, la sesión ya no se cierra con F5 ni con la flecha de atrás, y el número de factura de venta sale solo. Se anularon las 2 ventas de prueba. El detalle quedó en Administración → Auditoría.';

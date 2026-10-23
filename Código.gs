@@ -22,7 +22,7 @@
  */
 
 var TZ = 'America/Argentina/Buenos_Aires';
-var VERSION = '3.3';
+var VERSION = '3.4';
 var AUDIT_COLS = ['CreadoEl', 'CreadoPor', 'ModificadoEl', 'ModificadoPor', 'Activo'];
 var ROLES = ['Administrador', 'Responsable de subunidad', 'Operador de carga', 'Consulta / auditoría'];
 var SESION_SEGUNDOS = 6 * 60 * 60;
@@ -842,6 +842,11 @@ function api_editar(token, tabla, id, entrada) {
       validar_(tabla, o, u, id);
       calcular_(tabla, o);
       if (tabla === 'D_Animal') { o.Estado = actual.Estado; o.FechaBaja = actual.FechaBaja; }
+      // v3.3: si se corrige el peso, la fecha o el sexo de una ficha con datos estimados, se saca la marca de "estimado"
+      if (tabla === 'D_Animal' && /estimad/i.test(String(o.Observaciones || '')) &&
+          (String(o.PesoKg) !== String(actual.PesoKg) || String(o.FechaNac) !== String(actual.FechaNac) || String(o.Sexo) !== String(actual.Sexo))) {
+        o.Observaciones = String(o.Observaciones).replace(/[^.]*estimad[^.]*\.?/gi, '').replace(/\s+/g, ' ').trim();
+      }
       if (tabla === 'S_Usuarios') { o.Sal = actual.Sal; o.ClaveHash = actual.ClaveHash; }
       if (tabla === 'F_Costos') o.IdCompra = actual.IdCompra;
       if (!s.pkManual) o[s.pk] = actual[s.pk];

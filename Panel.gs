@@ -164,3 +164,16 @@ function api_asistente(token, pregunta, idCampana, escenario) {
 function pick_(o, ks) { var r = {}; (ks || []).forEach(function (k) { if (o && o[k] !== undefined) r[k] = o[k]; }); return r; }
 
 function r2_(x) { return Math.round(Number(x) * 100) / 100; }
+
+/** El administrador guarda la clave de Gemini desde la app (queda en Propiedades del script, nunca en la planilla ni en la página). */
+function api_guardarClaveIA(token, clave) {
+  var u = sesion_(token);
+  if (u.Rol !== 'Administrador') throw new Error('Solo el administrador puede guardar la clave.');
+  clave = String(clave || '').trim();
+  if (!/^AIza[0-9A-Za-z_\-]{20,}$/.test(clave)) throw new Error('Eso no parece una clave de Gemini: tiene que empezar con "AIza" y no llevar espacios.');
+  var res = UrlFetchApp.fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=1', { headers: { 'x-goog-api-key': clave }, muteHttpExceptions: true });
+  if (res.getResponseCode() === 400 || res.getResponseCode() === 403) throw new Error('Google rechazó la clave. Copiala de nuevo desde aistudio.google.com/apikey.');
+  PropertiesService.getScriptProperties().setProperty('GEMINI_API_KEY', clave);
+  conBloqueo_(function () { auditar_(u.Email, 'Guardó la clave de Gemini', 'Panel', 'GEMINI_API_KEY', null, null); });
+  return { ok: true, mensaje: 'Clave guardada. Ya podés preguntarle a la oveja.' };
+}

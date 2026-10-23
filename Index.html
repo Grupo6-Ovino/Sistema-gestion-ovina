@@ -270,6 +270,18 @@
   .uni { display:flex; gap:12px; align-items:flex-start; }
   .uni .ic { flex:0 0 44px; height:44px; border-radius:11px; display:grid; place-items:center; background:var(--verde-s); color:var(--verde); }
 
+  .listaInd { display:grid; gap:8px; margin-top:12px; }
+  .filaInd { border:1px solid var(--linea); border-radius:var(--r); background:#fff; overflow:hidden; }
+  .filaBtn { width:100%; display:flex; align-items:center; gap:12px; background:none; border:0; padding:12px 14px; cursor:pointer; text-align:left; color:var(--tinta); min-height:58px; }
+  .filaBtn:hover { background:var(--suave); }
+  .filaN { flex:1; font-weight:650; font-size:15.5px; } .filaN small, .filaV small { display:block; font-weight:400; font-size:13px; color:var(--tinta-2); margin-top:2px; }
+  .filaN small { margin-left:16px; } .filaV { text-align:right; font-weight:750; font-size:16px; font-variant-numeric:tabular-nums; }
+  .filaMas { flex:0 0 36px; height:36px; border-radius:9px; background:var(--verde-s); color:var(--verde); display:grid; place-items:center; }
+  .filaMas[aria-expanded="true"] svg { transform:rotate(90deg); }
+  .detI { border-top:1px solid var(--linea); padding:14px 16px 16px; background:var(--suave); }
+  .detCab { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; } .detV { font-size:30px; font-weight:750; line-height:1.1; font-variant-numeric:tabular-nums; }
+  .detG { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:10px; margin-top:12px; }
+  .detB { background:#fff; border:1px solid var(--linea); border-radius:var(--r-s); padding:10px 12px; font-size:14px; } .detB b { display:block; margin-bottom:4px; font-size:13.5px; color:var(--monte); }
   /* La ovejita del asistente */
   .oveja { position:fixed; right:18px; bottom:18px; z-index:45; width:64px; height:64px; border-radius:50%; border:0; background:var(--amarillo); box-shadow:var(--sh-alta); display:grid; place-items:center; cursor:pointer; transition:transform .15s; }
   .oveja:hover { transform:translateY(-2px) rotate(-4deg); } .oveja:focus-visible { outline:3px solid var(--monte); outline-offset:3px; }
@@ -502,6 +514,7 @@ function armarMenu() {
   if (puede('F_Compras', 'crear')) carga.push(it('compra', 'compra', 'Cargar una compra'));
   if (puede('F_Ingresos', 'crear')) carga.push(it('venta', 'venta', 'Vender animales'));
   if (puede('F_Tesoreria', 'crear')) carga.push(it('cuentas', 'cuentas', 'Cobros y pagos'));
+  if (S.u.Rol !== 'Consulta / auditoría') carga.push(it('corregir', 'lapiz', 'Corregir un dato'));
   var ver = [it('animales', 'caravana', 'Los animales'), it('terceros', 'terceros', 'Proveedores y clientes'), it('tablero', 'tablero', 'Resultados'),
     it('indicadores', 'indicadores', 'Indicadores'), it('panel', 'tablero', 'Panel decisional'), it('cotizaciones', 'cotizaciones', 'Cotizaciones'), it('impuestos', 'impuestos', 'Impuestos'), it('unidades', 'unidades', 'Unidades del campo')];
   if (!puede('F_Tesoreria', 'crear')) ver.splice(2, 0, it('cuentas', 'cuentas', 'Cobros y pagos'));
@@ -518,7 +531,7 @@ var VISTAS = {
   venta:     ['Vender animales', vVenta], terceros: ['Proveedores y clientes', vTerceros], animales: ['Los animales', vAnimales],
   tablero:   ['Resultados', vTablero], tablas: ['Administración', vTablas], clave: ['Cambiar mi clave', vClave],
   indicadores: ['Indicadores (Cuadro de Mando Integral)', vIndicadores], cotizaciones: ['Cotizaciones', vCotizaciones],
-  impuestos: ['Impuestos y vencimientos', vImpuestos], panel: ['Panel decisional', vPanel], unidades: ['Unidades de Pozo del Carril', vUnidades]
+  impuestos: ['Impuestos y vencimientos', vImpuestos], corregir: ['Corregir un dato', vCorregir], panel: ['Panel decisional', vPanel], unidades: ['Unidades de Pozo del Carril', vUnidades]
 };
 function ir(v, origen) {
   if (!VISTAS[v]) v = 'inicio';
@@ -528,7 +541,7 @@ function ir(v, origen) {
   document.body.classList.toggle('enInicio', v === 'inicio');
   $('hero').classList.toggle('big', v === 'inicio');
   var h = new Date().getHours(), saludo = h < 13 ? 'Buen día' : h < 20 ? 'Buenas tardes' : 'Buenas noches';
-  var ICV = { sanidad:'sanidad', nacimiento:'oveja', muerte:'baja', compra:'compra', compras:'cuentas', cuentas:'cuentas', venta:'venta', terceros:'terceros', animales:'caravana', tablero:'tablero', tablas:'tablas', clave:'clave', indicadores:'indicadores', panel:'cotizaciones', cotizaciones:'cotizaciones', impuestos:'impuestos', unidades:'unidades' };
+  var ICV = { sanidad:'sanidad', nacimiento:'oveja', muerte:'baja', compra:'compra', compras:'cuentas', cuentas:'cuentas', venta:'venta', terceros:'terceros', animales:'caravana', tablero:'tablero', tablas:'tablas', clave:'clave', indicadores:'indicadores', panel:'cotizaciones', corregir:'lapiz', cotizaciones:'cotizaciones', impuestos:'impuestos', unidades:'unidades' };
   $('heroTit').innerHTML = v === 'inicio' ? esc(saludo + ', ' + String(S.u.Nombre).split(' ')[0]) : '<span class="icT">' + ic(ICV[v]) + '</span>' + esc(VISTAS[v][0]);
   $('heroFecha').classList.toggle('hide', v !== 'inicio'); $('heroExtra').innerHTML = '';
   document.title = (v === 'inicio' ? '' : VISTAS[v][0] + ' · ') + 'Pozo del Carril';
@@ -571,6 +584,7 @@ function vInicio() {
   if (puede('F_Compras', 'crear')) carga.push(t('compra', 'compra', 'Cargué una compra', 'Factura de un proveedor', 1));
   if (puede('F_Ingresos', 'crear')) carga.push(t('venta', 'venta', 'Vendí animales', 'La factura sale numerada sola', 1));
   if (puede('F_Tesoreria', 'crear')) carga.push(t('cuentas', 'cuentas', 'Cobré o pagué algo', 'Recibos, lo que se debe y lo que nos deben', 1));
+  if (S.u.Rol !== 'Consulta / auditoría') carga.push(t('corregir', 'lapiz', 'Corregir un dato', 'Kilos, precios, fechas o pesos mal cargados', 1));
   var ver = [t('animales', 'caravana', 'Los animales', 'Rodeo, fichas y tratamientos'),
     t('terceros', 'terceros', 'Proveedores y clientes', puede('D_Tercero', 'crear') ? 'Ver y agregar' : 'Ver la lista'), t('tablero', 'tablero', 'Resultados', 'Ingresos, costos y margen'),
     t('indicadores', 'indicadores', 'Indicadores', 'Semáforo para tomar decisiones'), t('panel', 'cotizaciones', 'Panel decisional', 'Escenarios y asistente con IA'), t('cotizaciones', 'cotizaciones', 'Cotizaciones', 'Granos, hacienda y dólar'),
@@ -982,7 +996,7 @@ function anFicha(car) {
   call('api_ficha', S.token, car).then(function (r) {
     var a = r.animal;
     var fila = function (k, v) { return v === '' || v === undefined || v === null ? '' : '<tr><th style="position:static;width:45%">' + k + '</th><td>' + v + '</td></tr>'; };
-    var h = '<div class="row" style="align-items:center"><h2 style="flex:1">Caravana ' + a.Caravana + '</h2><button class="btn2" onclick="this.closest(\'.modal\').remove()">Cerrar</button></div>' +
+    var h = '<div class="row" style="align-items:center"><h2 style="flex:1">Caravana ' + a.Caravana + '</h2>' + (S.u.Rol !== 'Consulta / auditoría' ? '<button class="btn2" onclick="coAbrir(\'D_Animal\',\'' + a.Caravana + '\',\'fichaCorr\',function(x){ document.querySelector(\'.modal\').remove(); anFicha(' + a.Caravana + '); })" aria-label="Corregir la ficha">' + ic('lapiz') + 'Corregir</button>' : '') + '<button class="btn2" onclick="this.closest(\'.modal\').remove()">Cerrar</button></div><div id="fichaCorr"></div>' +
       '<table>' + fila('Categoría', esc(nombreCat(a.IdCategoria))) + fila('Estado', esc(a.Estado) + (a.FechaBaja ? ' (' + fecha(a.FechaBaja) + ')' : '')) + fila('Nació', fecha(a.FechaNac)) + fila('Sexo', esc(a.Sexo)) +
       fila('Peso', a.PesoKg !== '' ? num(a.PesoKg) + ' kg' : '') + fila('Estado reproductivo', esc(a.EstadoRepro)) + fila('Madre', a.Madre) + fila('Padre', a.Padre) + fila('Observaciones', esc(a.Observaciones)) + '</table>';
     h += '<h3>Tratamientos</h3>' + (r.sanidad.length ? '<div class="lista">' + r.sanidad.map(function (s) { return '<div class="item"><div class="t"><b>' + esc(s.TipoEvento) + ' · ' + esc(s.Producto) + '</b><div>' + fecha(s.Fecha) + ' · ' + num(s.Dosis) + ' ' + sUmDe(s.IdInsumo) + ' · ' + esc(s.Responsable) + '</div></div><div class="der">' + (s.FinCarencia > hoy() ? '<span class="tag r">Carencia hasta ' + fecha(s.FinCarencia) + '</span>' : '') + '</div></div>'; }).join('') + '</div>' : '<p class="muted">Sin tratamientos cargados.</p>');
@@ -1432,18 +1446,64 @@ function pdPintar() {
   ({ resumen: pdResumen, etapas: pdEtapas, rendimiento: pdRendimiento, consumo: pdConsumo, campanas: pdCampanas, escenarios: pdEscenarios })[PD.tab] ? ({ resumen: pdResumen, etapas: pdEtapas, rendimiento: pdRendimiento, consumo: pdConsumo, campanas: pdCampanas, escenarios: pdEscenarios })[PD.tab]() : pdResumen();
 }
 function pdSerie(id) { return PD.d.historia.filter(function (x) { return x.id === id && x.v !== null; }).sort(function (a, b) { return a.f < b.f ? -1 : 1; }); }
-function pdMini(id, color) {
-  var L = pdSerie(id); if (L.length < 2) return '<span class="muted">Se arma día a día</span>';
-  var vs = L.map(function (x) { return x.v; }), mn = Math.min.apply(null, vs), mx = Math.max.apply(null, vs), w = 120, hh = 28;
-  var pts = L.map(function (x, i) { return (i / (L.length - 1) * w).toFixed(1) + ',' + (mx === mn ? hh / 2 : hh - (x.v - mn) / (mx - mn) * hh).toFixed(1); }).join(' ');
-  return '<svg width="' + w + '" height="' + hh + '" viewBox="0 0 ' + w + ' ' + hh + '" aria-label="Evolución desde el ' + fecha(L[0].f) + '"><polyline fill="none" stroke="' + color + '" stroke-width="2" points="' + pts + '"/></svg>';
+function pdValCamp(id) { return PD.d.comparacion.map(function (c) { var x = c.ind.filter(function (i) { return i.id === id; })[0] || { valor: null, estado: 'Sin datos' }; return { nombre: c.nombre, id: c.id, valor: x.valor, estado: x.estado }; }); }
+function pdFmtEje(v, u) { return u === '%' ? num(v, 0) + ' %' : /^\$/.test(u || '') ? '$ ' + num(v, 0) : num(v, 1); }
+/** Gráfico profesional: una barra por campaña coloreada por su semáforo, con las metas como líneas de referencia. */
+function pdGrafico(i) {
+  var chico = window.innerWidth < 600, P0 = pdValCamp(i.id), W = chico ? 360 : 640, H = chico ? 240 : 270, L = chico ? 50 : 64, R = chico ? 96 : 150, T = 22, B = 44, w = W - L - R, h = H - T - B;
+  var mv = i.metaVerde === '' || i.metaVerde === null || i.metaVerde === undefined ? null : Number(i.metaVerde), ma = i.metaAmarillo === '' || i.metaAmarillo === null || i.metaAmarillo === undefined ? null : Number(i.metaAmarillo);
+  var refs = []; if (mv !== null) refs.push(mv); if (ma !== null) refs.push(ma); if (i.sentido === 'Cerca de cero es mejor' && mv !== null) refs.push(-mv);
+  var vals = P0.map(function (p) { return p.valor; }).filter(function (v) { return v !== null; });
+  if (!vals.length && !refs.length) return '<p class="muted">Todavía no hay valores para graficar.</p>';
+  var mx = Math.max.apply(null, vals.concat(refs).concat([0])), mn = Math.min.apply(null, vals.concat(refs).concat([0]));
+  if (mx === mn) mx = mn + 1; var pad = (mx - mn) * 0.12; mx += pad; if (mn < 0) mn -= pad;
+  var paso = (function (r) { var e = Math.pow(10, Math.floor(Math.log(r / 4) / Math.LN10)), f = r / 4 / e; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * e; })(mx - mn);
+  mx = Math.ceil(mx / paso) * paso; mn = Math.floor(mn / paso) * paso;
+  var y = function (v) { return T + (mx - v) / (mx - mn) * h; }, n = P0.length, bw = Math.min(64, w / n * 0.5);
+  var g = '';
+  for (var vv = mn; vv <= mx + paso / 2; vv += paso) { var yy = y(vv); g += '<line x1="' + L + '" x2="' + (L + w) + '" y1="' + yy + '" y2="' + yy + '" stroke="#e3e9e4" stroke-width="1"/><text x="' + (L - 8) + '" y="' + (yy + 4) + '" text-anchor="end" font-size="11" fill="#6a776e">' + esc(pdFmtEje(vv, i.unidad)) + '</text>'; }
+  g += '<line x1="' + L + '" x2="' + (L + w) + '" y1="' + y(0) + '" y2="' + y(0) + '" stroke="#9aa79e" stroke-width="1"/>';
+  var usadas = []; var ref = function (v, color, txt) { var yy = y(v), yt = yy + 4; usadas.forEach(function (u) { if (Math.abs(u - yt) < 15) yt = u + 15; }); usadas.push(yt); return '<line x1="' + L + '" x2="' + (L + w) + '" y1="' + yy + '" y2="' + yy + '" stroke="' + color + '" stroke-width="2" stroke-dasharray="6 4"/><text x="' + (L + w + 8) + '" y="' + yt + '" font-size="12" font-weight="600" fill="#16201a">' + esc(txt) + '</text>'; };
+  if (mv !== null) g += ref(mv, '#1d7a46', 'Meta: ' + fmtMeta(mv, i.unidad));
+  if (ma !== null) g += ref(ma, '#a86f00', 'Alerta: ' + fmtMeta(ma, i.unidad));
+  if (i.sentido === 'Cerca de cero es mejor' && mv !== null) g += ref(-mv, '#1d7a46', 'Meta: −' + fmtMeta(mv, i.unidad));
+  P0.forEach(function (p, k) {
+    var cx = L + w * (k + 0.5) / n, x0 = cx - bw / 2;
+    if (p.valor !== null) {
+      var y1 = y(Math.max(0, p.valor)), y2 = y(Math.min(0, p.valor)), hh = Math.max(2, y2 - y1), col = colorEst(p.estado);
+      g += '<g><title>' + esc(p.nombre + ': ' + pdFmtEje(p.valor, i.unidad) + ' · ' + p.estado) + '</title><path d="M' + x0 + ' ' + (y1 + hh) + 'V' + (y1 + 4) + 'Q' + x0 + ' ' + y1 + ' ' + (x0 + 4) + ' ' + y1 + 'H' + (x0 + bw - 4) + 'Q' + (x0 + bw) + ' ' + y1 + ' ' + (x0 + bw) + ' ' + (y1 + 4) + 'V' + (y1 + hh) + 'Z" fill="' + col + '"/>' +
+        '<text x="' + cx + '" y="' + (hh > 26 ? (p.valor >= 0 ? y1 + 18 : y2 - 8) : (p.valor >= 0 ? y1 - 8 : y2 + 16)) + '" text-anchor="middle" font-size="13" font-weight="700" fill="' + (hh > 26 ? '#fff' : '#16201a') + '">' + esc(pdFmtEje(p.valor, i.unidad)) + '</text></g>';
+    } else g += '<text x="' + cx + '" y="' + (y(0) - 8) + '" text-anchor="middle" font-size="12" fill="#6a776e">Sin datos</text>';
+    g += '<text x="' + cx + '" y="' + (H - 18) + '" text-anchor="middle" font-size="12.5" fill="#4c5a51">' + esc(p.nombre) + '</text>';
+  });
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="' + esc(i.nombre) + ' por campaña" style="max-width:760px;display:block">' + g + '</svg>';
+}
+function pdDetalle(id) {
+  var cont = $('pdDet_' + id), btn = $('pdBtn_' + id);
+  if (!cont.classList.contains('hide')) { cont.classList.add('hide'); btn.innerHTML = ic('mas'); btn.setAttribute('aria-expanded', 'false'); return; }
+  var i = PD.d.indicadores.indicadores.filter(function (x) { return x.id === id; })[0], C = pdValCamp(id), S2 = pdSerie(id);
+  var conV = C.filter(function (p) { return p.valor !== null; }), evol = '';
+  if (conV.length >= 2) {
+    var a = conV[conV.length - 2], b = conV[conV.length - 1], dif = b.valor - a.valor;
+    var mejora = i.sentido === 'Menor es mejor' ? dif < 0 : i.sentido === 'Cerca de cero es mejor' ? Math.abs(b.valor) < Math.abs(a.valor) : dif > 0;
+    evol = Math.abs(dif) < 1e-9 ? 'Quedó igual entre ' + a.nombre + ' y ' + b.nombre + '.' : (mejora ? 'Mejoró' : 'Empeoró') + ' de ' + pdFmtEje(a.valor, i.unidad) + ' (' + a.nombre + ') a ' + pdFmtEje(b.valor, i.unidad) + ' (' + b.nombre + '): ' + (dif > 0 ? '+' : '') + (i.unidad === '%' ? num(dif, 1) + ' puntos' : pdFmtEje(dif, i.unidad)) + (a.valor ? ' (' + (dif > 0 ? '+' : '') + num(dif / Math.abs(a.valor) * 100, 1) + ' %)' : '') + '.';
+  } else evol = 'Todavía hay un solo valor para comparar: la evolución aparece cuando haya datos de dos campañas.';
+  if (S2.length >= 2) evol += ' En la campaña actual, la foto diaria pasó de ' + pdFmtEje(S2[0].v, i.unidad) + ' (' + fecha(S2[0].f) + ') a ' + pdFmtEje(S2[S2.length - 1].v, i.unidad) + ' (' + fecha(S2[S2.length - 1].f) + ').';
+  var bloque = function (t, x) { return x ? '<div class="detB"><b>' + t + '</b><div>' + x + '</div></div>' : ''; };
+  cont.innerHTML = '<div class="detI"><div class="detCab"><div><div class="muted">' + esc(i.perspectiva) + ' · ' + esc(i.objetivo || '') + '</div><div class="detV" style="color:' + colorEst(i.estado) + '">' + (i.valor === null ? '—' : fmtInd(i.valor, i.unidad)) + '</div></div><span class="tag ' + (i.estado === 'Verde' ? 'v' : i.estado === 'Rojo' ? 'r' : i.estado === 'Amarillo' ? '' : 'g') + '">' + esc(i.estado) + '</span></div>' +
+    '<h3 style="margin-top:6px">Por campaña</h3>' + pdGrafico(i) +
+    '<div class="detG">' + bloque('Cómo se calcula', esc(i.formula || '—')) + bloque('Cálculo de esta campaña', esc(i.detalle || '—') + (i.nota ? '<br><span style="color:var(--warn)">' + esc(i.nota) + '</span>' : '')) +
+    bloque('Cómo evolucionó', esc(evol)) + bloque('Cómo se lee', esc(i.interpretacion || '—')) + bloque('Semáforo', metaTxt(i) + (i.fuenteMeta ? '<br><span class="muted">Meta: ' + esc(i.fuenteMeta) + '</span>' : '')) +
+    bloque('Qué hacer', esc(i.decision || '—')) + bloque('Quién y cuándo', 'Responsable: ' + esc(i.responsable || '—') + ' · Se mide: ' + esc(i.periodicidad || '—') + (i.automatico ? ' · Se calcula solo con los datos cargados' : ' · Valor cargado a mano')) + '</div>' +
+    '<details style="margin-top:6px"><summary>Ver los valores en tabla</summary><table style="margin-top:6px"><thead><tr><th>Campaña</th><th class="n">Valor</th><th>Semáforo</th></tr></thead><tbody>' + C.map(function (p) { return '<tr><td>' + esc(p.nombre) + '</td><td class="n">' + (p.valor === null ? '—' : fmtInd(p.valor, i.unidad)) + '</td><td>' + P(p.estado === 'Sin datos' || p.estado === 'Sin meta' ? 'Sin' : p.estado) + esc(p.estado) + '</td></tr>'; }).join('') + '</tbody></table></details></div>';
+  cont.classList.remove('hide'); btn.innerHTML = ic('volver'); btn.setAttribute('aria-expanded', 'true');
 }
 function pdResumen() {
   var d = PD.d, I = d.indicadores, cu = I.cuenta;
-  var h = '<div class="card"><h2>Resumen</h2><div class="sem"><span class="e-Verde">' + P('Verde') + cu.Verde + ' en meta</span><span class="e-Amarillo">' + P('Amarillo') + cu.Amarillo + ' en alerta</span><span class="e-Rojo">' + P('Rojo') + cu.Rojo + ' a corregir</span></div>' +
-    '<div class="scroll" style="margin-top:12px;max-height:none"><table><thead><tr><th>Indicador</th><th>Perspectiva</th><th class="n">Valor</th><th>Meta (verde)</th><th>Evolución</th></tr></thead><tbody>' +
-    I.indicadores.map(function (i) { return '<tr><td>' + P(i.estado === 'Sin datos' || i.estado === 'Sin meta' ? 'Sin' : i.estado) + esc(i.nombre) + '</td><td>' + esc(i.perspectiva) + '</td><td class="n">' + (i.valor === null ? '—' : fmtInd(i.valor, i.unidad)) + '</td><td>' + (i.metaVerde === '' ? '—' : fmtMeta(i.metaVerde, i.unidad)) + '</td><td>' + pdMini(i.id, colorEst(i.estado)) + '</td></tr>'; }).join('') +
-    '</tbody></table></div><p class="muted" style="margin-top:8px">La evolución sale de la copia analítica diaria: todos los días a las 19 h el sistema guarda una foto de cada indicador.</p></div>';
+  var h = '<div class="card"><h2>Resumen</h2><p class="sub">Tocá el + de cada indicador para ver cómo se calcula, cómo evolucionó entre campañas y qué hacer.</p><div class="sem"><span class="e-Verde">' + P('Verde') + cu.Verde + ' en meta</span><span class="e-Amarillo">' + P('Amarillo') + cu.Amarillo + ' en alerta</span><span class="e-Rojo">' + P('Rojo') + cu.Rojo + ' a corregir</span></div>' +
+    '<div class="listaInd">' + I.indicadores.map(function (i) {
+      return '<div class="filaInd"><button type="button" class="filaBtn" onclick="pdDetalle(\'' + esc(i.id) + '\')"><span class="filaN">' + P(i.estado === 'Sin datos' || i.estado === 'Sin meta' ? 'Sin' : i.estado) + esc(i.nombre) + '<small>' + esc(i.perspectiva) + '</small></span><span class="filaV">' + (i.valor === null ? '—' : fmtInd(i.valor, i.unidad)) + '<small>Meta: ' + (i.metaVerde === '' ? '—' : fmtMeta(i.metaVerde, i.unidad)) + '</small></span><span class="filaMas" id="pdBtn_' + esc(i.id) + '" aria-expanded="false">' + ic('mas') + '</span></button><div id="pdDet_' + esc(i.id) + '" class="hide"></div></div>';
+    }).join('') + '</div></div>';
   h += '<div class="card"><h2>' + ic('alerta') + ' Hallazgos</h2><p class="sub">Lo que el sistema detectó solo, con reglas: indicadores en rojo, desvíos de consumo y de rinde, y cambios fuertes contra la última foto.</p>' +
     (d.hallazgos.length ? '<div class="lista">' + d.hallazgos.map(function (x) { return '<div class="item"><div class="t"><b>' + P(x.tipo === 'Cambio' ? 'Sin' : x.tipo) + esc(x.titulo) + '</b><div>' + esc(x.texto) + '</div></div></div>'; }).join('') + '</div>' : '<p class="muted">No hay nada fuera de lo normal en esta campaña.</p>') + '</div>';
   $('pdCuerpo').innerHTML = h;
@@ -1542,6 +1602,11 @@ function ovejaMontar() {
   $('chatQ').addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); chatEnviar(); } });
   chatPintar();
 }
+function chatClave() {
+  var k = $('chatK') ? $('chatK').value : ''; if (!k) return;
+  call('api_guardarClaveIA', S.token, k).then(function (r) { CHAT.push({ de: 'ia', html: esc(r.mensaje) }); chatPintar(); })
+    .catch(function (e) { CHAT.push({ de: 'ia err', html: esc(e.message) }); chatPintar(); });
+}
 function chatAbrir(si) { $('chat').classList.toggle('abierto', si); if (si) setTimeout(function () { $('chatQ').focus(); }, 150); }
 function chatPintar() {
   $('chatL').innerHTML = (CHAT.length ? '' : '<div class="chatM ia">¡Hola! Soy la oveja del sistema. Preguntame sobre los indicadores, los resultados o un escenario del Panel decisional. Te respondo separando <b>hechos</b>, <b>cálculos</b> e <b>hipótesis a validar</b>.</div>') +
@@ -1556,7 +1621,55 @@ function chatEnviar() {
   call('api_asistente', S.token, q, S.campPanel || '', sup).then(function (r) {
     var html = esc(r.respuesta).replace(/^(Hechos|Cálculos|Hipótesis y acciones a validar):?\s*$/gm, '<b class="chatT">$1</b>').replace(/^- (.*)$/gm, '• $1').replace(/\n+/g, '<br>').replace(/<\/b><br>/g, '</b>').replace(/^<br>/, '');
     CHAT[CHAT.length - 1] = { de: 'ia', html: html + '<small class="chatP">' + esc(r.modelo) + ' · te quedan ' + r.quedan + ' preguntas hoy</small>' };
-  }).catch(function (e) { CHAT[CHAT.length - 1] = { de: 'ia err', html: esc(e.message) }; }).then(function () { $('chatB').disabled = false; chatPintar(); });
+  }).catch(function (e) {
+    var falta = /Falta la clave/.test(e.message) && S.u.Rol === 'Administrador';
+    CHAT[CHAT.length - 1] = { de: 'ia err', html: falta ? 'Todavía no está guardada la clave de Gemini. Pegala acá (empieza con AIza…). Se guarda en el servidor, no en la planilla.<div class="row" style="margin-top:8px;gap:6px"><input id="chatK" type="password" autocomplete="off" placeholder="AIza…" style="min-height:40px"><button class="btn" style="min-height:40px;padding:6px 12px" onclick="chatClave()">Guardar</button></div>' : esc(e.message) };
+  }).then(function () { $('chatB').disabled = false; chatPintar(); });
+}
+
+
+/* ---------- CORREGIR UN DATO (lapicito, v3.4) ---------- */
+var CO = { items: [], filtro: '', busca: '' };
+var CO_TIPOS = [['', 'Todo'], ['F_Ingresos', 'Ventas'], ['F_Compras', 'Facturas de compra'], ['F_Costos', 'Costos'], ['D_Animal', 'Animales'], ['F_Sanidad', 'Sanidad'], ['F_Mortandad', 'Muertes'], ['F_Tesoreria', 'Cobros y pagos']];
+function vCorregir() {
+  var m = $('main'); m.innerHTML = volverBtn() + '<div class="card"><div class="cargando"><i></i><i></i><i></i><i></i></div></div>';
+  call('api_corregibles', S.token).then(function (r) {
+    CO.items = r.items;
+    m.innerHTML = volverBtn() + '<div class="card"><h2>' + ic('lapiz') + ' Corregir un dato</h2><p class="sub">' + (r.admin ? 'Como administrador podés corregir cualquier registro.' : 'Podés corregir lo que cargaste vos en los últimos ' + r.dias + ' días. Para lo demás, pedíselo al administrador.') + ' Cada corrección queda en la auditoría con el valor anterior. El número de factura de venta no se puede cambiar.</p>' +
+      '<div class="pills" id="coTipos">' + CO_TIPOS.map(function (t) { return '<button type="button" class="pill' + (CO.filtro === t[0] ? ' on' : '') + '" onclick="CO.filtro=\'' + t[0] + '\';coPintar()">' + t[1] + '</button>'; }).join('') + '</div>' +
+      '<div class="f" style="margin-top:12px"><label for="coBusca">Buscar</label><input id="coBusca" placeholder="Ej.: caravana 45, FAV 0003, Metaxona…" oninput="CO.busca=this.value;coPintar()" value="' + esc(CO.busca) + '"></div><div id="coLista"></div></div>';
+    coPintar();
+  }).catch(function (e) { m.innerHTML = volverBtn(); msg(m.appendChild(document.createElement('div')), 'err', e.message); });
+}
+function coPintar() {
+  Array.prototype.forEach.call(document.querySelectorAll('#coTipos .pill'), function (b, i) { b.classList.toggle('on', CO_TIPOS[i][0] === CO.filtro); });
+  var q = CO.busca.toLowerCase().trim(), L = CO.items.filter(function (x) { return (!CO.filtro || x.tabla === CO.filtro) && (!q || x.texto.toLowerCase().indexOf(q) >= 0); });
+  $('coLista').innerHTML = L.length ? '<div class="lista">' + L.slice(0, 120).map(function (x, k) {
+    return '<div class="item"><div class="t"><b>' + esc(x.texto) + '</b><div>' + fecha(x.fecha) + '</div></div><div class="der"><button class="btn2" onclick="coAbrir(\'' + x.tabla + '\',\'' + esc(x.id) + '\',\'coF' + k + '\')" aria-label="Corregir">' + ic('lapiz') + 'Corregir</button></div><div id="coF' + k + '" style="flex-basis:100%"></div></div>';
+  }).join('') + '</div>' + (L.length > 120 ? '<p class="muted">Mostrando 120 de ' + L.length + '. Usá el buscador para encontrar el resto.</p>' : '') : '<p class="muted">No hay registros para corregir con ese filtro.</p>';
+}
+/** Abre el formulario de corrección de un registro dentro del contenedor indicado. */
+function coAbrir(tabla, id, cont, alListo) {
+  var el = $(cont); el.innerHTML = '<div class="cargando" style="margin-top:10px"><i></i><i></i></div>';
+  call('api_paraCorregir', S.token, tabla, id).then(function (r) {
+    var campoHtml = function (c) {
+      var v = c.valor === null || c.valor === undefined ? '' : c.valor, idc = 'co_' + c.n;
+      var inp = c.opts ? '<select id="' + idc + '">' + c.opts.map(function (o) { return '<option' + (String(o) === String(v) ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') + '</select>'
+        : c.fk ? '<select id="' + idc + '">' + opciones(L(c.fk), v) + '</select>'
+        : c.t === 'bool' ? '<select id="' + idc + '"><option' + (v === 'Sí' ? ' selected' : '') + '>Sí</option><option' + (v === 'No' ? ' selected' : '') + '>No</option></select>'
+        : '<input id="' + idc + '" type="' + (c.t === 'date' ? 'date' : c.t === 'num' ? 'number' : 'text') + '"' + (c.t === 'num' ? ' step="any" inputmode="decimal"' : '') + ' value="' + esc(v) + '">';
+      return campo(esc(c.l), inp);
+    };
+    el.innerHTML = '<div class="mini" style="margin-top:10px"><div id="coMsg_' + cont + '"></div><div class="row">' + r.campos.map(campoHtml).join('') + '</div>' +
+      '<div class="row"><button class="btn" id="coG_' + cont + '">Guardar corrección</button><button class="btn2" onclick="$(\'' + cont + '\').innerHTML=\'\'">Cancelar</button></div></div>';
+    $('coG_' + cont).onclick = function () {
+      var b = this, ch = {}; r.campos.forEach(function (c) { var e = $('co_' + c.n); if (e) ch[c.n] = e.value; });
+      ocupado(b, true);
+      call('api_corregir', S.token, tabla, id, ch).then(function (x) {
+        return refrescar().then(function () { if (alListo) alListo(x); else { msg($('coMsg_' + cont), 'ok', x.mensaje); ocupado(b, false); call('api_corregibles', S.token).then(function (rr) { CO.items = rr.items; }); } });
+      }).catch(function (e) { msg($('coMsg_' + cont), 'err', e.message); ocupado(b, false); });
+    };
+  }).catch(function (e) { el.innerHTML = ''; msg(el, 'err', e.message); });
 }
 
 /* ---------- UNIDADES DE POZO DEL CARRIL ---------- */
