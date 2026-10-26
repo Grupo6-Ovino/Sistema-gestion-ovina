@@ -13,7 +13,15 @@ var CORREGIBLE = {
   D_Animal: ['PesoKg', 'Sexo', 'FechaNac', 'IdCategoria', 'Madre', 'Padre', 'Observaciones'],
   F_Sanidad: ['Fecha', 'Dosis', 'DiasCarencia', 'Responsable', 'Observaciones'],
   F_Mortandad: ['Fecha', 'Causa', 'Observaciones'],
-  F_Tesoreria: ['Fecha', 'Numero', 'Observaciones']
+  F_Tesoreria: ['Fecha', 'Numero', 'Observaciones'],
+  F_ConsumoLote: ['Fecha', 'AplicacionHa', 'PrecioUnit', 'Observaciones'],
+  F_Cosecha: ['Fecha', 'KgTotal', 'Observaciones'],
+  F_VentaGrano: ['Fecha', 'Toneladas', 'PrecioTn', 'Observaciones'],
+  F_GastoAgro: ['Fecha', 'Cantidad', 'PrecioUnit', 'Observaciones'],
+  D_Bovino: ['Sexo', 'Categoria', 'FechaNac', 'PesoNac', 'Madre', 'Padre', 'Observaciones'],
+  F_PesadaBov: ['Fecha', 'PesoKg', 'Observaciones'],
+  F_AlimentoBov: ['Fecha', 'Cantidad', 'Observaciones'],
+  F_MovBov: ['PesoKg', 'PrecioKg', 'Observaciones']
 };
 var CORREGIR_DIAS = 7;
 
@@ -43,6 +51,14 @@ function api_corregibles(token) {
       else if (t === 'D_Animal') txt = 'Animal · caravana ' + r.Caravana + ' · ' + lab('D_Categoria', r.IdCategoria) + (r.PesoKg !== '' ? ' · ' + r.PesoKg + ' kg' : '');
       else if (t === 'F_Sanidad') txt = 'Sanidad · caravana ' + r.Caravana + ' · ' + lab('D_Insumo', r.IdInsumo) + ' · dosis ' + r.Dosis;
       else if (t === 'F_Mortandad') txt = 'Muerte · caravana ' + r.Caravana + ' · ' + r.Causa;
+      else if (t === 'F_ConsumoLote') txt = 'Maíz · ' + lab('D_InsumoAgro', r.IdInsumoAgro) + ' · ' + lab('D_Lote', r.IdLote) + ' · ' + r.AplicacionHa + ' ' + r.UnidadAplicacion + ' a $' + fmtNum_(r.PrecioUnit, 2);
+      else if (t === 'F_Cosecha') txt = 'Maíz · cosecha ' + lab('D_Lote', r.IdLote) + ' · ' + fmtNum_(r.KgTotal, 0) + ' kg';
+      else if (t === 'F_VentaGrano') txt = 'Maíz · venta ' + r.Comprobante + ' · ' + r.Toneladas + ' t a $' + fmtNum_(r.PrecioTn, 2);
+      else if (t === 'D_Bovino') txt = 'Bovino · caravana ' + r.Caravana + ' · ' + r.Categoria;
+      else if (t === 'F_PesadaBov') txt = 'Bovino · pesada caravana ' + r.Caravana + ' · ' + r.PesoKg + ' kg';
+      else if (t === 'F_AlimentoBov') txt = 'Bovino · ' + r.Alimento + ' · ' + r.Cantidad + ' ' + r.Unidad + ' · ' + lab('D_CargaEngorde', r.IdCarga);
+      else if (t === 'F_MovBov') txt = 'Bovino · ' + r.Tipo + ' caravana ' + r.Caravana;
+      else if (t === 'F_GastoAgro') txt = 'Maíz · ' + r.Concepto + ' · $' + fmtNum_(r.Importe, 2);
       else txt = (r.Tipo || 'Movimiento') + ' · $' + fmtNum_(r.Importe, 2) + ' · ' + lab('D_Tercero', r.IdTercero);
       out.push({ tabla: t, id: r[pk], fecha: r.Fecha || String(r.CreadoEl).slice(0, 10), texto: txt, creado: String(r.CreadoEl).slice(0, 10), quien: quien_(r) });
     });
@@ -72,13 +88,14 @@ function api_corregir(token, tabla, id, cambios) {
     if (!hubo.length) return { ok: true, mensaje: 'No cambiaste nada.' };
     validar_(tabla, o, u, id);
     calcular_(tabla, o);
+    if (tabla === 'D_Bovino') { o.Estado = actual.Estado; o.FechaBaja = actual.FechaBaja; }
     if (tabla === 'D_Animal') {
       o.Estado = actual.Estado; o.FechaBaja = actual.FechaBaja;
       if (/estimad/i.test(String(o.Observaciones || '')) && (String(o.PesoKg) !== String(actual.PesoKg) || String(o.FechaNac) !== String(actual.FechaNac) || String(o.Sexo) !== String(actual.Sexo)))
         o.Observaciones = String(o.Observaciones).replace(/[^.]*estimad[^.]*\.?/gi, '').replace(/\s+/g, ' ').trim();
     }
     if (tabla === 'F_Costos') o.IdCompra = actual.IdCompra;
-    if (tabla === 'F_Ingresos') o.Comprobante = actual.Comprobante; // el número de factura no se toca
+    if (tabla === 'F_Ingresos' || tabla === 'F_VentaGrano') o.Comprobante = actual.Comprobante; // el número de factura no se toca
     o[SCHEMA[tabla].pk] = actual[SCHEMA[tabla].pk];
     AUDIT_COLS.forEach(function (k) { o[k] = actual[k]; });
     o.ModificadoEl = new Date(); o.ModificadoPor = u.Email;

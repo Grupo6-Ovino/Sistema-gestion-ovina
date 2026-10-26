@@ -31,6 +31,7 @@ function asegurarVersion_() {
       var log = migrarV3_();
       invalidarTodo_();
       p.setProperty('VERSION_DATOS', VERSION);
+      if (antes === '3.6') return 'Sistema actualizado a la versión 3.7: las unidades Maíz y Bovinos ya son parte de este sistema, con los datos que pasaron esos grupos. Maíz: lotes, labores e insumos, cosechas, ventas de grano, gastos de almacén y su resumen. Bovinos: animales, pesadas, cargas de engorde con su alimento, ventas y muertes. En el inicio elegís la unidad: Ovinos, Bovinos o Maíz.';
       if (antes === '3.5') return 'Sistema actualizado a la versión 3.6: al tocar F5 la página espera en la misma sección (ya no pasa por el inicio) y el historial de cambios lo ve solo el administrador.';
       if (antes === '3.4') return 'Sistema actualizado a la versión 3.5: se quitó el rol Responsable de subunidad (quien lo tenía ahora es Operador de carga), cada registro muestra quién lo cargó y quién lo modificó, y hay un Historial de cambios en Administración.';
       if (antes === '3.3') return 'Sistema actualizado a la versión 3.4: ahora podés corregir datos con el lapicito (Cargar → Corregir un dato y en la ficha de cada animal).';
@@ -330,6 +331,13 @@ function migrarV3_() {
     });
     return 'Roles: ' + n + ' usuario(s) pasaron de Responsable de subunidad a Operador de carga';
   });
+
+
+  // ---------- v3.7 ----------
+  // La unidad Maíz se integra al sistema con las tablas y los datos de la planilla del grupo de Maíz (taller_2_maiz.xlsx).
+  paso('maiz37', function () { return importarMaiz_('sistema (actualización v3.7)'); });
+  paso('bovino37', function () { return importarBovino_('sistema (actualización v3.7)'); });
+  paso('indicadores37', function () { return cargarIndicadoresUnidad_('sistema (actualización v3.7)'); });
 
   return log;
 }

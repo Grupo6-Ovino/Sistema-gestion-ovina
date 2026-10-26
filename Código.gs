@@ -22,7 +22,7 @@
  */
 
 var TZ = 'America/Argentina/Buenos_Aires';
-var VERSION = '3.6';
+var VERSION = '3.7';
 var AUDIT_COLS = ['CreadoEl', 'CreadoPor', 'ModificadoEl', 'ModificadoPor', 'Activo'];
 var ROLES = ['Administrador', 'Operador de carga', 'Consulta / auditoría']; // v3.5: se quitó "Responsable de subunidad" (el Operador de carga hace lo mismo)
 var SESION_SEGUNDOS = 6 * 60 * 60;
@@ -91,7 +91,8 @@ var SCHEMA = {
       { n: 'Factor', t: 'num', req: true, min: 0.0000001, l: 'Factor' }] },
   D_Campana: { grupo: 'Maestras', titulo: 'Campañas', pk: 'IdCampana', prefijo: 'CAM', label: 'Nombre',
     cols: [{ n: 'IdCampana', l: 'Id' }, { n: 'Nombre', req: true, l: 'Nombre' }, { n: 'FechaDesde', t: 'date', req: true, l: 'Desde' },
-      { n: 'FechaHasta', t: 'date', req: true, l: 'Hasta' }] },
+      { n: 'FechaHasta', t: 'date', req: true, l: 'Hasta' }, { n: 'IdUnidad', fk: 'D_UnidadNeg', l: 'Unidad (vacío = Ovino)' },
+      { n: 'Estado', t: 'enum', opts: ['Planificación', 'Activa', 'Cerrada'], l: 'Estado' }] },
   D_Moneda: { grupo: 'Maestras', titulo: 'Monedas', pk: 'IdMoneda', prefijo: 'MON', label: 'Nombre',
     cols: [{ n: 'IdMoneda', l: 'Id' }, { n: 'Nombre', req: true, l: 'Nombre' }, { n: 'Simbolo', req: true, l: 'Símbolo' }] },
   D_Tercero: { grupo: 'Maestras', titulo: 'Clientes y proveedores', pk: 'IdTercero', prefijo: 'TER', label: 'RazonSocial',
@@ -158,7 +159,8 @@ var SCHEMA = {
       { n: 'Sentido', t: 'enum', req: true, opts: ['Mayor es mejor', 'Menor es mejor', 'Cerca de cero es mejor'], l: 'Sentido' },
       { n: 'MetaVerde', t: 'num', l: 'Meta (verde)' }, { n: 'MetaAmarillo', t: 'num', l: 'Alerta (amarillo)' }, { n: 'FuenteMeta', l: 'De dónde sale la meta' },
       { n: 'Periodicidad', l: 'Cada cuánto se mide' }, { n: 'Responsable', l: 'Responsable' }, { n: 'Decision', l: 'Qué hacer si empeora' },
-      { n: 'ValorManual', t: 'num', l: 'Valor cargado a mano (solo indicadores sin cálculo automático)' }, { n: 'Orden', t: 'num', l: 'Orden' }] },
+      { n: 'ValorManual', t: 'num', l: 'Valor cargado a mano (solo indicadores sin cálculo automático)' }, { n: 'Orden', t: 'num', l: 'Orden' },
+      { n: 'IdUnidad', fk: 'D_UnidadNeg', l: 'Unidad (vacío = Ovino)' }] },
   F_Cotizacion: { grupo: 'Parámetros', titulo: 'Cotizaciones (granos y hacienda)', pk: 'IdCotizacion', prefijo: 'COT', label: 'IdCotizacion',
     cols: [{ n: 'IdCotizacion', l: 'Id' }, { n: 'Fecha', t: 'date', req: true, l: 'Fecha' }, { n: 'Producto', req: true, l: 'Producto' },
       { n: 'Mercado', req: true, l: 'Mercado o fuente' }, { n: 'Precio', t: 'num', req: true, min: 0.0000001, l: 'Precio' }, { n: 'Unidad', req: true, l: 'Unidad (ej. $/t, $/kg vivo)' },
@@ -233,6 +235,84 @@ var SCHEMA = {
       { n: 'IdSubunidad', req: true, fk: 'D_Subunidad', l: 'Etapa' }, { n: 'IdInsumo', req: true, fk: 'D_Insumo', l: 'Insumo' },
       { n: 'CantidadReal', t: 'num', req: true, min: 0, l: 'Cantidad usada' }, { n: 'BaseReal', t: 'num', req: true, min: 0.0000001, l: 'Base real (cabezas o kg)' },
       { n: 'IdOrigen', calc: true, l: 'Origen' }, { n: 'Fuente', req: true, l: 'Fuente' }] },
+
+  // ---------- UNIDAD MAÍZ (v3.7) — mismas tablas que la planilla del grupo de Maíz, integradas a este sistema ----------
+  D_Lote: { grupo: 'Maestras', titulo: 'Maíz · Lotes', pk: 'IdLote', prefijo: 'LOT', label: 'Nombre', agro: true,
+    cols: [{ n: 'IdLote', l: 'Código' }, { n: 'Nombre', req: true, l: 'Nombre del lote' }, { n: 'Hectareas', t: 'num', req: true, min: 0.01, l: 'Hectáreas' },
+      { n: 'IdCampana', req: true, fk: 'D_Campana', l: 'Campaña' }, { n: 'Cultivo', req: true, l: 'Cultivo' }, { n: 'Variedad', l: 'Variedad / híbrido' },
+      { n: 'SistemaSiembra', t: 'enum', opts: ['Directa', 'Convencional'], l: 'Sistema de siembra' }, { n: 'Observaciones', l: 'Observaciones' }] },
+  D_InsumoAgro: { grupo: 'Maestras', titulo: 'Maíz · Insumos y labores', pk: 'IdInsumoAgro', prefijo: 'IAG', label: 'Nombre', agro: true,
+    cols: [{ n: 'IdInsumoAgro', l: 'Código' }, { n: 'Nombre', req: true, l: 'Nombre' },
+      { n: 'Categoria', t: 'enum', req: true, opts: ['Pulverizar', 'Fertilizar', 'Maíz a sembrar', 'Labores', 'Otros / Servicios'], l: 'Categoría' },
+      { n: 'Tipo', l: 'Tipo (herbicida, fertilizante…)' }, { n: 'Unidad', req: true, l: 'Unidad de medida (L, kg, bolsa, ha…)' }] },
+  F_DosisAgro: { grupo: 'Parámetros', titulo: 'Maíz · Dosis técnica por lote', pk: 'IdDosisAgro', prefijo: 'DAG', label: 'IdDosisAgro', agro: true,
+    cols: [{ n: 'IdDosisAgro', l: 'Id' }, { n: 'IdCampana', req: true, fk: 'D_Campana', l: 'Campaña' }, { n: 'IdLote', req: true, fk: 'D_Lote', l: 'Lote' },
+      { n: 'IdSubunidad', req: true, fk: 'D_Subunidad', l: 'Subunidad' }, { n: 'IdInsumoAgro', req: true, fk: 'D_InsumoAgro', l: 'Insumo' },
+      { n: 'DosisHa', t: 'num', req: true, min: 0.0000001, l: 'Dosis técnica por ha' }, { n: 'Unidad', req: true, l: 'Unidad (kg/ha, L/ha…)' }] },
+  F_RindeEstAgro: { grupo: 'Parámetros', titulo: 'Maíz · Rinde estándar', pk: 'IdRindeEst', prefijo: 'RAG', label: 'IdRindeEst', agro: true,
+    cols: [{ n: 'IdRindeEst', l: 'Id' }, { n: 'IdCampana', req: true, fk: 'D_Campana', l: 'Campaña' }, { n: 'IdSubunidad', req: true, fk: 'D_Subunidad', l: 'Subunidad' },
+      { n: 'RindeEsperado', t: 'num', req: true, min: 0.0000001, l: 'Rinde esperado' }, { n: 'Unidad', req: true, l: 'Unidad (kg/ha, % conservación…)' }] },
+  F_CostoEstAgro: { grupo: 'Parámetros', titulo: 'Maíz · Costo estándar por hectárea', pk: 'IdCostoEst', prefijo: 'CEA', label: 'IdCostoEst', agro: true,
+    cols: [{ n: 'IdCostoEst', l: 'Id' }, { n: 'IdCampana', req: true, fk: 'D_Campana', l: 'Campaña' }, { n: 'IdSubunidad', req: true, fk: 'D_Subunidad', l: 'Subunidad' },
+      { n: 'Rubro', t: 'enum', req: true, opts: ['Siembra', 'Fertilizante', 'Fumigación', 'Combustible', 'RHHD', 'Almacenamiento', 'Labores', 'Otros'], l: 'Rubro' },
+      { n: 'Concepto', req: true, l: 'Concepto' }, { n: 'Unidad', l: 'Unidad' }, { n: 'CantidadHa', t: 'num', req: true, min: 0, l: 'Cantidad estándar por ha' },
+      { n: 'PrecioUSD', t: 'num', req: true, min: 0, l: 'Precio estándar (US$)' }, { n: 'CostoHaUSD', t: 'num', calc: true, l: 'Costo estándar por ha (US$)' }] },
+  F_ConsumoLote: { grupo: 'Hechos', titulo: 'Maíz · Labores e insumos aplicados por lote', pk: 'IdConsumoLote', prefijo: 'CLO', label: 'IdConsumoLote', hecho: true, agro: true,
+    cols: [{ n: 'IdConsumoLote', l: 'Id' }, { n: 'Fecha', t: 'date', req: true, l: 'Fecha' }, { n: 'IdCampana', req: true, fk: 'D_Campana', l: 'Campaña' },
+      { n: 'IdSubunidad', req: true, fk: 'D_Subunidad', l: 'Subunidad' }, { n: 'IdLote', req: true, fk: 'D_Lote', l: 'Lote' },
+      { n: 'IdInsumoAgro', req: true, fk: 'D_InsumoAgro', l: 'Insumo o labor' }, { n: 'UnidadAplicacion', req: true, l: 'Unidad de aplicación (L/ha, kg/ha, ha…)' },
+      { n: 'AplicacionHa', t: 'num', req: true, min: 0, l: 'Aplicación por ha' }, { n: 'Hectareas', t: 'num', calc: true, l: 'Hectáreas del lote' },
+      { n: 'CantidadTotal', t: 'num', calc: true, l: 'Consumo real total' }, { n: 'PrecioUnit', t: 'num', req: true, min: 0, l: 'Precio unitario real ($)' },
+      { n: 'CostoTotal', t: 'num', calc: true, l: 'Costo total real ($)' }, { n: 'Observaciones', l: 'Observaciones' }] },
+  F_Cosecha: { grupo: 'Hechos', titulo: 'Maíz · Cosechas', pk: 'IdCosecha', prefijo: 'CSH', label: 'IdCosecha', hecho: true, agro: true,
+    cols: [{ n: 'IdCosecha', l: 'Id' }, { n: 'Fecha', t: 'date', req: true, l: 'Fecha de cosecha' }, { n: 'IdCampana', req: true, fk: 'D_Campana', l: 'Campaña' },
+      { n: 'IdSubunidad', req: true, fk: 'D_Subunidad', l: 'Subunidad' }, { n: 'IdLote', req: true, fk: 'D_Lote', l: 'Lote' },
+      { n: 'KgTotal', t: 'num', req: true, min: 0, l: 'Producción total (kg)' }, { n: 'Hectareas', t: 'num', calc: true, l: 'Hectáreas' },
+      { n: 'Toneladas', t: 'num', calc: true, l: 'Producción (t)' }, { n: 'RindeKgHa', t: 'num', calc: true, l: 'Rinde (kg/ha)' }, { n: 'Observaciones', l: 'Observaciones' }] },
+  F_VentaGrano: { grupo: 'Hechos', titulo: 'Maíz · Ventas de grano', pk: 'IdVentaGrano', prefijo: 'VGR', label: 'IdVentaGrano', hecho: true, agro: true,
+    cols: [{ n: 'IdVentaGrano', l: 'Id' }, { n: 'Fecha', t: 'date', req: true, l: 'Fecha' }, { n: 'IdCampana', req: true, fk: 'D_Campana', l: 'Campaña' },
+      { n: 'IdSubunidad', req: true, fk: 'D_Subunidad', l: 'Subunidad' },
+      { n: 'Destino', t: 'enum', req: true, opts: ['Terceros', 'Interno: Ganadería'], l: 'Destino del grano' },
+      { n: 'IdTercero', fk: 'D_Tercero', l: 'Cliente (si es a terceros)' }, { n: 'Comprobante', calc: true, l: 'Comprobante' },
+      { n: 'Toneladas', t: 'num', req: true, min: 0.001, l: 'Toneladas' }, { n: 'PrecioTn', t: 'num', req: true, min: 0.01, l: 'Precio por tonelada ($)' },
+      { n: 'AlicuotaIVA', t: 'num', min: 0, l: 'IVA %' }, { n: 'Neto', t: 'num', calc: true, l: 'Neto' }, { n: 'IVA', t: 'num', calc: true, l: 'IVA' },
+      { n: 'Total', t: 'num', calc: true, l: 'Total' }, { n: 'Observaciones', l: 'Observaciones' }] },
+  F_GastoAgro: { grupo: 'Hechos', titulo: 'Maíz · Gastos de almacén y comercialización', pk: 'IdGastoAgro', prefijo: 'GAG', label: 'IdGastoAgro', hecho: true, agro: true,
+    cols: [{ n: 'IdGastoAgro', l: 'Id' }, { n: 'Fecha', t: 'date', req: true, l: 'Fecha' }, { n: 'IdCampana', req: true, fk: 'D_Campana', l: 'Campaña' },
+      { n: 'IdSubunidad', req: true, fk: 'D_Subunidad', l: 'Subunidad' },
+      { n: 'Rubro', t: 'enum', req: true, opts: ['Almacenamiento', 'Flete', 'Comisión', 'Otros'], l: 'Rubro' },
+      { n: 'Concepto', req: true, l: 'Concepto' }, { n: 'IdTercero', fk: 'D_Tercero', l: 'Proveedor' },
+      { n: 'Cantidad', t: 'num', req: true, min: 0.0000001, l: 'Cantidad' }, { n: 'Unidad', l: 'Unidad (qq, t, unidad…)' },
+      { n: 'PrecioUnit', t: 'num', req: true, min: 0, l: 'Precio unitario ($)' }, { n: 'Importe', t: 'num', calc: true, l: 'Importe ($)' },
+      { n: 'Observaciones', l: 'Observaciones' }] },
+
+  // ---------- UNIDAD BOVINA (v3.7) — a partir de las planillas de campo del grupo de Bovinos ----------
+  D_CargaEngorde: { grupo: 'Maestras', titulo: 'Bovinos · Cargas de engorde', pk: 'IdCarga', prefijo: 'CEN', label: 'Nombre', bov: true,
+    cols: [{ n: 'IdCarga', l: 'Código' }, { n: 'Nombre', req: true, l: 'Nombre de la carga' }, { n: 'FechaInicio', t: 'date', req: true, l: 'Inicio' },
+      { n: 'FechaFin', t: 'date', l: 'Fin (venta)' }, { n: 'Estado', t: 'enum', req: true, opts: ['En engorde', 'Vendida'], l: 'Estado' },
+      { n: 'DesbastePct', t: 'num', min: 0, l: 'Desbaste (%)' }, { n: 'Observaciones', l: 'Observaciones' }] },
+  D_Bovino: { grupo: 'Maestras', titulo: 'Bovinos · Animales (caravanas)', pk: 'Caravana', pkManual: true, label: 'Caravana', bov: true,
+    cols: [{ n: 'Caravana', req: true, l: 'Caravana' }, { n: 'Sexo', t: 'enum', req: true, opts: ['Hembra', 'Macho'], l: 'Sexo' },
+      { n: 'Categoria', t: 'enum', req: true, opts: ['Ternero', 'Ternera', 'Novillo', 'Vaquillona', 'Torito de reposición', 'Toro', 'Vaca'], l: 'Categoría' },
+      { n: 'IdSubunidad', req: true, fk: 'D_Subunidad', l: 'Etapa' }, { n: 'FechaNac', t: 'date', l: 'Fecha de nacimiento' }, { n: 'PesoNac', t: 'num', min: 0, l: 'Peso al nacer (kg)' },
+      { n: 'Madre', l: 'Vaca madre' }, { n: 'Padre', l: 'Toro (padre)' }, { n: 'IdCarga', fk: 'D_CargaEngorde', l: 'Carga de engorde' },
+      { n: 'Estado', t: 'enum', opts: ['Activo', 'Vendido', 'Muerto', 'Faltante'], calc: true, l: 'Estado' }, { n: 'FechaBaja', t: 'date', calc: true, l: 'Fecha de baja' },
+      { n: 'Observaciones', l: 'Observaciones' }] },
+  F_PesadaBov: { grupo: 'Hechos', titulo: 'Bovinos · Pesadas', pk: 'IdPesada', prefijo: 'PES', label: 'IdPesada', hecho: true, bov: true,
+    cols: [{ n: 'IdPesada', l: 'Id' }, { n: 'Fecha', t: 'date', req: true, l: 'Fecha' }, { n: 'IdCampana', fk: 'D_Campana', calc: true, l: 'Campaña' },
+      { n: 'Caravana', req: true, fk: 'D_Bovino', l: 'Caravana' }, { n: 'PesoKg', t: 'num', req: true, min: 1, l: 'Peso (kg)' },
+      { n: 'Evento', t: 'enum', req: true, opts: ['Nacimiento', 'Control de peso', 'Ingreso a engorde', 'Venta'], l: 'Motivo' },
+      { n: 'IdCarga', fk: 'D_CargaEngorde', l: 'Carga de engorde' }, { n: 'Observaciones', l: 'Observaciones' }] },
+  F_AlimentoBov: { grupo: 'Hechos', titulo: 'Bovinos · Alimento entregado (moliendas)', pk: 'IdAlimento', prefijo: 'ALB', label: 'IdAlimento', hecho: true, bov: true,
+    cols: [{ n: 'IdAlimento', l: 'Id' }, { n: 'Fecha', t: 'date', req: true, l: 'Fecha de la molienda' }, { n: 'IdCampana', fk: 'D_Campana', calc: true, l: 'Campaña' },
+      { n: 'IdCarga', req: true, fk: 'D_CargaEngorde', l: 'Carga de engorde' }, { n: 'Alimento', t: 'enum', req: true, opts: ['Maíz molido', 'Soja', 'Minerales'], l: 'Alimento' },
+      { n: 'Cantidad', t: 'num', req: true, min: 0.0001, l: 'Cantidad' }, { n: 'Unidad', t: 'enum', req: true, opts: ['kg', 'bolsa de 25 kg'], l: 'Unidad' },
+      { n: 'Kg', t: 'num', calc: true, l: 'Kilos' }, { n: 'Observaciones', l: 'Observaciones' }] },
+  F_MovBov: { grupo: 'Hechos', titulo: 'Bovinos · Ventas, muertes y faltantes', pk: 'IdMovBov', prefijo: 'MBV', label: 'IdMovBov', hecho: true, bov: true,
+    cols: [{ n: 'IdMovBov', l: 'Id' }, { n: 'Fecha', t: 'date', req: true, l: 'Fecha' }, { n: 'IdCampana', fk: 'D_Campana', calc: true, l: 'Campaña' },
+      { n: 'Caravana', req: true, fk: 'D_Bovino', l: 'Caravana' }, { n: 'Tipo', t: 'enum', req: true, opts: ['Venta', 'Muerte', 'Faltante'], l: 'Qué pasó' },
+      { n: 'PesoKg', t: 'num', min: 0, l: 'Peso (kg)' }, { n: 'IdTercero', fk: 'D_Tercero', l: 'Cliente (si es venta)' },
+      { n: 'PrecioKg', t: 'num', min: 0, l: 'Precio por kg ($)' }, { n: 'Importe', t: 'num', calc: true, l: 'Importe ($)' }, { n: 'Observaciones', l: 'Observaciones' }] },
 
   F_PagoImpuesto: { grupo: 'Hechos', titulo: 'Impuestos pagados', pk: 'IdPagoImp', prefijo: 'PIM', label: 'IdPagoImp', hecho: true,
     cols: [{ n: 'IdPagoImp', l: 'Id' }, { n: 'Fecha', t: 'date', req: true, l: 'Fecha de pago' }, { n: 'IdCampana', fk: 'D_Campana', calc: true, l: 'Campaña' },
@@ -474,7 +554,7 @@ function nuevoId_(tabla, filas, prefijo) {
  * ============================================================================================= */
 function campanaDeFecha_(fecha) {
   var f = String(fecha);
-  var c = leer_('D_Campana').filter(function (x) { return activo_(x) && x.FechaDesde <= f && f <= x.FechaHasta; });
+  var c = campanasOvinas_().filter(function (x) { return x.FechaDesde <= f && f <= x.FechaHasta; });
   if (!c.length) throw new Error('La fecha ' + f + ' no cae dentro de ninguna campaña cargada. Pedile al administrador que cargue la campaña.');
   return c[0].IdCampana;
 }
@@ -505,6 +585,8 @@ function limpiar_(tabla, entrada, u) {
 }
 function validar_(tabla, o, u, idActual) {
   var s = SCHEMA[tabla];
+  if (s.agro) validarAgro_(tabla, o);
+  if (s.bov) validarBov_(tabla, o);
   var errores = [];
   s.cols.forEach(function (c) {
     if (c.calc || c.hidden) return;
@@ -546,7 +628,7 @@ function validar_(tabla, o, u, idActual) {
   }
   if (tabla === 'D_Campana') {
     if (o.FechaDesde > o.FechaHasta) throw new Error('La fecha "Desde" tiene que ser anterior a "Hasta".');
-    if (otros.some(function (x) { return !(o.FechaHasta < x.FechaDesde || o.FechaDesde > x.FechaHasta); })) {
+    if (otros.some(function (x) { return String(x.IdUnidad || UNIDAD_OVINA) === String(o.IdUnidad || UNIDAD_OVINA) && !(o.FechaHasta < x.FechaDesde || o.FechaDesde > x.FechaHasta); })) {
       throw new Error('Las fechas se superponen con otra campaña.');
     }
   }
@@ -588,6 +670,8 @@ function validar_(tabla, o, u, idActual) {
 }
 function calcular_(tabla, o) {
   var r2 = function (x) { return Math.round(x * 100) / 100; };
+  if (SCHEMA[tabla].agro) return calcularAgro_(tabla, o);
+  if (SCHEMA[tabla].bov) return calcularBov_(tabla, o);
   if (SCHEMA[tabla].hecho && o.Fecha) o.IdCampana = campanaDeFecha_(o.Fecha);
   if (tabla === 'F_Costos') {
     var a = Number(o.AlicuotaIVA || 0);
@@ -727,7 +811,7 @@ function api_inicio(token, code) {
   Object.keys(SCHEMA).forEach(function (t) {
     var s = SCHEMA[t];
     esquema[t] = {
-      grupo: s.grupo, titulo: s.titulo, pk: s.pk, pkManual: !!s.pkManual, hecho: !!s.hecho,
+      grupo: s.grupo, titulo: s.titulo, pk: s.pk, pkManual: !!s.pkManual, hecho: !!s.hecho, agro: !!s.agro, bov: !!s.bov,
       soloFormulario: !!s.soloFormulario, editablesDespues: s.editablesDespues || null,
       cols: s.cols.filter(function (c) { return !c.hidden; }),
       puede: { leer: puede_(u, t, 'leer'), crear: puede_(u, t, 'crear'), editar: puede_(u, t, 'editar'), baja: puede_(u, t, 'baja') }
@@ -768,7 +852,11 @@ function listas_() {
       var lab = Array.isArray(s.label) ? s.label.map(function (k) { return x[k]; }).join(' – ') : String(x[s.label]);
       var item = { id: String(x[s.pk]), label: lab };
       if (t === 'D_Animal') { item.estado = x.Estado; item.cat = x.IdCategoria; item.label = 'Caravana ' + x.Caravana; item.peso = x.PesoKg; item.sexo = x.Sexo || ''; item.carencia = car[x.Caravana] || ''; }
-      if (t === 'D_Campana') { item.desde = x.FechaDesde; item.hasta = x.FechaHasta; }
+      if (t === 'D_Campana') { item.desde = x.FechaDesde; item.hasta = x.FechaHasta; item.unidad = x.IdUnidad || UNIDAD_OVINA; }
+      if (t === 'D_Subunidad') { item.unidad = x.IdUnidad; }
+      if (t === 'D_Lote') { item.ha = x.Hectareas; item.camp = x.IdCampana; }
+      if (t === 'D_Bovino') { item.label = String(x.Caravana); item.estado = x.Estado; item.cat = x.Categoria; item.sexo = x.Sexo; item.carga = x.IdCarga || ''; }
+      if (t === 'D_InsumoAgro') { item.um = x.Unidad; item.cat = x.Categoria; }
       if (t === 'D_Producto') { item.iva = x.AlicuotaIVA; }
       if (t === 'D_Insumo') { item.rubro = x.Rubro || ''; item.um = x.IdUM; item.contenido = x.ContenidoEnvase || ''; item.tipo = x.TipoCosto; }
       if (t === 'D_Tercero') { item.tipo = x.Tipo; item.cuit = x.CUIT || ''; }
@@ -802,8 +890,10 @@ function api_crear(token, tabla, entrada) {
     if (tabla === 'D_Insumo' && o.Rubro && RUBROS[o.Rubro]) completarInsumo_(o);
     validar_(tabla, o, u);
     calcular_(tabla, o);
+    if (tabla === 'F_VentaGrano') o.Comprobante = o.Destino === 'Terceros' ? proximaFactura_() : 'Transferencia interna'; // v3.7: misma numeración que las ventas de corderos
     if (tabla === 'S_Usuarios') { o.Sal = Utilities.getUuid(); o.ClaveHash = hash_(o.Sal, String(entrada.ClaveNueva)); }
     var id = insertar_(tabla, o, u.Email);
+    if (tabla === 'F_MovBov') cambiarEstadoBov_(o.Caravana, estadoDeMov_(o.Tipo), o.Fecha, u.Email, String(o.Tipo) + ' ' + id);
     return { ok: true, id: id, mensaje: 'Guardado con el número ' + id + '.' };
   });
 }
@@ -841,6 +931,8 @@ function api_editar(token, tabla, id, entrada) {
       if (s.pkManual) o[s.pk] = actual[s.pk];
       validar_(tabla, o, u, id);
       calcular_(tabla, o);
+      if (tabla === 'F_VentaGrano') o.Comprobante = actual.Comprobante; // el número de factura no se toca
+      if (tabla === 'D_Bovino') { o.Estado = actual.Estado; o.FechaBaja = actual.FechaBaja; }
       if (tabla === 'D_Animal') { o.Estado = actual.Estado; o.FechaBaja = actual.FechaBaja; }
       // v3.3: si se corrige el peso, la fecha o el sexo de una ficha con datos estimados, se saca la marca de "estimado"
       if (tabla === 'D_Animal' && /estimad/i.test(String(o.Observaciones || '')) &&
@@ -878,6 +970,11 @@ function api_baja(token, tabla, id, activar) {
       cambiarEstadoAnimal_(actual.Caravana, activar ? est : 'Activo', activar ? actual.Fecha : '', u.Email,
         (activar ? 'Reactivación de ' : 'Anulación de ') + (tabla === 'F_Ingresos' ? 'venta ' : 'muerte ') + id);
     }
+    if (tabla === 'F_MovBov') { // v3.7: anular una venta, muerte o faltante de un bovino lo devuelve al rodeo (y al revés)
+      var bv = buscar_('D_Bovino', actual.Caravana);
+      if (activar && bv.Estado !== 'Activo') throw new Error('La caravana ' + bv.Caravana + ' ya no está activa: no se puede reactivar.');
+      cambiarEstadoBov_(actual.Caravana, activar ? estadoDeMov_(actual.Tipo) : 'Activo', activar ? actual.Fecha : '', u.Email, (activar ? 'Reactivación de ' : 'Anulación de ') + String(actual.Tipo).toLowerCase() + ' ' + id);
+    }
     if (tabla === 'F_Sanidad') { // el consumo que generó ese tratamiento sigue su suerte
       leer_('F_Consumo').filter(function (c) { return c.IdOrigen === id; }).forEach(function (c) { cambiarActivo_('F_Consumo', c, activar, u.Email, (activar ? 'Reactivación' : 'Baja') + ' por ' + id); });
     }
@@ -897,7 +994,7 @@ var RE_FACTURA = /^[A-Z]{2,4} \d{4}-\d{9}$/;
 function proximaFactura_() {
   var pre = (config_('FACTURA_PREFIJO') || 'FAV').trim().toUpperCase(), pv = ('0000' + (config_('FACTURA_PUNTO_VENTA') || '0003').trim()).slice(-4);
   var re = new RegExp('^' + pre + ' ' + pv + '-(\\d{9})$'), max = 0;
-  leer_('F_Ingresos').forEach(function (x) { var m = re.exec(String(x.Comprobante).trim()); if (m) max = Math.max(max, Number(m[1])); }); // también las anuladas: un número usado no se reutiliza
+  leer_('F_Ingresos').concat(leer_('F_VentaGrano')).forEach(function (x) { var m = re.exec(String(x.Comprobante).trim()); if (m) max = Math.max(max, Number(m[1])); }); // también las anuladas: un número usado no se reutiliza (v3.7: corderos y grano comparten la numeración)
   var forzado = Number(config_('FACTURA_PROXIMO_NUMERO')) || 0;
   var n = Math.max(max + 1, forzado);
   return pre + ' ' + pv + '-' + ('000000000' + n).slice(-9);
@@ -1143,10 +1240,10 @@ function fmtNum_(x, dec) {
 function api_reportes(token, idCampana) {
   sesion_(token);
   var r2 = function (x) { return Math.round(x * 100) / 100; };
-  var campanas = leer_('D_Campana').filter(activo_);
+  var campanas = campanasOvinas_();
   if (!idCampana) idCampana = campanas.length ? campanas[0].IdCampana : '';
   var camp = campanas.filter(function (c) { return c.IdCampana === idCampana; })[0];
-  var subs = leer_('D_Subunidad').filter(activo_);
+  var subs = leer_('D_Subunidad').filter(function (x) { return activo_(x) && String(x.IdUnidad) === UNIDAD_OVINA; });
   var insumos = {}; leer_('D_Insumo').forEach(function (i) { insumos[i.IdInsumo] = i; });
   var deCamp = function (x) { return activo_(x) && x.IdCampana === idCampana; };
   var ing = leer_('F_Ingresos').filter(deCamp);
@@ -1487,7 +1584,7 @@ function asegurarCotizacion_(fecha) {
  *    Un indicador nuevo que no tenga cálculo automático usa el "Valor cargado a mano".
  * ============================================================================================= */
 function ctxIndicadores_(idCampana) {
-  var campanas = leer_('D_Campana').filter(activo_).sort(function (a, b) { return a.FechaDesde < b.FechaDesde ? -1 : 1; });
+  var campanas = campanasOvinas_().sort(function (a, b) { return a.FechaDesde < b.FechaDesde ? -1 : 1; });
   var hoy = hoyStr_();
   if (!idCampana) { var act = campanas.filter(function (c) { return c.FechaDesde <= hoy && hoy <= c.FechaHasta; })[0]; idCampana = act ? act.IdCampana : (campanas.length ? campanas[campanas.length - 1].IdCampana : ''); }
   var camp = campanas.filter(function (c) { return c.IdCampana === idCampana; })[0] || { FechaDesde: '0000-00-00', FechaHasta: '9999-12-31' };
@@ -1652,7 +1749,7 @@ function api_indicadores(token, idCampana) {
 function indicadoresDe_(idCampana) {
   var c = ctxIndicadores_(idCampana);
   var defs = [];
-  try { defs = leer_('P_Indicador').filter(activo_); } catch (e) { throw new Error('Falta la tabla de indicadores: recargá la página para que el sistema se actualice.'); }
+  try { defs = leer_('P_Indicador').filter(function (d) { return activo_(d) && (!d.IdUnidad || String(d.IdUnidad) === UNIDAD_OVINA); }); } catch (e) { throw new Error('Falta la tabla de indicadores: recargá la página para que el sistema se actualice.'); }
   defs.sort(function (a, b) { return (PERSPECTIVAS.indexOf(a.Perspectiva) - PERSPECTIVAS.indexOf(b.Perspectiva)) || (Number(a.Orden) || 99) - (Number(b.Orden) || 99); });
   var cuenta = { Verde: 0, Amarillo: 0, Rojo: 0, 'Sin datos': 0, 'Sin meta': 0 };
   var lista = defs.map(function (d) {

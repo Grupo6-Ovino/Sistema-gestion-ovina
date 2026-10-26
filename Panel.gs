@@ -110,7 +110,7 @@ function api_panel(token, idCampana) {
 
 /* ---------- Asistente IA (Gemini) ---------- */
 var IA_POR_DIA = 40; // consultas por usuario por día (cuida el nivel gratuito)
-function api_asistente(token, pregunta, idCampana, escenario) {
+function api_asistente(token, pregunta, idCampana, escenario, unidad, historial) {
   var u = sesion_(token);
   pregunta = String(pregunta || '').trim().slice(0, 600);
   if (pregunta.length < 3) throw new Error('Escribí una pregunta.');
@@ -134,12 +134,36 @@ function api_asistente(token, pregunta, idCampana, escenario) {
     consumo: (rep.consumoTotal || []).map(function (r) { return pick_(r, ['insumo', 'um', 'real', 'esperado', 'desvio']); }),
     base_escenarios: base, escenario_en_pantalla: escenario || null
   };
-  var sistema = 'Sos el asistente del panel decisional de un sistema de gestión ovina usado por estudiantes de Ciencias Económicas y por el dueño del campo. ' +
-    'Respondé en español rioplatense, claro y breve (máximo 250 palabras), sin tecnicismos innecesarios. Usá SOLO los datos del contexto JSON; si un dato no está, decilo y no lo inventes. ' +
-    'Separá siempre la respuesta en tres partes con estos títulos exactos: "Hechos" (datos registrados), "Cálculos" (cuentas que hacés con esos datos, mostrando la cuenta) e "Hipótesis y acciones a validar" (posibles causas y qué hacer, aclarando que hay que verificarlas). ' +
-    'Cuando un costo es supuesto, aclaralo. No des consejos financieros de inversión. Formato: texto plano con viñetas "- ", sin tablas ni markdown de encabezados.';
+  // v3.7: lo que se ve en el inicio y en Cotizaciones, las otras unidades y dónde está cada cosa en la aplicación
+  try { var tc = leer_('F_TipoCambio').filter(activo_).sort(function (a, b) { return String(a.Fecha) < String(b.Fecha) ? 1 : -1; })[0];
+    if (tc) ctx.dolar_oficial_bna = { fecha: tc.Fecha, comprador: tc.Comprador, vendedor: tc.Vendedor, fuente: tc.Fuente }; } catch (e) {}
+  try { var ult = {}; leer_('F_Cotizacion').filter(activo_).forEach(function (x) { var k = x.Producto + ' · ' + x.Mercado; if (!ult[k] || String(x.Fecha) > String(ult[k].Fecha)) ult[k] = x; });
+    ctx.ultimas_cotizaciones = Object.keys(ult).map(function (k) { var x = ult[k]; return { producto: x.Producto, mercado: x.Mercado, fecha: x.Fecha, precio: x.Precio, unidad: x.Unidad }; }); } catch (e) {}
+  try { var mz = maizDatos_(''); if (mz.campanas.length) ctx.unidad_maiz = pick_(mz, ['campana', 'ha', 't', 'rinde', 'rindeEst', 'pctEst', 'costoProd', 'costoHa', 'costoT', 'ventasNeto', 'tVendidas', 'precioT', 'margen', 'margenHa', 'margenPct', 'rubros', 'gastos', 'ventas']); } catch (e) {}
+  try { var bv = bovinoDatos_(); ctx.unidad_bovina = { activos: bv.activos, vendidos: bv.vendidos, muertos: bv.muertos, faltantes: bv.faltantes, categorias: bv.categorias, recria: bv.recria, maiz_consumido_kg: bv.maizKg,
+    cargas: bv.cargas.map(function (x) { return pick_(x, ['nombre', 'estado', 'inicio', 'fin', 'animales', 'dias', 'pesoIni', 'pesoFin', 'kgGanados', 'adpv', 'adpvDesbaste', 'conversion', 'alimento', 'kgVendidos']); }), aclaracion: 'Las planillas de Bovinos no traen precios: no hay resultados en pesos.' }; } catch (e) {}
+  ctx.unidad_en_pantalla = { ovino: 'Ovinos', maiz: 'Maíz', bovino: 'Bovinos' }[unidad] || 'Ovinos';
+  ctx.mapa_de_la_aplicacion = {
+    'Inicio': 'arriba se elige la unidad (Ovinos, Bovinos o Maíz); muestra el rodeo de hoy, lo que hay que atender y el dólar oficial BNA del día (el administrador lo actualiza tocándolo)',
+    'Ovinos': 'Cargar: Vacunas y tratamientos, Nació un cordero, Murió un animal, Cargar una compra, Vender animales (la factura sale numerada sola), Cobros y pagos, Corregir un dato. Consultar: Los animales (fichas), Proveedores y clientes, Resultados, Indicadores, Panel decisional (escenarios), Cotizaciones, Impuestos, Unidades del campo',
+    'Maíz': 'Cargar: Labores e insumos por lote, Cosecha, Venta de grano, Almacén y fletes, Corregir un dato. Consultar: Resumen de Maíz, Indicadores, Lotes, Estándares y dosis, Insumos y labores',
+    'Bovinos': 'Cargar: Pesé animales (toda la manga junta), Nació un ternero, Alimento de las cargas, Venta, muerte o faltante, Corregir un dato. Consultar: Resumen de Bovinos, Indicadores, Los animales, Cargas de engorde, Todas las pesadas',
+    'Cotizaciones': 'precios de granos de la Bolsa de Comercio de Rosario (automáticos), hacienda de Cañuelas, carga manual e historial',
+    'Administración': 'solo el Administrador: tablas, usuarios, metas de indicadores e Historial de cambios'
+  };
+  var sistema = 'Sos la ovejita asistente del Sistema de Gestión de Pozo del Carril (unidades Ovinos, Bovinos y Maíz), usado por estudiantes de Ciencias Económicas y por el dueño del campo. ' +
+    'Respondé en español rioplatense, cálido y directo. Contestá EXACTAMENTE lo que te preguntan y nada más: no agregues datos, análisis ni recomendaciones que no te pidieron. ' +
+    'Usá SOLO los datos del contexto JSON; si un dato no está, decilo en una frase y no lo inventes. ' +
+    'Elegí el largo según la pregunta: ' +
+    '(1) si piden un dato (por ejemplo "¿cuál es el último dólar?", "¿cuántas ovejas hay?"), respondé en una o dos oraciones con el número, la fecha y la fuente; ' +
+    '(2) si preguntan dónde está algo o cómo se hace en la aplicación, explicalo en pocos pasos usando el mapa de la aplicación; ' +
+    '(3) si saludan o charlan, respondé breve y ofrecé ayuda; ' +
+    '(4) solo si piden analizar, explicar por qué pasó algo, comparar o qué conviene hacer, usá tres partes con estos títulos exactos, cada uno solo en su renglón: "Hechos", "Cálculos" (mostrando la cuenta) e "Hipótesis y acciones a validar" (aclarando que hay que verificarlas), en hasta 200 palabras. ' +
+    'Si la pregunta es de una unidad, usá los datos de esa unidad; si no aclara, usá la unidad en pantalla. Cuando un costo es supuesto, aclaralo. No des consejos financieros de inversión. ' +
+    'Formato: texto plano, viñetas "- " solo si hay una lista, sin tablas ni markdown (sin asteriscos ni numerales).';
+  var previas = (Array.isArray(historial) ? historial : []).slice(-4).map(function (h) { return 'Pregunta anterior: ' + String(h.q || '').slice(0, 300) + '\nRespuesta anterior: ' + String(h.r || '').slice(0, 600); }).join('\n\n');
   var cuerpo = { systemInstruction: { parts: [{ text: sistema }] },
-    contents: [{ role: 'user', parts: [{ text: 'Contexto (JSON):\n' + JSON.stringify(ctx) + '\n\nPregunta: ' + pregunta }] }],
+    contents: [{ role: 'user', parts: [{ text: 'Contexto (JSON):\n' + JSON.stringify(ctx) + (previas ? '\n\nConversación anterior (para entender preguntas de seguimiento):\n' + previas : '') + '\n\nPregunta: ' + pregunta }] }],
     generationConfig: { temperature: 0.3, maxOutputTokens: 1200 } };
   var modelos = [config_('GEMINI_MODELO'), 'gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'].filter(Boolean), ultimo = '', ocupados = 0;
   for (var i = 0; i < modelos.length; i++) {
