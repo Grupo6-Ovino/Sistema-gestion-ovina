@@ -1436,11 +1436,14 @@ function actualizarDolar() {
     var nuevas = [];
     Object.keys(fechas).sort().forEach(function (f) {
       TC_ = null;
-      var c = cotizacion_(f);
-      if (c && (aFecha_(f) - aFecha_(c.Fecha)) / 86400000 <= 4) return; // ya hay una del día o de pocos días antes (fin de semana)
+      var c = cotizacion_(f), esHoy = f === hoyStr_();
+      if (c && String(c.Fecha) === f) return; // ya está la de ese día
+      // Para fechas pasadas alcanza con una de pocos días antes (fin de semana o feriado). Para HOY siempre se busca la más nueva
+      // (v3.7: antes no buscaba si había una de hasta 4 días atrás, y por eso el botón no traía la de ayer).
+      if (c && !esHoy && (aFecha_(f) - aFecha_(c.Fecha)) / 86400000 <= 4) return;
       for (var d = 0; d <= 5; d++) { // si ese día no hubo cotización (fin de semana o feriado), busca el día hábil anterior
         var fd = sumarDias_(f, -d);
-        if (tiene[fd]) break;
+        if (tiene[fd] || (c && fd <= String(c.Fecha))) break; // no hay nada más nuevo que lo que ya está guardado
         var t = traerCotizacion_(fd);
         if (t) { t.Origen = 'Automático'; insertar_('F_TipoCambio', t, 'sistema (dólar automático)'); tiene[fd] = 1; nuevas.push(fd + ': $' + t.Vendedor); break; }
       }
