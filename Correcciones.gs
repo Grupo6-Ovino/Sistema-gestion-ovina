@@ -21,7 +21,8 @@ var CORREGIBLE = {
   D_Bovino: ['Sexo', 'Categoria', 'FechaNac', 'PesoNac', 'Madre', 'Padre', 'Observaciones'],
   F_PesadaBov: ['Fecha', 'PesoKg', 'Observaciones'],
   F_AlimentoBov: ['Fecha', 'Cantidad', 'Observaciones'],
-  F_MovBov: ['PesoKg', 'PrecioKg', 'Observaciones']
+  F_MovBov: ['PesoKg', 'PrecioKg', 'Observaciones'],
+  F_Presupuesto: ['Importe']
 };
 var CORREGIR_DIAS = 7;
 
@@ -58,6 +59,7 @@ function api_corregibles(token) {
       else if (t === 'F_PesadaBov') txt = 'Bovino · pesada caravana ' + r.Caravana + ' · ' + r.PesoKg + ' kg';
       else if (t === 'F_AlimentoBov') txt = 'Bovino · ' + r.Alimento + ' · ' + r.Cantidad + ' ' + r.Unidad + ' · ' + lab('D_CargaEngorde', r.IdCarga);
       else if (t === 'F_MovBov') txt = 'Bovino · ' + r.Tipo + ' caravana ' + r.Caravana;
+      else if (t === 'F_Presupuesto') txt = 'Presupuesto · ' + r.Rubro + ' · ' + lab('D_Campana', r.IdCampana) + ' · $' + fmtNum_(r.Importe, 2);
       else if (t === 'F_GastoAgro') txt = 'Maíz · ' + r.Concepto + ' · $' + fmtNum_(r.Importe, 2);
       else txt = (r.Tipo || 'Movimiento') + ' · $' + fmtNum_(r.Importe, 2) + ' · ' + lab('D_Tercero', r.IdTercero);
       out.push({ tabla: t, id: r[pk], fecha: r.Fecha || String(r.CreadoEl).slice(0, 10), texto: txt, creado: String(r.CreadoEl).slice(0, 10), quien: quien_(r) });

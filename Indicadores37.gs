@@ -1,7 +1,7 @@
 /**
  * INDICADORES CON SEMÁFORO DE MAÍZ Y BOVINOS (v3.7)
  * ---------------------------------------------------------------------------------------------
- * Misma tabla de metas que Ovinos (P_Indicador), con la columna Unidad. Mismo semáforo (diapositiva 11).
+ * Misma tabla de metas que Ovinos (P_Indicador), con la columna Unidad. Mismo semáforo.
  * Los valores salen solos de los datos cargados. Las metas solo se cargan cuando tienen fuente:
  *  - Maíz · rinde: estándar de 8.500 kg/ha cargado por el grupo de Maíz (F_RindeEstAgro).
  *  - El resto queda "Sin meta" hasta que el administrador la cargue (no se inventan metas).

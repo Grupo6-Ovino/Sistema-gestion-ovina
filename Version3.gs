@@ -17,6 +17,14 @@
  *  - Diferencia de conteo (64 → 47 ovejas, 2 → 1 carnero): el grupo no sabe qué pasó; por pedido del grupo se registra
  *    como muerte con causa "No se sabe" y caravanas elegidas al azar. Queda aclarado en cada registro.
  */
+/** Saca de un texto las referencias a material de clase (se pidió en la v3.8). */
+function limpiarDiap_(t) {
+  var D = 'd[a-z]{2}p[a-z]{7}s?'; // la palabra de las referencias a material de clase
+  t = String(t === undefined || t === null ? '' : t);
+  return t.replace(new RegExp('\\s*\\(semáforo de la ' + D + ' \\d+\\)', 'gi'), '').replace(new RegExp('Propuesta \\(' + D + ' \\d+\\):\\s*ajustable por el grupo', 'gi'), 'Propuesta del grupo (ajustable)')
+    .replace(new RegExp(D + ' [\\d y]+ \\(meta de referencia (\\d+)\\s*%\\)', 'gi'), 'Meta de referencia del grupo: $1 %').replace(new RegExp(',\\s*' + D + ' [\\d y]+(:[^)]*)?\\)', 'gi'), ')')
+    .replace(new RegExp('\\s*\\(' + D + ' [\\d y]+(:[^)]*)?\\)', 'gi'), '').replace(new RegExp('\\s*\\b' + D + ' \\d+( y \\d+)?', 'gi'), '').replace(/\s{2,}/g, ' ').trim();
+}
 var CARAVANAS_BAJA_V3 = [31, 32, 33, 43, 56, 58, 59, 61, 64, 67, 70, 72, 75, 83, 89, 93, 94]; // sorteadas (semilla 20261015)
 var CARNERO_BAJA_V3 = 96;
 
@@ -36,7 +44,7 @@ function asegurarVersion_() {
       var log = migrarV3_();
       invalidarTodo_();
       p.setProperty('VERSION_DATOS', VERSION);
-      if (antes === '3.6' || antes === VERSION) return 'Sistema actualizado a la versión 3.7: las unidades Maíz y Bovinos ya son parte de este sistema, con los datos que pasaron esos grupos. Maíz: lotes, labores e insumos, cosechas, ventas de grano, gastos de almacén y su resumen. Bovinos: animales, pesadas, cargas de engorde con su alimento, ventas y muertes. En el inicio elegís la unidad: Ovinos, Bovinos o Maíz.';
+      if (antes === '3.7' || antes === '3.6' || antes === VERSION) return 'Sistema actualizado a la versión 3.8: se puede cargar sin señal (queda guardado en el teléfono y se envía solo), hay Presupuesto de la campaña, Resultados e Indicadores en listas desplegables y el sistema queda solo para ganadería: Bovinos está en Unidades del campo (en pausa hasta que el administrador lo active).';
       if (antes === '3.5') return 'Sistema actualizado a la versión 3.6: al tocar F5 la página espera en la misma sección (ya no pasa por el inicio) y el historial de cambios lo ve solo el administrador.';
       if (antes === '3.4') return 'Sistema actualizado a la versión 3.5: se quitó el rol Responsable de subunidad (quien lo tenía ahora es Operador de carga), cada registro muestra quién lo cargó y quién lo modificó, y hay un Historial de cambios en Administración.';
       if (antes === '3.3') return 'Sistema actualizado a la versión 3.4: ahora podés corregir datos con el lapicito (Cargar → Corregir un dato y en la ficha de cada animal).';
@@ -151,7 +159,7 @@ function migrarV3_() {
     return 'Maíz: dosis técnica 20 kg por cabeza y consumo real 960 kg (esperado 940 kg)';
   });
 
-  // 5. Presupuesto 2026 (los supuestos del grupo funcionan como presupuesto: diapositiva 12)
+  // 5. Presupuesto 2026 (los supuestos del grupo funcionan como presupuesto)
   paso('presupuesto', function () {
     if (!CAM26) return '';
     [['Alimentación', 310500, 'Supuesto del grupo (14/09, "entrar a este 1"): $4.500 por cabeza × 69 cabezas'],
@@ -344,6 +352,40 @@ function migrarV3_() {
   paso('bovino37', function () { return importarBovino_('sistema (actualización v3.7)'); });
   paso('indicadores37', function () { return cargarIndicadoresUnidad_('sistema (actualización v3.7)'); });
 
+  // ---------- v3.8 ----------
+  // Indicadores de Ovinos: quedan los 7 que le importan al productor (pedido del grupo, 28/10/2026). Los otros 7 NO se borran:
+  // se dan de baja y el administrador los puede reactivar en Administración → Indicadores (ver dados de baja).
+  paso('indicadores38', function () {
+    var OCULTAR = ['DESVIO_PRESUP', 'COBRANZA', 'SUPERVIVENCIA', 'PRENEZ', 'DESVIO_ALIM', 'COSTOS_REALES', 'FICHAS'], n = 0, t = 0;
+    leer_('P_Indicador').forEach(function (x) {
+      if (OCULTAR.indexOf(x.IdIndicador) >= 0 && activo_(x)) { cambiarActivo_('P_Indicador', x, false, QUIEN, 'Baja: indicador oculto por pedido del grupo (v3.8)'); n++; }
+    });
+    leer_('P_Indicador').forEach(function (x) {
+      var c = {}; ['Objetivo', 'Formula', 'Interpretacion', 'FuenteMeta', 'Decision'].forEach(function (k) { var v = limpiarDiap_(x[k]); if (v !== String(x[k] === undefined ? '' : x[k])) c[k] = v; });
+      if (Object.keys(c).length) { actualizarFila('P_Indicador', x, c, 'Textos de indicadores'); t++; }
+    });
+    return 'Indicadores: ' + n + ' ocultos (se pueden reactivar) y ' + t + ' textos actualizados';
+  });
+  // Solo ganadería (pedido de la cátedra): Maíz sale del sistema (sus datos quedan en la planilla, sin tocar) y vuelve a ser
+  // una unidad con link; Bovinos queda en pausa hasta que el administrador lo active en Unidades del campo.
+  paso('unidades38', function () {
+    var n = [];
+    leer_('D_UnidadNeg').forEach(function (u) {
+      if (/^bovin/i.test(u.Nombre) && !u.Estado) { actualizarFila('D_UnidadNeg', u, { Estado: 'En pausa', Descripcion: 'Recría y engorde a corral' }, 'Bovinos en pausa (v3.8)'); n.push('Bovinos en pausa'); }
+      if (/^ma[ií]z$/i.test(String(u.Nombre).trim())) { actualizarFila('D_UnidadNeg', u, { Descripcion: 'Maíz para comercialización y consumo interno', Estado: '' }, 'Maíz fuera de este sistema (v3.8)'); n.push('Maíz fuera del sistema'); }
+    });
+    return 'Unidades: ' + n.join(', ');
+  });
+  paso('presupuesto38', function () {
+    var n = 0;
+    leer_('F_Presupuesto').forEach(function (x) {
+      if (x.Tipo && x.Clasificacion) return;
+      var t = x.Tipo || (RUBROS[x.Rubro] ? 'Gasto' : 'Ingreso');
+      actualizarFila('F_Presupuesto', x, { Tipo: t, Clasificacion: clasifPresu_(t, x.Rubro) }, 'Presupuesto: ingreso o gasto y clasificación'); n++;
+    });
+    return 'Presupuesto: ' + n + ' renglones clasificados';
+  });
+
   return log;
 }
 
@@ -373,7 +415,7 @@ var INDICADORES_BASE_ = [
   ['COBERTURA', 'Financiera', 'Reducir la pérdida de la unidad y acercarla al punto de equilibrio', 'Cobertura del costo total',
     'Ingresos sin IVA ÷ costo total (directos + indirectos) × 100',
     'Qué parte del costo total pagan las ventas. 100% = punto de equilibrio: ni gana ni pierde. Debajo de 100% la unidad pierde plata.',
-    '%', 'Mayor es mejor', 85, 80, 'CMI del Grupo 6 (semáforo de la diapositiva 11)', 'Anual (cierre de campaña) con revisión trimestral de costos', 'Administración del campo (UNRC)',
+    '%', 'Mayor es mejor', 85, 80, 'CMI del Grupo 6', 'Anual (cierre de campaña) con revisión trimestral de costos', 'Administración del campo (UNRC)',
     'Ver qué rubro explica el desvío en "Resultados → ¿En qué se gastó?". Los indirectos (reposición de madres y amortización de carneros) son la mayor parte del costo: revisar esos supuestos antes de recortar sanidad, que afecta la señalada.'],
   ['MB_MADRE', 'Financiera', 'Que cada madre deje margen sobre sus costos directos', 'Margen bruto por madre',
     '(Ingresos sin IVA − costos directos) ÷ ovejas en servicio',
@@ -382,13 +424,13 @@ var INDICADORES_BASE_ = [
     'Si baja: revisar qué costo directo subió (alimento, sanidad) y si bajaron los corderos o los kilos por madre.'],
   ['DESVIO_PRESUP', 'Financiera', 'Gastar lo presupuestado en cada rubro', 'Desvío presupuestario',
     '(Costo real − costo presupuestado) ÷ costo presupuestado × 100 (solo rubros con gasto real)',
-    'Positivo: se gastó MÁS de lo previsto. Negativo: se gastó menos. Avisa durante la campaña, antes de ver el resultado final (indicador adelantado, diapositiva 10).',
-    '%', 'Menor es mejor', 0, 5, 'Propuesta (diapositiva 12): ajustable por el grupo', 'Mensual', 'Administración del campo',
+    'Positivo: se gastó MÁS de lo previsto. Negativo: se gastó menos. Avisa durante la campaña, antes de ver el resultado final (indicador adelantado).',
+    '%', 'Menor es mejor', 0, 5, 'Propuesta del grupo (ajustable)', 'Mensual', 'Administración del campo',
     'Ver qué rubro explica el desvío (alimento, sanidad, insumos, combustible) y si fue por precio o por cantidad.'],
   ['PRECIO_REL', 'Clientes', 'Vender el cordero en un canal que pague un precio cercano al de referencia', 'Precio relativo frente a la referencia',
     'Precio obtenido por kg ÷ precio de referencia por kg × 100 (los dos con IVA)',
     'Si da 100% vendimos al precio del mercado; menos de 100% vendimos más barato. Hay que comparar productos y fechas equivalentes: con inflación, una referencia muy posterior a la venta agranda la brecha.',
-    '%', 'Mayor es mejor', 85, 80, 'CMI del Grupo 6 (semáforo de la diapositiva 11)', 'En cada venta', 'Encargado de comercialización',
+    '%', 'Mayor es mejor', 85, 80, 'CMI del Grupo 6', 'En cada venta', 'Encargado de comercialización',
     'Juntar un lote más grande para justificar el flete a una planta habilitada, o sumar compradores para no depender solo de La Campana.'],
   ['COBRANZA', 'Clientes', 'Cobrar las ventas a tiempo', 'Plazo promedio de cobranza',
     'Días entre la venta y el cobro, ponderados por importe (las ventas sin cobrar cuentan hasta hoy)',
@@ -398,12 +440,12 @@ var INDICADORES_BASE_ = [
   ['CORDEROS_MADRE', 'Procesos internos', 'Aumentar los corderos logrados por cada madre', '% de corderos logrados por madre (señalada)',
     'Corderos logrados en la campaña (nacidos − muertos) ÷ ovejas en servicio × 100',
     'Cuántos corderos produce cada 100 ovejas. Es la palanca principal del resultado: más corderos por madre = más kilos para vender con el mismo rodeo.',
-    '%', 'Mayor es mejor', 85, 80, 'CMI del Grupo 6 (semáforo de la diapositiva 11)', 'Por campaña (control en parición y destete)', 'Encargado de la unidad ovina',
+    '%', 'Mayor es mejor', 85, 80, 'CMI del Grupo 6', 'Por campaña (control en parición y destete)', 'Encargado de la unidad ovina',
     'Analizar las causas de muerte y reforzar el plan sanitario preparto (vacuna clostridial, antiparasitario) y la vigilancia en la parición.'],
   ['SUPERVIVENCIA', 'Procesos internos', 'Que sobrevivan los corderos que nacen', 'Supervivencia de corderos',
     'Corderos vivos o vendidos ÷ corderos nacidos en la campaña × 100',
-    'De cada 100 corderos que nacen, cuántos llegan al destete o a la venta (diapositiva 18: ovinos).',
-    '%', 'Mayor es mejor', 85, 80, 'Diapositivas 11 y 18 (meta de referencia 85%)', 'Por campaña', 'Encargado de la unidad ovina',
+    'De cada 100 corderos que nacen, cuántos llegan al destete o a la venta.',
+    '%', 'Mayor es mejor', 85, 80, 'Meta de referencia del grupo: 85 %', 'Por campaña', 'Encargado de la unidad ovina',
     'Revisar las causas en las muertes registradas y reforzar el control en la parición (abrigo, calostro, predadores).'],
   ['KG_MADRE', 'Procesos internos', 'Producir más kilos por madre', 'Kg de cordero vendidos por madre',
     'Kg vendidos en la campaña ÷ ovejas en servicio',

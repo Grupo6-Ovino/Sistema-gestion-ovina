@@ -22,7 +22,7 @@
  */
 
 var TZ = 'America/Argentina/Buenos_Aires';
-var VERSION = '3.7';
+var VERSION = '3.8';
 var AUDIT_COLS = ['CreadoEl', 'CreadoPor', 'ModificadoEl', 'ModificadoPor', 'Activo'];
 var ROLES = ['Administrador', 'Operador de carga', 'Consulta / auditoría']; // v3.5: se quitó "Responsable de subunidad" (el Operador de carga hace lo mismo)
 var SESION_SEGUNDOS = 6 * 60 * 60;
@@ -54,7 +54,8 @@ var SCHEMA = {
   // ---------- MAESTRAS ----------
   D_UnidadNeg: { grupo: 'Maestras', titulo: 'Unidades de negocio', pk: 'IdUnidad', prefijo: 'N', label: 'Nombre',
     cols: [{ n: 'IdUnidad', l: 'Código' }, { n: 'Nombre', req: true, l: 'Nombre' }, { n: 'TipoActividad', l: 'Tipo de actividad' },
-      { n: 'Descripcion', l: 'Descripción' }, { n: 'LinkApp', l: 'Link de la aplicación de esa unidad (si tiene)' }] },
+      { n: 'Descripcion', l: 'Descripción' }, { n: 'LinkApp', l: 'Link de la aplicación de esa unidad (si tiene)' },
+      { n: 'Estado', t: 'enum', opts: ['Activa', 'En pausa'], l: 'Estado en este sistema (solo Bovinos)' }] },
   D_Subunidad: { grupo: 'Maestras', titulo: 'Subunidades (etapas)', pk: 'IdSubunidad', prefijo: 'SUB', label: 'Nombre',
     cols: [{ n: 'IdSubunidad', l: 'Código' }, { n: 'IdUnidad', req: true, fk: 'D_UnidadNeg', l: 'Unidad de negocio' },
       { n: 'Nombre', req: true, l: 'Nombre' }, { n: 'Descripcion', l: 'Descripción' }] },
@@ -149,9 +150,12 @@ var SCHEMA = {
       { n: 'Origen', t: 'enum', opts: ['Automático', 'Manual'], l: 'Cómo se cargó' }] },
 
   F_Presupuesto: { grupo: 'Parámetros', titulo: 'Presupuesto por rubro', pk: 'IdPresupuesto', prefijo: 'PRE', label: 'IdPresupuesto',
+    soloFormulario: true, editablesDespues: [] /* v3.8: se carga una vez desde "Presupuesto"; solo el administrador lo corrige con el lapicito */,
     cols: [{ n: 'IdPresupuesto', l: 'Id' }, { n: 'IdCampana', req: true, fk: 'D_Campana', l: 'Campaña' },
-      { n: 'Rubro', t: 'enum', req: true, opts: Object.keys(RUBROS), l: 'Rubro' }, { n: 'IdSubunidad', fk: 'D_Subunidad', l: 'Etapa (opcional)' },
-      { n: 'Importe', t: 'num', req: true, min: 0, l: 'Importe presupuestado ($)' }, { n: 'Fuente', req: true, l: 'Fuente' }] },
+      { n: 'Rubro', req: true, l: 'Rubro' }, { n: 'IdSubunidad', fk: 'D_Subunidad', l: 'Etapa (opcional)' },
+      { n: 'Importe', t: 'num', req: true, min: 0, l: 'Importe presupuestado ($)' }, { n: 'Fuente', req: true, l: 'Fuente' },
+      { n: 'Tipo', t: 'enum', opts: ['Gasto', 'Ingreso'], l: 'Ingreso o gasto' }, { n: 'Concepto', l: 'Concepto (detalle)' },
+      { n: 'Clasificacion', t: 'enum', opts: ['Directo', 'Indirecto', 'Ingreso'], calc: true, l: 'Clasificación (la pone el sistema)' }] },
   P_Indicador: { grupo: 'Parámetros', titulo: 'Indicadores: metas y textos (CMI)', pk: 'IdIndicador', pkManual: true, label: 'Nombre',
     cols: [{ n: 'IdIndicador', req: true, l: 'Código' }, { n: 'Perspectiva', t: 'enum', req: true, opts: PERSPECTIVAS, l: 'Perspectiva' },
       { n: 'Objetivo', l: 'Objetivo estratégico' }, { n: 'Nombre', req: true, l: 'Indicador' }, { n: 'Formula', l: 'Fórmula' },
@@ -678,6 +682,7 @@ function calcular_(tabla, o) {
     o.Importe = r2(o.Cantidad * o.PrecioUnit);
     o.IVA = r2(o.Importe * a / 100);
   }
+  if (tabla === 'F_Presupuesto') { if (!o.Tipo) o.Tipo = RUBROS[o.Rubro] ? 'Gasto' : 'Ingreso'; o.Clasificacion = o.Tipo === 'Ingreso' ? 'Ingreso' : (RUBROS[o.Rubro] || {}).tipo || 'Indirecto'; }
   if (tabla === 'F_Produccion') o.RindeReal = Math.round(o.KgProducidos / o.CabezasBase * 10000) / 10000;
   if (tabla === 'F_Ingresos') {
     var prod = leer_('D_Producto').filter(function (x) { return x.IdProducto === o.IdProducto; })[0];
@@ -863,7 +868,7 @@ function listas_() {
       if (t === 'D_TipoComprobante') { item.circuito = x.Circuito; item.signo = x.Signo; item.nombre = x.Nombre; }
       if (t === 'D_Categoria') { item.sub = x.IdSubunidad; }
       if (t === 'D_UM') { item.abrev = x.Abreviatura; }
-      if (t === 'D_UnidadNeg') { item.link = x.LinkApp || ''; item.desc = x.Descripcion || ''; item.tipo = x.TipoActividad || ''; }
+      if (t === 'D_UnidadNeg') { item.link = x.LinkApp || ''; item.desc = x.Descripcion || ''; item.tipo = x.TipoActividad || ''; item.estado = x.Estado || ''; }
       if (t === 'D_LinkCotizacion') { item.url = x.URL; item.producto = x.Producto || ''; item.desc = x.Descripcion || ''; }
       if (t === 'D_Impuesto') { item.organismo = x.Organismo; }
       return item;
@@ -998,6 +1003,20 @@ function proximaFactura_() {
   var forzado = Number(config_('FACTURA_PROXIMO_NUMERO')) || 0;
   var n = Math.max(max + 1, forzado);
   return pre + ' ' + pv + '-' + ('000000000' + n).slice(-9);
+}
+/** v3.8 · Sin señal: las cargas hechas en el campo se mandan con una clave única. Si la misma carga llega dos veces
+ *  (por ejemplo, se cortó la señal justo cuando el servidor ya la había guardado), se devuelve el resultado anterior
+ *  y no se duplica. Solo para las cargas de campo, nunca para administración. */
+function api_conClave(token, clave, fn, args) {
+  var MAPA = { api_crear: api_crear, api_registrarSanidad: api_registrarSanidad, api_registrarMuerte: api_registrarMuerte, api_registrarVenta: api_registrarVenta,
+    api_registrarCompra: api_registrarCompra, api_registrarMovimiento: api_registrarMovimiento, api_pesadasBov: api_pesadasBov, api_corregir: api_corregir };
+  if (!MAPA[fn]) throw new Error('Esta operación no se puede guardar sin señal.');
+  if (!/^[a-z0-9-]{8,60}$/i.test(String(clave || ''))) throw new Error('Clave de envío inválida.');
+  var c = CacheService.getScriptCache(), k = 'pend_' + clave, prev = c.get(k);
+  if (prev) { var p = JSON.parse(prev); p.repetida = true; return p; }
+  var r = MAPA[fn].apply(null, [token].concat(Array.isArray(args) ? args : []));
+  try { c.put(k, JSON.stringify(r === undefined ? null : r).slice(0, 90000), 21600); } catch (e) {}
+  return r;
 }
 function api_proximaFactura(token) { var u = sesion_(token); exigir_(u, 'F_Ingresos', 'crear'); return proximaFactura_(); }
 
@@ -1365,7 +1384,7 @@ function api_reportes(token, idCampana) {
   return {
     campana: camp ? { id: camp.IdCampana, nombre: camp.Nombre, desde: camp.FechaDesde, hasta: camp.FechaHasta } : null,
     campanas: campanas.map(function (c) { return { id: c.IdCampana, nombre: c.Nombre }; }),
-    porSubunidad: porSub, consolidado: consolidado, rinde: rinde, consumo: consumo, consumoTotal: consumoTotal, costosRubro: costosRubro,
+    porSubunidad: porSub, consolidado: consolidado, rinde: rinde, consumo: consumo, consumoTotal: consumoTotal, costosRubro: costosRubro, presupuesto: presupuestoDe_(idCampana),
     stock: Object.keys(stock).map(function (k) { return stock[k]; }), lectura: lectura,
     detalleIngresos: ing.map(function (x) { return sinOcultos_('F_Ingresos', x); }),
     detalleCostos: cos.map(function (x) { var c = sinOcultos_('F_Costos', x); c.TipoCosto = insumos[x.IdInsumo] ? insumos[x.IdInsumo].TipoCosto : ''; c.Insumo = insumos[x.IdInsumo] ? insumos[x.IdInsumo].Nombre : ''; return c; })
@@ -1581,7 +1600,7 @@ function asegurarCotizacion_(fecha) {
   } catch (e) { /* sin conexión: no frena la carga */ }
 }
 /* =============================================================================================
- * 11. INDICADORES — Cuadro de Mando Integral (Kaplan y Norton), con semáforo (diapositiva 11)
+ * 11. INDICADORES — Cuadro de Mando Integral (Kaplan y Norton), con semáforo
  *    Las metas, textos y umbrales viven en la tabla P_Indicador (el administrador los cambia desde la app).
  *    El VALOR de cada indicador lo calcula el sistema con los datos cargados (funciones de CALC_IND).
  *    Un indicador nuevo que no tenga cálculo automático usa el "Valor cargado a mano".

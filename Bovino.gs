@@ -35,8 +35,10 @@ function calcularBov_(tabla, o) {
   if (tabla === 'F_MovBov') o.Importe = o.PrecioKg && o.PesoKg ? r2(Number(o.PesoKg) * Number(o.PrecioKg)) : '';
   return o;
 }
+function bovinoActivo_() { var b = unidadBovina_(); if (!b) return false; var u = leer_('D_UnidadNeg').filter(function (x) { return x.IdUnidad === b; })[0]; return !!u && u.Estado !== 'En pausa'; }
 function validarBov_(tabla, o) {
   var b = unidadBovina_();
+  if (!bovinoActivo_()) throw new Error('La unidad Bovinos está en pausa. El administrador la activa en Unidades del campo.');
   if (o.IdSubunidad) { var s = leer_('D_Subunidad').filter(function (x) { return x.IdSubunidad === o.IdSubunidad; })[0]; if (s && String(s.IdUnidad) !== b) throw new Error('Elegí una etapa de Bovinos (Recría o Engorde).'); }
   if (tabla === 'D_Bovino' && o.FechaNac && o.FechaNac > hoyStr_()) throw new Error('La fecha de nacimiento no puede ser posterior a hoy.');
   if (tabla === 'F_PesadaBov' || tabla === 'F_MovBov') {

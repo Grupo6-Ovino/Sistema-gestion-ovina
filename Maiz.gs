@@ -42,6 +42,7 @@ function calcularAgro_(tabla, o) {
 
 /** Controles propios del maíz (además de los generales: obligatorios, números, listas). */
 function validarAgro_(tabla, o) {
+  throw new Error('La parte agrícola (Maíz) no está en este sistema.'); // v3.8: pedido de la cátedra, solo ganadería
   var m = unidadMaiz_();
   if (o.IdSubunidad) { var s = leer_('D_Subunidad').filter(function (x) { return x.IdSubunidad === o.IdSubunidad; })[0]; if (s && String(s.IdUnidad) !== m) throw new Error('Elegí una subunidad de Maíz (Producción o Almacén).'); }
   if (o.IdCampana) { var c = leer_('D_Campana').filter(function (x) { return x.IdCampana === o.IdCampana; })[0]; if (c && String(c.IdUnidad) !== m) throw new Error('Elegí una campaña de Maíz.'); }

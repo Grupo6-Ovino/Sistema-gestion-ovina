@@ -318,11 +318,13 @@
     footer { flex-direction:column; align-items:flex-start; }
   }
   /* v3.7 · Unidad Maíz */
-  .unidadSel { display:flex; gap:8px; flex-wrap:wrap; margin:0 0 18px; }
+  .unidadSel { display:flex; gap:8px; flex-wrap:wrap; margin:0 0 18px; position:relative; z-index:2; } .unidadSel + .atender { margin-top:0; }
   .unidadSel button { display:flex; align-items:center; gap:10px; padding:10px 18px 10px 12px; border-radius:999px; border:1.5px solid #cfd9d2; background:#fff; font:inherit; font-weight:600; font-size:16px; color:var(--tinta); cursor:pointer; min-height:48px; }
   .unidadSel button .ic { width:30px; height:30px; display:grid; place-items:center; border-radius:50%; background:#e7efe9; color:var(--verde); }
   .unidadSel button.on { background:var(--monte); border-color:var(--monte); color:#fff; } .unidadSel button.on .ic { background:var(--amarillo); color:var(--monte); }
-  .unidadSel button:focus-visible { outline:3px solid var(--amarillo); outline-offset:2px; }
+  .unidadSel button:focus-visible, .unidadSel a:focus-visible { outline:3px solid var(--amarillo); outline-offset:2px; }
+  .unidadSel a.uExt { display:flex; align-items:center; gap:10px; padding:10px 16px 10px 12px; border-radius:999px; border:1.5px dashed #cfd9d2; background:#fff; font-weight:600; font-size:16px; color:var(--tinta); min-height:48px; text-decoration:none; }
+  .unidadSel a.uExt .ic { width:30px; height:30px; display:grid; place-items:center; border-radius:50%; background:#e7efe9; color:var(--verde); } .unidadSel a.uExt > svg { width:16px; height:16px; color:var(--tinta-2); }
   .mzK { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-bottom:16px; }
   .mzK > div { background:#fff; border:1px solid #dfe6e1; border-radius:var(--r); padding:14px 16px; box-shadow:var(--sh); }
   .mzK .mzL { font-size:12.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--tinta-2); font-weight:600; }
@@ -336,6 +338,47 @@
   .mzDos { display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; margin-bottom:16px; } .mzDos > .card { margin:0; min-width:0; }
   .mzER td:last-child { text-align:right; font-variant-numeric:tabular-nums; } .mzER tr.tot td { border-top:2px solid var(--tinta); font-weight:700; }
   @media (max-width:760px) { .mzK { grid-template-columns:repeat(2,minmax(0,1fr)); } .mzK .mzV { font-size:25px; } .mzDos { grid-template-columns:1fr; } .mzBar { grid-template-columns:110px 1fr 90px; font-size:14px; } }
+  /* v3.8 · Sin señal */
+  .senal { position:sticky; top:0; z-index:35; display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:12px max(16px, env(safe-area-inset-left, 0px)); background:#2b3530; color:#fff; font-size:15px; box-shadow:0 2px 10px rgba(0,0,0,.18); }
+  .senal .ic { width:34px; height:34px; border-radius:50%; display:grid; place-items:center; background:rgba(255,255,255,.12); flex:0 0 auto; }
+  .senal .ic svg { width:20px; height:20px; }
+  .senal .tx { flex:1; min-width:200px; line-height:1.35; } .senal .tx b { display:block; font-size:16px; }
+  .senal button { font:inherit; font-weight:600; border-radius:999px; padding:8px 16px; min-height:40px; cursor:pointer; border:1.5px solid rgba(255,255,255,.7); background:transparent; color:#fff; }
+  .senal.envia { background:var(--amarillo); color:var(--monte); } .senal.envia .ic { background:rgba(22,54,40,.12); } .senal.envia button { border-color:var(--monte); color:var(--monte); }
+  .senal.ok { background:var(--verde); }
+  .senal.err { background:#8f2a1f; }
+  .chipP { display:flex; align-items:center; gap:6px; background:var(--amarillo); color:var(--monte); border:0; border-radius:999px; padding:6px 12px; font-weight:700; min-height:40px; cursor:pointer; margin-left:auto; margin-right:8px; }
+  .chipP svg { width:18px; height:18px; } .chipP.err { background:#f6d4cf; color:#8f2a1f; }
+  .pendL { display:grid; gap:10px; margin:12px 0; } .pendI { border:1px solid #dfe6e1; border-radius:var(--r); padding:12px 14px; display:flex; gap:12px; align-items:flex-start; }
+  .pendI .t { flex:1; min-width:0; } .pendI .t small { display:block; color:var(--tinta-2); } .pendI.err { border-color:#e7b3ab; background:#fdf3f1; }
+  .pendI .e { color:#8f2a1f; font-size:14px; margin-top:4px; }
+  .listo .ch.nubeOk { background:var(--amarillo); color:var(--monte); }
+  /* v3.8 · Listas desplegables */
+  .accL { display:grid; gap:10px; margin-bottom:16px; }
+  details.acc { background:var(--panel); border:1px solid var(--linea); border-radius:var(--r); box-shadow:var(--sh); overflow:hidden; }
+  details.acc > summary { list-style:none; display:flex; align-items:center; gap:12px; padding:14px 16px; margin:0; cursor:pointer; color:var(--tinta); min-height:64px; }
+  details.acc > summary::-webkit-details-marker { display:none; }
+  details.acc > summary:hover { background:var(--suave); } details.acc > summary:focus-visible { outline:3px solid var(--amarillo); outline-offset:-3px; }
+  .acc .aT { flex:1; min-width:0; font-weight:700; font-size:17px; } .acc .aT small { display:block; font-weight:400; font-size:13.5px; color:var(--tinta-2); margin-top:2px; }
+  .acc .aV { font-family:var(--num); font-weight:700; font-size:20px; text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .acc .aI { width:34px; height:34px; border-radius:50%; background:var(--suave); display:grid; place-items:center; color:var(--verde); flex:0 0 auto; transition:transform .2s; }
+  .acc .aI svg { width:18px; height:18px; } details.acc[open] > summary .aI { transform:rotate(45deg); }
+  .acc .aC { padding:4px 16px 16px; border-top:1px solid var(--linea); }
+  @media (max-width:600px) { .acc .aV { font-size:17px; } .acc .aT { font-size:16px; } }
+  @media (prefers-reduced-motion:reduce) { .acc .aI { transition:none; } }
+  .calc { background:var(--suave); border-radius:10px; padding:10px 12px; margin-top:8px; font-variant-numeric:tabular-nums; }
+  .calc .cl { display:flex; justify-content:space-between; gap:10px; padding:4px 0; } .calc .cl b { white-space:nowrap; } .calc .cl.tot { border-top:2px solid var(--tinta); margin-top:4px; padding-top:6px; font-weight:700; }
+  details.como summary { margin:8px 0 0; font-size:14.5px; }
+  .item.tot { background:var(--suave); }
+  /* v3.8 · Semáforo explicado */
+  .leyenda { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; margin:10px 0 4px; }
+  @media (max-width:600px) { .leyenda > div { padding:8px 10px; font-size:13px; } .leyenda b { font-size:14px; } }
+  .leyenda > div { display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border-radius:10px; font-size:14px; line-height:1.35; }
+  .leyenda b { display:block; font-size:15px; } .leyenda .punto { margin-top:4px; flex:0 0 auto; }
+  .leyenda .l-Verde { background:var(--ok-bg); } .leyenda .l-Amarillo { background:#fff1cc; } .leyenda .l-Rojo { background:var(--bad-bg); } .leyenda .l-Sin { background:#eef1ee; }
+  .semBar { display:flex; height:14px; border-radius:7px; overflow:hidden; background:#e6ece8; margin:10px 0 2px; }
+  .semBar i { display:block; height:100%; } .semBar .b-Verde { background:var(--ok); } .semBar .b-Amarillo { background:#e0a106; } .semBar .b-Rojo { background:var(--bad); } .semBar .b-Sin { background:#b9bbb5; }
+  .leyMini { font-size:13px; color:var(--tinta-2); margin-top:8px; display:flex; flex-wrap:wrap; gap:4px 14px; }
 </style>
 </head>
 <body>
@@ -365,6 +408,7 @@
       <div class="top">
         <button class="hamb" onclick="menuLateral()" aria-label="Abrir el menú" id="hambBtn"></button>
         <div class="marca"><b>Pozo del Carril</b> · La Aguada · <span id="marcaU">Ovinos Dorper</span></div>
+        <button class="chipP hide" id="chipP" onclick="pendAbrir()" aria-label="Cargas guardadas en el teléfono"></button>
         <button class="chipU" id="chipU" onclick="menuUsuario()"><span class="av" id="avU"></span><span class="nm" id="nmU"></span></button>
       </div>
       <h1 id="heroTit"></h1>
@@ -376,8 +420,9 @@
       <button onclick="salir()" id="muSalir">Salir</button>
     </div>
   </header>
+  <div id="senal" class="senal hide" role="status" aria-live="polite"></div>
   <main id="main"></main>
-  <footer><img id="logoPie" alt="UNRC"><div>Sistema de Gestión de Pozo del Carril (Ovinos, Bovinos y Maíz) · Grupo 6 · Taller de Práctica II · FCE – UNRC<br><span id="verPie"></span></div></footer>
+  <footer><img id="logoPie" alt="UNRC"><div>Sistema de Gestión Ganadera de Pozo del Carril · Grupo 6 · Taller de Práctica II · FCE – UNRC<br><span id="verPie"></span></div></footer>
   </div>
 </div>
 
@@ -386,6 +431,8 @@ var S = { token:null, code:null, u:null, esq:null, listas:null, resumen:null, vi
 var $ = function (id) { return document.getElementById(id); };
 /* ---------- Íconos (dibujados, trazo 1,75; sin emojis) ---------- */
 var ICONOS = {
+  sinsenal: '<path d="M2 2l20 20"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M5 12.9a10 10 0 0 1 5.2-2.8"/><path d="M19 12.9a10 10 0 0 0-2.3-1.6"/><path d="M2 8.8a15 15 0 0 1 4.2-2.7"/><path d="M22 8.8A15 15 0 0 0 11 5"/><path d="M12 20h.01"/>',
+  nube: '<path d="M17.5 19H8a6 6 0 1 1 5.7-7.9A4.5 4.5 0 1 1 17.5 19Z"/><path d="M12 12v5"/><path d="m9.5 14.5 2.5 2.5 2.5-2.5"/>',
   vaca: '<path d="M4 4.5c0 2.2 1.4 3.5 3.2 3.5"/><path d="M20 4.5c0 2.2-1.4 3.5-3.2 3.5"/><path d="M7 8h10l-.9 7.2a4.1 4.1 0 0 1-8.2 0Z"/><path d="M10 18.5h4"/><path d="M10 12h.01M14 12h.01"/>',
   balanza: '<path d="M12 3v17"/><path d="M6 20h12"/><path d="M4 7h16"/><path d="m4 7-2.4 6a2.6 2.6 0 0 0 4.8 0Z"/><path d="m20 7-2.4 6a2.6 2.6 0 0 0 4.8 0Z"/>',
   inicio: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>',
@@ -440,10 +487,25 @@ if (typeof LOGO !== 'undefined') $('logoPie').src = LOGO;
 
 function call(fn) {
   var args = Array.prototype.slice.call(arguments, 1);
+  // v3.8: las cargas del campo viajan con una clave única; sin señal quedan guardadas en el teléfono
+  if (PEND_FN[fn] && S.u) {
+    var item = { clave: pendClave(), fn: fn, args: args.slice(1), desc: pendDesc(fn, args), cuando: new Date().toISOString(), email: S.u.Email, vista: S.vista, estado: 'espera' };
+    if (sinSenal()) { pendAgregar(item); pendListo(item); return new Promise(function () {}); }
+    return new Promise(function (res, rej) {
+      var runner = google.script.run.withSuccessHandler(function (r) { senalVolvio(); res(r); }).withFailureHandler(function (e) {
+        var m = (e && e.message) || String(e);
+        if (esErrorRed(m)) { S.offline = true; pendAgregar(item); pendListo(item); return; }
+        if (/Sesión vencida/.test(m)) { salir(true); }
+        rej(new Error(m));
+      });
+      runner.api_conClave(S.token, item.clave, fn, item.args);
+    });
+  }
   return new Promise(function (res, rej) {
-    var runner = google.script.run.withSuccessHandler(res).withFailureHandler(function (e) {
+    var runner = google.script.run.withSuccessHandler(function (r) { senalVolvio(); res(r); }).withFailureHandler(function (e) {
       var m = (e && e.message) || String(e);
-      if (/Sesión vencida/.test(m) && fn !== 'api_inicio') { salir(true); }
+      if (esErrorRed(m)) { S.offline = true; senalPintar(); m = 'Sin señal: esto se va a poder ver cuando vuelva la conexión. Lo que cargues mientras tanto queda guardado en el teléfono.'; }
+      else if (/Sesión vencida/.test(m) && fn !== 'api_inicio') { salir(true); }
       rej(new Error(m));
     });
     runner[fn].apply(runner, args);
@@ -506,6 +568,8 @@ function ingresar() {
 }
 $('lClave').addEventListener('keydown', function (e) { if (e.key === 'Enter') ingresar(); });
 function salir(silencioso) {
+  var mias = pendLeer().filter(function (x) { return S.u && x.email === S.u.Email; }).length;
+  if (!silencioso && mias && !window.confirm('Tenés ' + mias + ' carga' + (mias === 1 ? '' : 's') + ' guardada' + (mias === 1 ? '' : 's') + ' en el teléfono que todavía no se ' + (mias === 1 ? 'envió' : 'enviaron') + '. Si salís, se van a enviar la próxima vez que entres con tu usuario. ¿Salir igual?')) return;
   if (S.token && !silencioso) call('api_logout', S.token, S.code).catch(function () {});
   S.token = null; S.code = null; guardar('ovToken', null); guardar('ovLugar', null);
   if (HIST) { try { HIST.replace({ v: 'inicio' }, {}, ''); } catch (e) {} }
@@ -521,9 +585,10 @@ function iniciar() {
     $('heroFecha').textContent = fechaLarga(); $('verPie').textContent = 'Versión ' + r.version;
     $('login').classList.add('hide'); $('carga').classList.add('hide'); $('app').classList.remove('hide'); ovejaMontar(); $('oveja').classList.remove('hide');
     ir(S.vista, 'arranque');
+    senalPintar(); setTimeout(pendEnviar, 1500);
   });
 }
-function refrescar() { return call('api_inicio', S.token, S.code).then(function (r) { if (r.sesion) { S.token = r.sesion.token; S.code = r.sesion.code; guardar('ovToken', S.token); } S.listas = r.listas; S.esq = r.esquema; S.resumen = r.resumen; }); }
+function refrescar() { if (sinSenal()) return Promise.resolve(); return call('api_inicio', S.token, S.code).then(function (r) { if (r.sesion) { S.token = r.sesion.token; S.code = r.sesion.code; guardar('ovToken', S.token); } S.listas = r.listas; S.esq = r.esquema; S.resumen = r.resumen; }); }
 function menuUsuario() { $('menuU').classList.toggle('hide'); }
 /* ---------- Menú lateral: en la compu queda fijo a la izquierda; en el celular se abre con ☰ ---------- */
 function menuLateral(abrir) {
@@ -532,10 +597,9 @@ function menuLateral(abrir) {
 }
 function armarMenu() {
   var it = function (v, i, txt) { return '<button class="itS' + (S.vista === v ? ' on' : '') + '" onclick="menuLateral(false);ir(\'' + v + '\')"' + (S.vista === v ? ' aria-current="page"' : '') + '>' + ic(i) + txt + '</button>'; };
-  if (S.vista && /^(maiz|mz)/.test(S.vista)) S.unidad = 'maiz'; else if (S.vista && /^(bovino|bv)/.test(S.vista)) S.unidad = 'bovino'; else if (S.vista && ['sanidad','nacimiento','muerte','compra','venta','animales','tablero','panel'].indexOf(S.vista) >= 0) S.unidad = 'ovino';
+  if (S.vista && /^(maiz|mz)/.test(S.vista)) S.unidad = 'maiz'; else if (S.vista && /^(bovino|bv)/.test(S.vista)) S.unidad = 'bovino'; else if (S.vista && ['sanidad','nacimiento','muerte','compra','venta','animales','tablero','panel','presupuesto'].indexOf(S.vista) >= 0) S.unidad = 'ovino';
   try { guardar('ovUnidad', S.unidad || 'ovino'); } catch (e) {}
   if ($('marcaU')) $('marcaU').textContent = S.unidad === 'maiz' ? 'Maíz' : S.unidad === 'bovino' ? 'Bovinos' : 'Ovinos Dorper';
-  if (S.unidad === 'maiz') return armarMenuMaiz(it);
   if (S.unidad === 'bovino') return armarMenuBov(it);
   var carga = [];
   if (puede('F_Sanidad', 'crear')) carga.push(it('sanidad', 'sanidad', 'Vacunas y tratamientos'));
@@ -546,7 +610,7 @@ function armarMenu() {
   if (puede('F_Tesoreria', 'crear')) carga.push(it('cuentas', 'cuentas', 'Cobros y pagos'));
   if (S.u.Rol !== 'Consulta / auditoría') carga.push(it('corregir', 'lapiz', 'Corregir un dato'));
   var ver = [it('animales', 'caravana', 'Los animales'), it('terceros', 'terceros', 'Proveedores y clientes'), it('tablero', 'tablero', 'Resultados'),
-    it('indicadores', 'indicadores', 'Indicadores'), it('panel', 'tablero', 'Panel decisional'), it('cotizaciones', 'cotizaciones', 'Cotizaciones'), it('impuestos', 'impuestos', 'Impuestos'), it('unidades', 'unidades', 'Unidades del campo')];
+    it('indicadores', 'indicadores', 'Indicadores'), it('panel', 'tablero', 'Panel decisional'), it('cotizaciones', 'cotizaciones', 'Cotizaciones'), it('impuestos', 'impuestos', 'Impuestos'), it('unidades', 'unidades', 'Unidades del campo'), it('presupuesto', 'billete', 'Presupuesto')];
   if (!puede('F_Tesoreria', 'crear')) ver.splice(2, 0, it('cuentas', 'cuentas', 'Cobros y pagos'));
   $('side').innerHTML = '<div class="marcaS"><span class="cvn">PdC</span><div>Pozo del Carril<small>Unidad Ovina</small></div></div><div style="height:6px"></div>' + it('inicio', 'inicio', 'Inicio') +
     (carga.length ? '<div class="grupoS">Cargar</div>' + carga.join('') : '') + '<div class="grupoS">Consultar</div>' + ver.join('') +
@@ -561,7 +625,7 @@ var VISTAS = {
   venta:     ['Vender animales', vVenta], terceros: ['Proveedores y clientes', vTerceros], animales: ['Los animales', vAnimales],
   tablero:   ['Resultados', vTablero], tablas: ['Administración', vTablas], clave: ['Cambiar mi clave', vClave],
   indicadores: ['Indicadores (Cuadro de Mando Integral)', vIndicadores], cotizaciones: ['Cotizaciones', vCotizaciones],
-  impuestos: ['Impuestos y vencimientos', vImpuestos], corregir: ['Corregir un dato', vCorregir], historial: ['Historial de cambios', vHistorial], panel: ['Panel decisional', vPanel], unidades: ['Unidades de Pozo del Carril', vUnidades],
+  impuestos: ['Impuestos y vencimientos', vImpuestos], corregir: ['Corregir un dato', vCorregir], historial: ['Historial de cambios', vHistorial], panel: ['Panel decisional', vPanel], unidades: ['Unidades de Pozo del Carril', vUnidades], presupuesto: ['Presupuesto de la campaña', vPresupuesto],
   maiz: ['Maíz · Resumen de la campaña', vMaiz], mzAplicacion: ['Maíz · Labores e insumos por lote', function () { mzTabla('F_ConsumoLote'); }],
   mzCosecha: ['Maíz · Cosechas', function () { mzTabla('F_Cosecha'); }], mzVenta: ['Maíz · Ventas de grano', function () { mzTabla('F_VentaGrano'); }],
   mzGasto: ['Maíz · Almacén y comercialización', function () { mzTabla('F_GastoAgro'); }], mzLotes: ['Maíz · Lotes', function () { mzTabla('D_Lote'); }],
@@ -571,7 +635,9 @@ var VISTAS = {
   mzEstandar: ['Maíz · Estándares y dosis', function () { mzTabla(S.mzEst || 'F_CostoEstAgro'); }], mzInsumos: ['Maíz · Insumos y labores', function () { mzTabla('D_InsumoAgro'); }]
 };
 function ir(v, origen) {
-  if (!VISTAS[v]) v = 'inicio';
+  if (!VISTAS[v] || /^(maiz|mz)/.test(v)) v = 'inicio'; // v3.8: la parte agrícola salió del sistema
+  if (/^(bovino|bv)/.test(v) && S.listas && !bovActiva()) v = 'unidades';
+  if (S.unidad === 'maiz' || (S.unidad === 'bovino' && S.listas && !bovActiva())) S.unidad = 'ovino';
   if (origen !== 'arranque' && origen !== 'historia') guardarLugar();
   var nueva = origen !== 'historia' && origen !== 'arranque' && v !== S.vista;
   S.vista = v; $('menuU').classList.add('hide'); menuLateral(false);
@@ -579,7 +645,7 @@ function ir(v, origen) {
   document.body.classList.toggle('enInicio', v === 'inicio');
   $('hero').classList.toggle('big', v === 'inicio');
   var h = new Date().getHours(), saludo = h < 13 ? 'Buen día' : h < 20 ? 'Buenas tardes' : 'Buenas noches';
-  var ICV = { sanidad:'sanidad', nacimiento:'oveja', muerte:'baja', compra:'compra', compras:'cuentas', cuentas:'cuentas', venta:'venta', terceros:'terceros', animales:'caravana', tablero:'tablero', tablas:'tablas', clave:'clave', indicadores:'indicadores', panel:'cotizaciones', corregir:'lapiz', historial:'libro', cotizaciones:'cotizaciones', impuestos:'impuestos', unidades:'unidades', maiz:'campo', mzAplicacion:'campo', mzCosecha:'campo', mzVenta:'venta', mzGasto:'compra', mzLotes:'campo', mzEstandar:'tablas', mzInsumos:'tablas', bovino:'vaca', bvAnimales:'vaca', bvPesada:'balanza', bvAlimento:'campo', bvMov:'venta', bvCargas:'vaca', bvPesadas:'balanza' };
+  var ICV = { sanidad:'sanidad', nacimiento:'oveja', muerte:'baja', compra:'compra', compras:'cuentas', cuentas:'cuentas', venta:'venta', terceros:'terceros', animales:'caravana', tablero:'tablero', tablas:'tablas', clave:'clave', indicadores:'indicadores', panel:'cotizaciones', corregir:'lapiz', historial:'libro', cotizaciones:'cotizaciones', impuestos:'impuestos', unidades:'unidades', presupuesto:'billete', maiz:'campo', mzAplicacion:'campo', mzCosecha:'campo', mzVenta:'venta', mzGasto:'compra', mzLotes:'campo', mzEstandar:'tablas', mzInsumos:'tablas', bovino:'vaca', bvAnimales:'vaca', bvPesada:'balanza', bvAlimento:'campo', bvMov:'venta', bvCargas:'vaca', bvPesadas:'balanza' };
   $('heroTit').innerHTML = v === 'inicio' ? esc(saludo + ', ' + String(S.u.Nombre).split(' ')[0]) : '<span class="icT">' + ic(ICV[v]) + '</span>' + esc(VISTAS[v][0]);
   $('heroFecha').classList.toggle('hide', v !== 'inicio'); $('heroExtra').innerHTML = '';
   document.title = (v === 'inicio' ? '' : VISTAS[v][0] + ' · ') + 'Pozo del Carril';
@@ -598,7 +664,6 @@ if (HIST) HIST.setChangeHandler(function (e) { if (!S.u) return; var v = (e.stat
 
 /* ---------- INICIO ---------- */
 function vInicio() {
-  if (S.unidad === 'maiz') return vInicioMaiz();
   if (S.unidad === 'bovino') return vInicioBov();
   var r = S.resumen || {};
   // Las caravanas del rodeo, en el encabezado (cantidad por categoría)
@@ -614,7 +679,7 @@ function vInicio() {
     '<div class="res' + (r.comprasVencidas ? ' alerta' : r.comprasPendientes ? ' aviso' : ' okk') + '" onclick="ir(\'cuentas\')" role="button" tabindex="0"><div class="v">' + num(r.comprasPendientes, 0) + '</div><div class="l">Facturas por pagar' + (r.comprasVencidas ? ' · ' + r.comprasVencidas + ' vencida' + (r.comprasVencidas > 1 ? 's' : '') : '') + (r.porCobrar ? ' · ' + r.porCobrar + ' venta' + (r.porCobrar > 1 ? 's' : '') + ' por cobrar' : '') + '</div></div>' +
     (r.impuestos ? '<div class="res' + (r.impuestos.vencidos ? ' alerta' : r.impuestos.porVencer ? ' aviso' : ' okk') + '" onclick="ir(\'impuestos\')" role="button" tabindex="0"><div class="v">' + num(r.impuestos.vencidos + r.impuestos.porVencer, 0) + '</div><div class="l">Impuestos ' + (r.impuestos.vencidos ? 'vencidos o por vencer' : 'por vencer esta semana') + '</div></div>' : '') +
     '<div class="res dolar"' + (S.u.Rol === 'Administrador' ? ' onclick="dolarAhora(this)" role="button" tabindex="0" title="Tocá para buscar la cotización de hoy"' : '') + '><div class="v">' + (r.dolar ? pesos0(r.dolar.Vendedor) : '—') + '</div><div class="l">' + (r.dolar ? 'Dólar oficial BNA (vendedor) · ' + fecha(r.dolar.Fecha) : 'Dólar BNA: todavía sin cotización') + '</div></div>' +
-    '</div>';
+    '</div>' + leyendaMini();
   if (S.aviso) { h += '<div class="msg ' + (/^ERROR/.test(S.aviso) ? 'err' : 'ok') + '" id="avisoAct">' + ic(/^ERROR/.test(S.aviso) ? 'alerta' : 'ok') + '<div style="flex:1">' + esc(S.aviso) + '</div><button class="link" style="min-height:0;padding:0" onclick="this.parentNode.remove()">Cerrar</button></div>'; S.aviso = ''; }
   var t = function (v, icono, tit, sub, carga) { return '<button class="tile' + (carga ? ' carga' : '') + '" onclick="ir(\'' + v + '\')"><span class="ic">' + ic(icono) + '</span><span><b>' + tit + '</b><span>' + sub + '</span></span></button>'; };
   var carga = [];
@@ -628,7 +693,7 @@ function vInicio() {
   var ver = [t('animales', 'caravana', 'Los animales', 'Rodeo, fichas y tratamientos'),
     t('terceros', 'terceros', 'Proveedores y clientes', puede('D_Tercero', 'crear') ? 'Ver y agregar' : 'Ver la lista'), t('tablero', 'tablero', 'Resultados', 'Ingresos, costos y margen'),
     t('indicadores', 'indicadores', 'Indicadores', 'Semáforo para tomar decisiones'), t('panel', 'cotizaciones', 'Panel decisional', 'Escenarios y asistente con IA'), t('cotizaciones', 'cotizaciones', 'Cotizaciones', 'Granos, hacienda y dólar'),
-    t('impuestos', 'impuestos', 'Impuestos', 'Vencimientos y pagos'), t('unidades', 'unidades', 'Unidades del campo', 'Bovinos, porcinos, maíz, soja')];
+    t('impuestos', 'impuestos', 'Impuestos', 'Vencimientos y pagos'), t('unidades', 'unidades', 'Unidades del campo', 'Bovinos, porcinos y las demás'), t('presupuesto', 'billete', 'Presupuesto', 'Lo que se planea gastar en la campaña')];
   if (!puede('F_Tesoreria', 'crear')) ver.splice(1, 0, t('cuentas', 'cuentas', 'Cobros y pagos', 'Facturas, lo que se debe y lo que nos deben'));
   if (S.u.Rol === 'Administrador') ver.push(t('tablas', 'tablas', 'Administración', 'Tablas, parámetros y usuarios'));
   if (S.u.Rol === 'Administrador') ver.push(t('historial', 'libro', 'Historial de cambios', 'Quién cambió qué y cuándo'));
@@ -918,7 +983,7 @@ function mvTerCambio(ref) {
   var ter = $('mvTer').value, P = mvPendientes(ter);
   if (!ter) { $('mvDocs').innerHTML = ''; return; }
   var h = '<div class="f"><label>¿De qué factura es?</label><div class="lista">';
-  P.forEach(function (d, i) { h += '<label class="item" style="cursor:pointer"><input type="radio" name="mvDoc" value="' + esc(d.ref) + '" data-saldo="' + d.saldo + '" onchange="mvDocCambio(this)" style="width:auto;min-height:0;margin-top:4px"' + (d.ref === ref || (!ref && i === 0) ? ' checked' : '') + '><div class="t"><b>' + esc(d.txt) + '</b><div>Total ' + pesos(d.total) + '</div></div><div class="der"><b>' + pesos(d.saldo) + '</b><br><span class="muted">falta ' + (CU_TIPO === 'Pago' ? 'pagar' : 'cobrar') + '</span></div></label>'; });
+  P.forEach(function (d, i) { h += '<label class="item" style="cursor:pointer"><input type="radio" name="mvDoc" value="' + esc(d.ref) + '" data-saldo="' + d.saldo + '" onchange="mvDocCambio(this)" style="width:auto;min-height:0;margin-top:4px"' + (d.ref === ref || (!ref && i === 0) ? ' checked' : '') + '><div class="t"><b>' + esc(d.txt) + '</b><div>Total ' + pesos(d.total) + '</div></div><div class="der"><b>' + pesos(d.saldo) + '</b><br><span class="muted">Falta ' + (CU_TIPO === 'Pago' ? 'pagar' : 'cobrar') + '</span></div></label>'; });
   h += '<label class="item" style="cursor:pointer"><input type="radio" name="mvDoc" value="" data-saldo="" onchange="mvDocCambio(this)" style="width:auto;min-height:0;margin-top:4px"' + (!P.length ? ' checked' : '') + '><div class="t"><b>No es de una factura cargada</b><div>' + (P.length ? 'Pago a cuenta o de algo que no está en el sistema' : 'Este ' + (CU_TIPO === 'Pago' ? 'proveedor' : 'cliente') + ' no tiene facturas pendientes') + '</div></div></label></div></div>';
   $('mvDocs').innerHTML = h;
   var sel = document.querySelector('input[name="mvDoc"]:checked'); if (sel) mvDocCambio(sel);
@@ -971,7 +1036,7 @@ function cuPintar() {
 }
 window.cuPintar = cuPintar; window.mvTipoCambio = mvTipoCambio;
 function dolarAhora(el) {
-  if (el) el.querySelector('.l').textContent = 'buscando la cotización…';
+  if (el) el.querySelector('.l').textContent = 'Buscando la cotización…';
   call('api_actualizarDolar', S.token).then(function () { return refrescar(); }).then(function () { if (S.vista === 'inicio') vInicio(); })
     .catch(function (e) { if (el) el.querySelector('.l').textContent = e.message; });
 }
@@ -1107,70 +1172,76 @@ function vGuardar() {
 /* ---------- RESULTADOS (tablero) ---------- */
 function kpi(l, v) { return '<div class="kpi"><div class="l">' + l + '</div><div class="v">' + v + '</div></div>'; }
 function vTablero(idCamp) {
-  var m = $('main'); m.innerHTML = volverBtn() + '<div class="card">Calculando…</div>';
+  var m = $('main'); m.innerHTML = volverBtn() + '<div class="card"><div class="cargando"><i></i><i></i><i></i><i></i></div></div>';
   call('api_reportes', S.token, idCamp || S.campana || '').then(function (r) {
     S.campana = r.campana ? r.campana.id : '';
-    var c = r.consolidado;
-    var h = volverBtn() + '<div class="card"><div class="row"><div class="f" style="max-width:300px;margin:0"><label>Campaña</label><select onchange="vTablero(this.value)">' +
+    var c = r.consolidado, P = r.presupuesto || {};
+    var h = volverBtn() + '<div class="card"><div class="row" style="align-items:center"><div class="f" style="max-width:300px;margin:0"><label for="tbCamp">Campaña</label><select id="tbCamp" onchange="vTablero(this.value)">' +
       r.campanas.map(function (x) { return '<option value="' + x.id + '"' + (x.id === S.campana ? ' selected' : '') + '>' + esc(x.nombre) + '</option>'; }).join('') +
-      '</select></div><div class="muted" style="padding-bottom:12px">' + (r.campana ? 'Del ' + fecha(r.campana.desde) + ' al ' + fecha(r.campana.hasta) : '') + '</div></div></div>';
-    var u$ = function (x) { return '<div class="usd">US$ ' + num(x) + (c.usd && !c.usd.completo ? ' <span class="tag">Faltan cotizaciones</span>' : '') + '</div>'; };
-    h += '<div class="kpis">' + kpi('Ingresos (sin IVA)', pesos(c.ingresos) + u$(c.usd.ingresos)) + kpi('Costos directos' + (c.tieneSupuestos ? ' <span class="tag">Con supuestos</span>' : ''), pesos(c.costosDirectos) + u$(c.usd.costosDirectos)) +
-      kpi('Margen bruto', pesos(c.margenBruto) + u$(c.usd.margenBruto)) + kpi('% sobre costos', c.pctSobreCosto === null ? 'sin costos' : num(c.pctSobreCosto) + ' %') + '</div>';
-    h += '<div class="card"><h2>Lectura rápida</h2><ul class="lect">' + r.lectura.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></div>';
-
-    h += '<div class="card"><h2>¿En qué se gastó?</h2>';
-    if (!r.costosRubro.length) h += '<p class="muted">No hay costos cargados en esta campaña.</p>';
-    else {
-      var tc = r.costosRubro.reduce(function (a, x) { return a + x.total; }, 0);
-      h += '<div class="scroll" style="max-height:none"><table><tr><th>Rubro</th><th>Tipo</th><th class="n">Reales</th><th class="n">Supuestos</th><th class="n">Total</th><th class="n">% del total</th></tr>' +
-        r.costosRubro.map(function (x) { return '<tr' + (x.supuestos ? ' class="sup"' : '') + '><td>' + esc(x.rubro) + '</td><td>' + esc(x.tipo) + '</td><td class="n">' + pesos(x.reales) + '</td><td class="n">' + pesos(x.supuestos) + '</td><td class="n">' + pesos(x.total) + '</td><td class="n">' + (tc ? num(x.total / tc * 100, 1) + ' %' : '—') + '</td></tr>'; }).join('') +
-        '<tr class="tot"><td colspan="4">Total costos (directos + indirectos)</td><td class="n">' + pesos(tc) + '</td><td></td></tr></table></div><p class="muted">Las filas naranjas tienen costos SUPUESTOS (no salen de un comprobante). Las facturas de compra se ven en "Cobros y pagos".</p>';
-    }
-    h += '</div>';
-
-    h += '<div class="card"><h2>Resultado por etapa y total</h2><div class="scroll"><table><tr><th>Etapa</th><th class="n">Kg vendidos</th><th class="n">Ingresos (neto)</th><th class="n">Costos directos reales</th><th class="n">Costos directos supuestos</th><th class="n">Costos directos</th><th class="n">Margen bruto</th><th class="n">Margen bruto (US$)</th><th class="n">% s/ costo</th><th class="n">Costos indirectos (aparte)</th><th class="n">Muertes</th></tr>';
-    r.porSubunidad.concat([c]).forEach(function (s, i, arr) {
-      h += '<tr class="' + (i === arr.length - 1 ? 'tot' : '') + '"><td>' + esc(s.nombre) + (s.tieneSupuestos ? '<span class="tag">Supuestos</span>' : '') + '</td><td class="n">' + num(s.kg) + '</td><td class="n">' + pesos(s.ingresos) +
-        '</td><td class="n">' + pesos(s.directosReales) + '</td><td class="n">' + pesos(s.directosSupuestos) + '</td><td class="n">' + pesos(s.costosDirectos) + '</td><td class="n">' + pesos(s.margenBruto) + '</td><td class="n">US$ ' + num(s.usd.margenBruto) +
-        '</td><td class="n">' + (s.pctSobreCosto === null ? '—' : num(s.pctSobreCosto) + ' %') + '</td><td class="n">' + pesos(s.indirectos) + '</td><td class="n">' + num(s.muertes, 0) + '</td></tr>';
-    });
-    h += '</table></div><p class="muted">Margen bruto = ingresos reales − costos directos. % sobre costo = margen bruto ÷ costos directos × 100. Los costos indirectos se muestran aparte y no entran en el margen bruto. IVA débito de la campaña: ' + pesos(c.iva) + ' (no es ingreso). En dólares: cada venta y cada costo se pasa al dólar oficial del Banco Nación (vendedor) del día de la operación, o del último día hábil anterior.</p></div>';
-
-    h += '<div class="card"><h2>Desvío de rinde</h2><div class="scroll"><table><tr><th>Etapa</th><th class="n">Kg producidos</th><th class="n">Cabezas base</th><th class="n">Rinde real</th><th class="n">Rinde estándar</th><th class="n">Desvío</th><th class="n">Desvío %</th><th>Estándar: descripción y fuente</th></tr>';
-    r.rinde.forEach(function (x) {
-      h += '<tr><td>' + esc(x.nombre) + '</td><td class="n">' + num(x.kg) + '</td><td class="n">' + num(x.base) + '</td><td class="n">' + num(x.real) + '</td><td class="n">' + num(x.estandar) +
-        '</td><td class="n">' + num(x.desvio) + '</td><td class="n">' + (x.desvioPct === null ? '—' : num(x.desvioPct) + ' %') + '</td><td>' + esc(x.descripcion) + (x.fuente ? ' · ' + esc(x.fuente) : (x.real !== null ? '<span class="tag">Falta el estándar</span>' : '')) + '</td></tr>';
-    });
-    h += '</table></div><p class="muted">Rinde real = kg producidos ÷ cabezas base. Desvío = rinde real − rinde estándar de esa campaña y etapa.</p></div>';
-
-    h += '<div class="card"><h2>Desvío de consumo</h2>';
-    if (!r.consumo.length) h += '<p class="muted">Todavía no hay consumos reales ni dosis técnicas cargadas para esta campaña.</p>';
-    else {
-      h += '<div class="scroll"><table><tr><th>Etapa</th><th>Insumo</th><th class="n">Consumo real</th><th class="n">Base real</th><th class="n">Dosis técnica</th><th class="n">Consumo esperado</th><th class="n">Desvío</th></tr>';
-      r.consumo.forEach(function (x) {
-        h += '<tr><td>' + esc(x.subunidad) + '</td><td>' + esc(x.insumo) + '</td><td class="n">' + num(x.real, 4) + '</td><td class="n">' + num(x.base, 4) + '</td><td class="n">' + num(x.dosis, 4) + (x.baseCalculo ? ' /' + esc(x.baseCalculo.toLowerCase()) : '') +
-          '</td><td class="n">' + (x.esperado === null ? '<span class="tag">falta la dosis técnica</span>' : num(x.esperado, 4)) + '</td><td class="n">' + num(x.desvio, 4) + '</td></tr>';
-      });
-      r.consumoTotal.forEach(function (x) { h += '<tr class="tot"><td>Consolidado</td><td>' + esc(x.insumo) + '</td><td class="n">' + num(x.real, 4) + '</td><td></td><td></td><td class="n">' + num(x.esperado, 4) + '</td><td class="n">' + num(x.desvio, 4) + '</td></tr>'; });
-      h += '</table></div>';
-    }
-    h += '<p class="muted">Consumo esperado = dosis técnica × base real. Desvío = consumo real − consumo esperado. Los consumos de remedios se generan solos al cargar un tratamiento.</p></div>';
-
-    h += '<div class="card"><h2>Rodeo (hoy)</h2><table><tr><th>Categoría</th><th class="n">En el rodeo</th><th class="n">Vendidos</th><th class="n">Muertos</th></tr>';
-    var tA = 0; r.stock.forEach(function (s) { tA += s.activos; h += '<tr><td>' + esc(s.categoria) + '</td><td class="n">' + s.activos + '</td><td class="n">' + s.vendidos + '</td><td class="n">' + s.muertos + '</td></tr>'; });
-    h += '<tr class="tot"><td>Rodeo activo</td><td class="n">' + tA + '</td><td></td><td></td></tr></table></div>';
-
-    h += '<div class="card"><h2>Verificación: de dónde sale cada número</h2><details><summary>Ingresos (' + r.detalleIngresos.length + ' renglones)</summary><div class="scroll"><table><tr><th>Id</th><th>Fecha</th><th>Comprobante</th><th>Caravana</th><th>Etapa</th><th class="n">Kg</th><th class="n">$/kg</th><th>Con IVA</th><th class="n">Neto</th><th class="n">IVA</th><th class="n">Total</th></tr>';
-    var t = { kg:0, neto:0, iva:0, tot:0 };
+      '</select></div><p class="sub" style="flex:1;margin:0">' + (r.campana ? 'Del ' + fecha(r.campana.desde) + ' al ' + fecha(r.campana.hasta) + '. ' : '') + 'Tocá cada fila para ver el detalle.</p></div></div>';
+    var usd = function (x) { return 'US$ ' + num(x) + (c.usd && !c.usd.completo ? ' <span class="tag">Faltan cotizaciones</span>' : ''); };
+    var A = [];
+    // 1. Resultado de la campaña
+    A.push(acc('Resultado de la campaña', 'Margen bruto', pesos(c.margenBruto),
+      '<div class="kpis">' + kpi('Ingresos (sin IVA)', pesos(c.ingresos) + '<div class="usd">' + usd(c.usd.ingresos) + '</div>') + kpi('Costos directos' + (c.tieneSupuestos ? ' <span class="tag">Con supuestos</span>' : ''), pesos(c.costosDirectos) + '<div class="usd">' + usd(c.usd.costosDirectos) + '</div>') +
+      kpi('Margen bruto', pesos(c.margenBruto) + '<div class="usd">' + usd(c.usd.margenBruto) + '</div>') + kpi('% sobre costos', c.pctSobreCosto === null ? 'Sin costos' : num(c.pctSobreCosto) + ' %') + '</div>' +
+      (function () { var pi = (P['Ventas'] || 0) + (P['Otros ingresos'] || 0); if (!pi) return '';
+        return '<div class="calc"><div class="cl"><span>Ingresos reales</span><b>' + pesos(c.ingresos) + '</b></div><div class="cl"><span>Ingresos presupuestados</span><b>' + pesos(pi) + '</b></div><div class="cl tot"><span>' + (c.ingresos >= pi ? 'Se vendió más de lo previsto' : 'Falta para llegar a lo previsto') + '</span><b>' + pesos(Math.abs(c.ingresos - pi)) + ' (' + num(c.ingresos / pi * 100, 0) + ' %)</b></div></div>'; })() +
+      comoSeCalculo(c) + '<ul class="lect">' + r.lectura.filter(function (t) { return !/rinde|consumo/i.test(t); }).map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>', true));
+    // 2. ¿En qué se gastó? (los 4 rubros principales, real contra presupuestado)
+    var R = {}; r.costosRubro.forEach(function (x) { R[x.rubro] = x; });
+    var PR = ['Reposición de madres', 'Mano de obra', 'Alimentación', 'Sanidad'], otros = r.costosRubro.filter(function (x) { return PR.indexOf(x.rubro) < 0; }), totO = otros.reduce(function (a, x) { return a + x.total; }, 0);
+    var totR = 0, totP = 0, filas = PR.map(function (k) {
+      var x = R[k] || { total: 0, supuestos: 0 }, p = P[k] === undefined ? null : P[k]; totR += x.total; if (p !== null) totP += p;
+      var dif = p === null ? null : x.total - p, pct = p ? x.total / p * 100 : null;
+      return '<tr><td>' + esc(k) + (x.supuestos ? ' <span class="tag">Incluye supuestos</span>' : '') + '</td><td class="n">' + pesos(x.total) + '</td><td class="n">' + (p === null ? '<span class="muted">Sin cargar</span>' : pesos(p)) + '</td><td class="n">' +
+        (dif === null ? '—' : '<span style="color:' + (dif > 0 ? 'var(--bad)' : 'var(--ok)') + '">' + (dif > 0 ? '+' : '') + pesos(dif) + '</span>') + '</td><td class="n">' + (pct === null ? '—' : num(pct, 0) + ' %') + '</td></tr>';
+    }).join('');
+    var gasto = '<div class="scroll" style="max-height:none"><table><tr><th>Rubro</th><th class="n">Gastado</th><th class="n">Presupuestado</th><th class="n">Diferencia</th><th class="n">% usado</th></tr>' + filas +
+      '<tr class="tot"><td>Total de estos rubros</td><td class="n">' + pesos(totR) + '</td><td class="n">' + (totP ? pesos(totP) : '—') + '</td><td></td><td></td></tr>' +
+      (function () { var po = Object.keys(P).filter(function (k) { return PR.indexOf(k) < 0 && k !== 'Ventas' && k !== 'Otros ingresos'; }).reduce(function (a, k) { return a + P[k]; }, 0);
+        return totO || po ? '<tr class="muted"><td>Otros costos' + (otros.length ? ' (' + esc(otros.map(function (x) { return x.rubro.toLowerCase(); }).join(', ')) + ')' : '') + '</td><td class="n">' + pesos(totO) + '</td><td class="n">' + (po ? pesos(po) : '—') + '</td><td></td><td></td></tr>' : ''; })() + '</table></div>' +
+      '<p class="muted">Gastado: sale de las compras y los tratamientos cargados (cada producto tiene su rubro). Presupuestado: lo que se cargó en "Presupuesto" al empezar la campaña. Diferencia en rojo = se gastó más de lo previsto.' +
+      (puede('F_Presupuesto', 'crear') || S.u.Rol === 'Administrador' ? ' <button class="link" onclick="ir(\'presupuesto\')">Ir a Presupuesto</button>' : '') + '</p>';
+    A.push(acc('¿En qué se gastó?', 'Gastado contra presupuestado', pesos(totR), gasto));
+    // 3. Resultado por etapa y total
+    var et = '<div class="lista">' + r.porSubunidad.concat([c]).map(function (s, i, arr) {
+      var tot = i === arr.length - 1;
+      return '<div class="item' + (tot ? ' tot' : '') + '" style="display:block"><div class="row" style="align-items:center;gap:8px"><b style="flex:1;min-width:120px">' + esc(tot ? 'Total de la unidad' : s.nombre) + '</b>' +
+        '<span class="n" style="font-variant-numeric:tabular-nums"><small class="muted">Margen bruto</small><br><b>' + pesos(s.margenBruto) + '</b></span></div>' +
+        '<div class="muted" style="margin-top:4px">Ingresos ' + pesos(s.ingresos) + ' · costos directos ' + pesos(s.costosDirectos) + (s.pctSobreCosto === null ? '' : ' · ' + num(s.pctSobreCosto) + ' % sobre costo') + '</div>' +
+        '<details class="como"><summary>¿Cómo se calculó?</summary>' + comoSeCalculo(s) + '</details></div>';
+    }).join('') + '</div><p class="muted">IVA débito de la campaña: ' + pesos(c.iva) + ' (no es ingreso). En dólares, cada venta y cada costo se pasa al dólar oficial del Banco Nación del día de la operación.</p>';
+    A.push(acc('Resultado por etapa y total', 'Cría, Recría y Engorde', pesos(c.margenBruto), et));
+    // 4. Rodeo hoy
+    var tA = 0, rod = '<table><tr><th>Categoría</th><th class="n">En el rodeo</th><th class="n">Vendidos</th><th class="n">Muertos</th></tr>' + r.stock.map(function (x) { tA += x.activos; return '<tr><td>' + esc(x.categoria) + '</td><td class="n">' + x.activos + '</td><td class="n">' + x.vendidos + '</td><td class="n">' + x.muertos + '</td></tr>'; }).join('');
+    rod += '<tr class="tot"><td>Rodeo activo</td><td class="n">' + tA + '</td><td></td><td></td></tr></table>';
+    A.push(acc('Rodeo hoy', 'Animales por categoría', tA + ' cabezas', rod));
+    // 5. De dónde sale cada número
+    var t = { kg: 0, neto: 0, iva: 0, tot: 0 }, ing = '<div class="scroll"><table><tr><th>Fecha</th><th>Comprobante</th><th>Caravana</th><th>Etapa</th><th class="n">Kg</th><th class="n">$/kg</th><th class="n">Neto</th><th class="n">IVA</th><th class="n">Total</th></tr>';
     r.detalleIngresos.forEach(function (x) { t.kg += +x.Kg; t.neto += +x.ImporteNeto; t.iva += +x.IVA; t.tot += +x.Total;
-      h += '<tr><td>' + esc(x.IdIngreso) + '</td><td>' + fecha(x.Fecha) + '</td><td>' + esc(x.Comprobante) + '</td><td>' + esc(x.Caravana) + '</td><td>' + esc(etiqueta('D_Subunidad', x.IdSubunidad)) + '</td><td class="n">' + num(x.Kg) + '</td><td class="n">' + num(x.PrecioKg) + '</td><td>' + esc(x.PrecioIncluyeIVA) + '</td><td class="n">' + pesos(x.ImporteNeto) + '</td><td class="n">' + pesos(x.IVA) + '</td><td class="n">' + pesos(x.Total) + '</td></tr>'; });
-    h += '<tr class="tot"><td colspan="5">Total</td><td class="n">' + num(t.kg) + '</td><td></td><td></td><td class="n">' + pesos(t.neto) + '</td><td class="n">' + pesos(t.iva) + '</td><td class="n">' + pesos(t.tot) + '</td></tr></table></div></details>';
-    h += '<details><summary>Costos (' + r.detalleCostos.length + ' renglones)</summary><div class="scroll"><table><tr><th>Id</th><th>Fecha</th><th>Comprobante</th><th>Insumo</th><th>Tipo</th><th>Etapa</th><th class="n">Cantidad</th><th class="n">Precio unit.</th><th class="n">Importe</th><th>Supuesto</th><th>Fuente</th></tr>';
-    r.detalleCostos.forEach(function (x) { h += '<tr class="' + (x.EsSupuesto === 'Sí' ? 'sup' : '') + '"><td>' + esc(x.IdCosto) + '</td><td>' + fecha(x.Fecha) + '</td><td>' + esc(x.Comprobante) + '</td><td>' + esc(x.Insumo) + '</td><td>' + esc(x.TipoCosto) + '</td><td>' + esc(etiqueta('D_Subunidad', x.IdSubunidad)) + '</td><td class="n">' + num(x.Cantidad) + '</td><td class="n">' + pesos(x.PrecioUnit) + '</td><td class="n">' + pesos(x.Importe) + '</td><td>' + esc(x.EsSupuesto) + '</td><td class="muted">' + esc(x.Fuente) + '</td></tr>'; });
-    h += '</table></div></details></div>';
-    m.innerHTML = h;
-  }).catch(function (e) { msg(m, 'err', e.message); });
+      ing += '<tr><td>' + fecha(x.Fecha) + '</td><td>' + esc(x.Comprobante) + '</td><td>' + esc(x.Caravana) + '</td><td>' + esc(etiqueta('D_Subunidad', x.IdSubunidad)) + '</td><td class="n">' + num(x.Kg) + '</td><td class="n">' + num(x.PrecioKg) + '</td><td class="n">' + pesos(x.ImporteNeto) + '</td><td class="n">' + pesos(x.IVA) + '</td><td class="n">' + pesos(x.Total) + '</td></tr>'; });
+    ing += '<tr class="tot"><td colspan="4">Total</td><td class="n">' + num(t.kg) + '</td><td></td><td class="n">' + pesos(t.neto) + '</td><td class="n">' + pesos(t.iva) + '</td><td class="n">' + pesos(t.tot) + '</td></tr></table></div>';
+    A.push(acc('Ventas de la campaña', 'Cada renglón facturado', r.detalleIngresos.length + ' renglones', ing));
+    var tc = 0, cos = '<div class="scroll"><table><tr><th>Fecha</th><th>Comprobante</th><th>Producto o servicio</th><th>Etapa</th><th class="n">Cantidad</th><th class="n">Precio unit.</th><th class="n">Importe</th><th>¿Supuesto?</th></tr>';
+    r.detalleCostos.forEach(function (x) { tc += +x.Importe; cos += '<tr class="' + (x.EsSupuesto === 'Sí' ? 'sup' : '') + '"><td>' + fecha(x.Fecha) + '</td><td>' + esc(x.Comprobante) + '</td><td>' + esc(x.Insumo) + '</td><td>' + esc(etiqueta('D_Subunidad', x.IdSubunidad)) + '</td><td class="n">' + num(x.Cantidad) + '</td><td class="n">' + pesos(x.PrecioUnit) + '</td><td class="n">' + pesos(x.Importe) + '</td><td>' + esc(x.EsSupuesto) + '</td></tr>'; });
+    cos += '<tr class="tot"><td colspan="6">Total</td><td class="n">' + pesos(tc) + '</td><td></td></tr></table></div><p class="muted">Las filas naranjas son costos supuestos (no salen de un comprobante).</p>';
+    A.push(acc('Costos de la campaña', 'Cada compra y cada costo', r.detalleCostos.length + ' renglones', cos));
+    m.innerHTML = h + '<div class="accL">' + A.join('') + '</div>';
+  }).catch(function (e) { m.innerHTML = volverBtn(); msg(m.appendChild(document.createElement('div')), 'err', e.message); });
+}
+/** "¿Cómo se calculó?" del margen bruto, con los números de esa etapa o del total */
+function comoSeCalculo(s) {
+  return '<div class="calc"><div class="cl"><span>Ingresos netos (sin IVA)</span><b>' + pesos(s.ingresos) + '</b></div>' +
+    '<div class="cl"><span>− Costos directos reales</span><b>' + pesos(s.directosReales) + '</b></div>' +
+    (s.directosSupuestos ? '<div class="cl"><span>− Costos directos supuestos</span><b>' + pesos(s.directosSupuestos) + '</b></div>' : '') +
+    '<div class="cl tot"><span>= Margen bruto</span><b>' + pesos(s.margenBruto) + '</b></div>' +
+    '<p class="muted" style="margin:8px 0 0">% sobre costo = margen bruto ÷ costos directos × 100' + (s.pctSobreCosto === null ? '' : ' = ' + num(s.pctSobreCosto) + ' %') + '. ' +
+    'Costos indirectos (no entran en el margen bruto): ' + pesos(s.indirectos) + '. Kg vendidos: ' + num(s.kg) + '. Muertes: ' + num(s.muertes, 0) + '.</p></div>';
+}
+/** Fila desplegable: título, subtítulo, valor a la derecha y contenido al tocarla */
+function acc(tit, sub, valor, contenido, abierto) {
+  return '<details class="acc"' + (abierto ? ' open' : '') + '><summary><span class="aT">' + tit + (sub ? '<small>' + sub + '</small>' : '') + '</span><span class="aV">' + (valor || '') + '</span><span class="aI" aria-hidden="true">' + ic('mas') + '</span></summary><div class="aC">' + contenido + '</div></details>';
 }
 
 /* ---------- ADMINISTRACIÓN: formularios genéricos (se arman solos a partir del esquema) ---------- */
@@ -1224,7 +1295,7 @@ function formulario(tabla, registro, alGuardar) {
   } };
 }
 function vTablas(tabla) {
-  var visibles = Object.keys(S.esq).filter(function (t) { return S.esq[t].puede.leer; });
+  var visibles = Object.keys(S.esq).filter(function (t) { return S.esq[t].puede.leer && !S.esq[t].agro && (bovActiva() || !S.esq[t].bov); });
   tabla = tabla || S.tabla || 'D_Animal';
   if (visibles.indexOf(tabla) < 0) tabla = visibles[0];
   S.tabla = tabla;
@@ -1311,57 +1382,55 @@ function fmtMeta(x, u) { return u === '%' ? num(x, 1) + ' %' : /^\$/.test(u || '
 function metaTxt(i) {
   if (i.metaVerde === '' || i.metaVerde === null || i.metaVerde === undefined) return 'Sin meta definida' + (S.u.Rol === 'Administrador' ? ' (cargala en "Cambiar metas")' : '');
   var a = i.metaAmarillo === '' ? i.metaVerde : i.metaAmarillo;
-  if (i.sentido === 'Menor es mejor') return '' + P('Verde') + 'hasta ' + fmtMeta(i.metaVerde, i.unidad) + ' · ' + P('Amarillo') + 'hasta ' + fmtMeta(a, i.unidad) + ' · ' + P('Rojo') + 'más';
-  if (i.sentido === 'Cerca de cero es mejor') return '' + P('Verde') + 'entre −' + fmtMeta(i.metaVerde, i.unidad) + ' y +' + fmtMeta(i.metaVerde, i.unidad) + ' · ' + P('Amarillo') + 'hasta ±' + fmtMeta(a, i.unidad) + ' · ' + P('Rojo') + 'más';
-  return '' + P('Verde') + 'desde ' + fmtMeta(i.metaVerde, i.unidad) + ' · ' + P('Amarillo') + 'desde ' + fmtMeta(a, i.unidad) + ' · ' + P('Rojo') + 'menos';
+  if (i.sentido === 'Menor es mejor') return '' + P('Verde') + 'En meta: hasta ' + fmtMeta(i.metaVerde, i.unidad) + ' · ' + P('Amarillo') + 'Atención: hasta ' + fmtMeta(a, i.unidad) + ' · ' + P('Rojo') + 'Urgente: más';
+  if (i.sentido === 'Cerca de cero es mejor') return '' + P('Verde') + 'En meta: entre −' + fmtMeta(i.metaVerde, i.unidad) + ' y +' + fmtMeta(i.metaVerde, i.unidad) + ' · ' + P('Amarillo') + 'Atención: hasta ±' + fmtMeta(a, i.unidad) + ' · ' + P('Rojo') + 'Urgente: más';
+  return '' + P('Verde') + 'En meta: desde ' + fmtMeta(i.metaVerde, i.unidad) + ' · ' + P('Amarillo') + 'Atención: desde ' + fmtMeta(a, i.unidad) + ' · ' + P('Rojo') + 'Urgente: menos';
 }
 function colorEst(e) { return { Verde: '#1d7a46', Amarillo: '#a86f00', Rojo: '#b42318' }[e] || '#b9bbb5'; }
+/* v3.8 · Qué significa cada color (mismas palabras en todas las pantallas) */
+var SEM_TXT = { Verde: ['En meta', 'Va bien. Mantener lo que se está haciendo.'], Amarillo: ['Atención', 'Se está alejando de la meta. Revisar las causas.'],
+  Rojo: ['Urgente', 'Muy lejos de la meta. Actuar primero acá.'], Sin: ['Sin meta o sin datos', 'Falta cargar la meta o los datos para darle color.'] };
+function etqEst(e) { return e === 'Verde' ? 'En meta' : e === 'Amarillo' ? 'Atención' : e === 'Rojo' ? 'Urgente' : e || 'Sin datos'; }
+function claseEst(e) { return e === 'Verde' ? 'v' : e === 'Rojo' ? 'r' : e === 'Amarillo' ? '' : 'g'; }
+function leyendaSem(sinGris) { return '<div class="leyenda">' + ['Rojo', 'Amarillo', 'Verde'].concat(sinGris ? [] : ['Sin']).map(function (k) { return '<div class="l-' + k + '">' + P(k) + '<div><b>' + SEM_TXT[k][0] + '</b>' + SEM_TXT[k][1] + '</div></div>'; }).join('') + '</div>'; }
+function leyendaMini() { return '<div class="leyMini">' + ['Rojo', 'Amarillo', 'Verde'].map(function (k) { return '<span>' + P(k) + '<b>' + SEM_TXT[k][0] + '</b>: ' + SEM_TXT[k][1].split('.')[0].toLowerCase() + '</span>'; }).join('') + '</div>'; }
+function semConteo(c) {
+  var tot = c.Verde + c.Amarillo + c.Rojo + (c['Sin datos'] || 0) + (c['Sin meta'] || 0), sin = (c['Sin datos'] || 0) + (c['Sin meta'] || 0), w = function (n) { return tot ? (n / tot * 100).toFixed(1) : 0; };
+  return '<div class="sem"><span class="e-Rojo">' + P('Rojo') + c.Rojo + ' urgente' + (c.Rojo === 1 ? '' : 's') + '</span><span class="e-Amarillo">' + P('Amarillo') + c.Amarillo + ' en atención</span><span class="e-Verde">' + P('Verde') + c.Verde + ' en meta</span>' +
+    (sin ? '<span class="e-Sin">' + P('Sin') + sin + ' sin meta o sin datos</span>' : '') + '</div>' +
+    '<div class="semBar" role="img" aria-label="' + c.Rojo + ' urgentes, ' + c.Amarillo + ' en atención, ' + c.Verde + ' en meta, ' + sin + ' sin meta o sin datos">' +
+    '<i class="b-Rojo" style="width:' + w(c.Rojo) + '%"></i><i class="b-Amarillo" style="width:' + w(c.Amarillo) + '%"></i><i class="b-Verde" style="width:' + w(c.Verde) + '%"></i><i class="b-Sin" style="width:' + w(sin) + '%"></i></div>';
+}
 function vIndicadores(idCamp) {
-  var m = $('main'); m.innerHTML = volverBtn() + '<div class="card">Calculando los indicadores…</div>';
+  var m = $('main'); m.innerHTML = volverBtn() + '<div class="card"><div class="cargando"><i></i><i></i><i></i><i></i></div></div>';
   var uq = S.unidad || 'ovino', ck = 'campInd_' + uq;
   (uq === 'ovino' ? call('api_indicadores', S.token, idCamp || S[ck] || '') : call('api_indicadoresUnidad', S.token, uq, idCamp || S[ck] || '')).then(function (r) {
     S[ck] = r.campana.id;
-    var c = r.cuenta, I = r.indicadores;
-    var h = volverBtn() + '<div class="card"><div class="row" style="align-items:flex-end"><div class="f" style="max-width:300px;margin:0"><label>Campaña</label><select onchange="vIndicadores(this.value)">' +
+    var I = r.indicadores;
+    var h = volverBtn() + '<div class="card"><div class="row" style="align-items:flex-end"><div class="f" style="max-width:300px;margin:0"><label for="indCamp">Campaña</label><select id="indCamp" onchange="vIndicadores(this.value)">' +
       r.campanas.map(function (x) { return '<option value="' + x.id + '"' + (x.id === r.campana.id ? ' selected' : '') + '>' + esc(x.nombre) + '</option>'; }).join('') + '</select></div>' +
-      '<div class="muted" style="flex:1;padding-bottom:12px">' + (uq === 'ovino' ? 'Unidad Ovina · ' : uq === 'maiz' ? 'Unidad Maíz · ' : 'Unidad Bovina · ') + (r.campana.desde ? 'Del ' + fecha(r.campana.desde) + ' al ' + fecha(r.campana.hasta) : '') + (r.campana.actual ? ' · <b>campaña en curso</b>' : '') + '</div>' +
-      (S.u.Rol === 'Administrador' ? '<button class="btn2" style="margin-bottom:12px" onclick="S.tabla=\'P_Indicador\';ir(\'tablas\')">' + ic('lapiz') + 'Cambiar metas y textos</button>' : '') + '</div>' +
-      '<div class="sem"><span class="e-Verde">' + P('Verde') + '' + c.Verde + ' en meta</span><span class="e-Amarillo">' + P('Amarillo') + '' + c.Amarillo + ' en alerta</span><span class="e-Rojo">' + P('Rojo') + '' + c.Rojo + ' a corregir</span>' +
-      (c['Sin datos'] + c['Sin meta'] ? '<span class="e-Sin">' + P('Sin') + '' + (c['Sin datos'] + c['Sin meta']) + ' sin datos o sin meta</span>' : '') + '</div>' +
-      '<p class="muted" style="margin:6px 0 0">Semáforo como en la diapositiva 11: ' + P('Verde') + 'meta alcanzada (mantener) · ' + P('Amarillo') + 'alerta (analizar causas y corregir) · ' + P('Rojo') + 'desviación importante (priorizar acciones). Los valores se calculan solos con los datos cargados.</p></div>';
-    var mal = I.filter(function (i) { return i.estado === 'Rojo' || i.estado === 'Amarillo'; }).sort(function (a, b) { return (a.estado === 'Rojo' ? 0 : 1) - (b.estado === 'Rojo' ? 0 : 1); });
-    if (mal.length) {
-      h += '<div class="card"><h2>' + ic('alerta') + ' Lo que hay que mirar primero</h2><p class="sub">Indicadores fuera de la meta y la decisión que propone el grupo para cada uno.</p><div class="lista">' + mal.map(function (i) {
-        return '<div class="item"><div class="t"><b><span class="punto" style="background:' + colorEst(i.estado) + '"></span>' + esc(i.nombre) + ': ' + fmtInd(i.valor, i.unidad) + '</b><div>' + esc(i.decision || '') + '</div></div><div class="der"><span class="tag g">' + esc(i.perspectiva) + '</span></div></div>';
-      }).join('') + '</div></div>';
-    }
-    Object.keys(PERSP).forEach(function (p) {
-      var L = I.filter(function (i) { return i.perspectiva === p; }); if (!L.length) return;
-      h += '<div class="card persp"><h2>' + ic(PERSP[p][0]) + ' ' + esc(p) + '</h2><p class="sub">' + PERSP[p][1] + '</p><div class="inds">' + L.map(indCard).join('') + '</div></div>';
-    });
-    var peor = function (p) { var L = I.filter(function (i) { return i.perspectiva === p; }); return L.some(function (i) { return i.estado === 'Rojo'; }) ? 'Rojo' : L.some(function (i) { return i.estado === 'Amarillo'; }) ? 'Amarillo' : L.some(function (i) { return i.estado === 'Verde'; }) ? 'Verde' : 'Sin'; };
-    h += '<div class="card"><h2>' + ic('cadena') + ' Cadena causa-efecto</h2><p class="sub">Las cuatro perspectivas se conectan (diapositiva 20): lo que se mejora abajo se ve después en los resultados.</p><div class="cadena">' +
-      ['Aprendizaje y desarrollo', 'Procesos internos', 'Clientes', 'Financiera'].map(function (p) { return '<span class="pa"><span class="punto" style="background:' + colorEst(peor(p)) + '"></span>' + esc(p) + '</span>'; }).join('<span class="fl">' + ic('flecha') + '</span>') +
-      '</div><p class="muted" style="margin-top:10px">' + ({ ovino: 'Registrar bien la sanidad y los datos del rodeo → más corderos logrados y menos muertes → un lote más grande para negociar mejor precio → los ingresos cubren más del costo total.',
-        maiz: 'Registrar todo lo que pasa en cada lote → aplicar la dosis planificada y lograr el rinde estándar → vender cerca del precio de mercado → más margen por hectárea.',
-        bovino: 'Tener las fichas completas y pesar seguido → más ganancia diaria con menos alimento y menos muertes → vender con el peso que pide el comprador → más ingreso por kilo.' })[uq] + '</p>' +
-      (uq !== 'ovino' && r.cuenta['Sin meta'] ? '<p class="muted" style="margin-top:6px">Los indicadores sin meta muestran su valor pero no tienen color: la meta la carga el administrador cuando el grupo la defina.</p>' : '') + '</div>';
+      '<div class="muted" style="flex:1;padding-bottom:12px">' + (uq === 'ovino' ? 'Unidad Ovina' : uq === 'maiz' ? 'Unidad Maíz' : 'Unidad Bovina') + (r.campana.desde ? ' · del ' + fecha(r.campana.desde) + ' al ' + fecha(r.campana.hasta) : '') + (r.campana.actual ? ' · <b>Campaña en curso</b>' : '') + '</div>' +
+      '</div>' + (S.u.Rol === 'Administrador' ? '<button class="btn2" style="margin-top:8px" onclick="S.tabla=\'P_Indicador\';ir(\'tablas\')">' + ic('lapiz') + 'Cambiar metas y textos</button>' : '') +
+      '<h2 style="margin-top:14px">¿Qué significa cada color?</h2>' + leyendaSem() + '<h2 style="margin-top:14px">Cómo estamos</h2>' + semConteo(r.cuenta) + '</div>';
+    var orden = { Rojo: 0, Amarillo: 1, Verde: 2, 'Sin meta': 3, 'Sin datos': 4 }, pp = Object.keys(PERSP);
+    var L = I.slice().sort(function (a, b) { return (orden[a.estado] - orden[b.estado]) || (pp.indexOf(a.perspectiva) - pp.indexOf(b.perspectiva)); });
+    h += '<h2 class="seccion">Los indicadores</h2><p class="muted" style="margin:-6px 0 10px">Primero los urgentes, después los que piden atención y al final los que están en meta. Tocá cada uno para ver el detalle.</p><div class="accL">' + L.map(indAcc).join('') + '</div>';
+    if (uq !== 'ovino' && r.cuenta['Sin meta']) h += '<p class="muted">Los indicadores sin meta muestran su valor pero no tienen color: la meta la carga el administrador cuando el grupo la defina.</p>';
     m.innerHTML = h;
   }).catch(function (e) { m.innerHTML = volverBtn(); msg(m.appendChild(document.createElement('div')), 'err', e.message); });
 }
-function indCard(i) {
+/** Un indicador como fila desplegable: cerrado muestra nombre, valor y color; abierto, todo el detalle */
+function indAcc(i) {
   var est = i.estado === 'Sin datos' || i.estado === 'Sin meta' ? 'Sin' : i.estado;
-  var barra = '';
-  if (i.valor !== null && i.unidad === '%' && i.sentido === 'Mayor es mejor') barra = '<div class="barra"><i style="width:' + Math.max(2, Math.min(100, i.valor)) + '%;background:' + colorEst(i.estado) + '"></i></div>';
-  return '<div class="ind ' + i.estado + '"><div class="row" style="gap:6px;align-items:flex-start;flex-wrap:nowrap"><div style="flex:1"><div class="nom">' + esc(i.nombre) + '</div><div class="obj">' + esc(i.objetivo || '') + '</div></div>' +
-    '<span class="tag e-' + est + '" style="margin:0">' + esc(i.estado === 'Sin datos' ? 'Sin datos' : i.estado === 'Sin meta' ? 'Sin meta' : i.estado) + '</span></div>' +
-    '<div class="val" style="color:' + (est === 'Sin' ? 'var(--muted)' : colorEst(i.estado)) + '">' + fmtInd(i.valor, i.unidad) + '</div>' + barra +
-    '<div class="meta">' + metaTxt(i) + '</div>' + (i.detalle ? '<div class="det">' + esc(i.detalle) + '</div>' : '') + (i.nota ? '<div class="det" style="color:var(--warn)">' + ic('alerta') + ' ' + esc(i.nota) + '</div>' : '') +
-    ((i.estado === 'Rojo' || i.estado === 'Amarillo') && i.decision ? '<div class="que' + (i.estado === 'Amarillo' ? ' am' : '') + '"><b>Qué hacer:</b> ' + esc(i.decision) + '</div>' : '') +
-    '<details><summary>¿Cómo se lee?</summary><div class="det"><b>Fórmula:</b> ' + esc(i.formula || '') + '</div><div class="det">' + esc(i.interpretacion || '') + '</div>' +
-    '<div class="det"><b>Se mide:</b> ' + esc(i.periodicidad || '—') + ' · <b>Responsable:</b> ' + esc(i.responsable || '—') + '</div><div class="det"><b>Meta:</b> ' + esc(i.fuenteMeta || '—') + (i.automatico ? '' : ' · valor cargado a mano') + '</div>' +
-    (i.estado === 'Verde' && i.decision ? '<div class="det"><b>Si empeora:</b> ' + esc(i.decision) + '</div>' : '') + '</details></div>';
+  var cont = '<div class="det" style="margin-top:8px"><b>Objetivo:</b> ' + esc(i.objetivo || '—') + '</div>' +
+    '<div class="det"><b>Cálculo de esta campaña:</b> ' + esc(i.detalle || '—') + '</div>' + (i.nota ? '<div class="det" style="color:var(--warn)">' + ic('alerta') + ' ' + esc(i.nota) + '</div>' : '') +
+    '<div class="det"><b>Meta:</b> ' + metaTxt(i) + '</div>' +
+    (i.decision ? '<div class="que' + (i.estado === 'Amarillo' ? ' am' : '') + '"><b>' + (i.estado === 'Rojo' || i.estado === 'Amarillo' ? 'Qué hacer' : 'Si empeora') + ':</b> ' + esc(i.decision) + '</div>' : '') +
+    '<details class="como"><summary>¿Cómo se lee?</summary><div class="det"><b>Fórmula:</b> ' + esc(i.formula || '') + '</div><div class="det">' + esc(i.interpretacion || '') + '</div>' +
+    '<div class="det"><b>Se mide:</b> ' + esc(i.periodicidad || '—') + ' · <b>Responsable:</b> ' + esc(i.responsable || '—') + (i.fuenteMeta ? ' · <b>De dónde sale la meta:</b> ' + esc(i.fuenteMeta) : '') + (i.automatico ? '' : ' · valor cargado a mano') + '</div></details>';
+  return acc(P(est) + esc(i.nombre), '<span class="tag ' + claseEst(i.estado) + '" style="margin:4px 6px 0 0">' + esc(etqEst(i.estado)) + '</span>' + esc(i.perspectiva), '<span style="color:' + (est === 'Sin' ? 'var(--muted)' : colorEst(i.estado)) + '">' + fmtInd(i.valor, i.unidad) + '</span>', cont);
 }
+function indCard(i) { return indAcc(i); }
 
 /* ---------- COTIZACIONES ---------- */
 function vCotizaciones() {
@@ -1370,26 +1439,31 @@ function vCotizaciones() {
     var adm = S.u.Rol === 'Administrador';
     var h = volverBtn() + '<div class="card"><div class="row" style="align-items:center"><div style="flex:1"><h2>Cotizaciones</h2><p class="sub" style="margin:0">Los granos de la Bolsa de Rosario se actualizan solos todos los días a las 19 h, junto con el dólar.</p></div>' +
       (adm ? '<button class="btn2" id="cotBtn" onclick="cotAhora()">' + ic('recargar') + 'Buscar ahora</button>' : '') + '</div><div id="cotMsg" style="margin-top:10px"></div></div>';
-    h += '<div class="card"><h2>Últimos precios</h2>' + (r.ultimas.length ? '<div class="tiles">' + r.ultimas.sort(function (a, b) { return a.producto.localeCompare(b.producto); }).map(function (x) {
+    var A = [];
+    r.ultimas.sort(function (a, b) { return a.producto.localeCompare(b.producto); }).forEach(function (x) {
       var vari = x.anterior && x.anterior.precio ? (x.precio - x.anterior.precio) / x.anterior.precio * 100 : null;
-      return '<div class="cot"><div class="row" style="align-items:center;gap:6px"><b style="flex:1;font-size:17px">' + esc(x.producto) + '</b><span class="tag ' + (x.origen === 'Automático' ? 'v' : 'g') + '">' + esc(x.origen || '') + '</span></div>' +
-        '<div class="p">' + pesos0(x.precio) + ' <small style="font-size:14px;color:var(--muted)">' + esc(String(x.unidad).replace(/^\$/, '')) + '</small></div>' +
-        '<div class="muted">' + fecha(x.fecha) + (vari !== null ? ' · <span class="' + (vari > 0 ? 'sube' : vari < 0 ? 'baja' : '') + '">' + (vari > 0 ? '▲ ' : vari < 0 ? '▼ ' : '') + num(Math.abs(vari), 1) + ' %</span> vs ' + fecha(x.anterior.fecha) : '') + '</div>' +
-        '<div class="muted">' + esc(x.mercado) + (x.link ? ' · <a href="' + esc(x.link) + '" target="_blank" rel="noopener">ver fuente ' + ic('externo') + '</a>' : '') + '</div>' + (x.obs && /EXPERIMENTAL/.test(x.obs) ? '<div class="muted" style="color:var(--warn)">' + ic('alerta') + ' ' + esc(x.obs) + '</div>' : '') + '</div>';
-    }).join('') + '</div>' : '<p class="muted">Todavía no hay cotizaciones cargadas.</p>') + '</div>';
-    if (r.dolar && r.dolar.length) h += '<div class="card"><h2>Dólar oficial Banco Nación</h2><div class="scroll" style="max-height:300px"><table><tr><th>Fecha</th><th class="n">Comprador</th><th class="n">Vendedor</th></tr>' +
-      r.dolar.map(function (d) { return '<tr><td>' + fecha(d.Fecha) + '</td><td class="n">' + pesos(d.Comprador) + '</td><td class="n">' + pesos(d.Vendedor) + '</td></tr>'; }).join('') + '</table></div></div>';
+      var v = vari === null ? '' : ' <small class="' + (vari > 0 ? 'sube' : vari < 0 ? 'baja' : '') + '" style="font-size:13px">' + (vari > 0 ? '▲ ' : vari < 0 ? '▼ ' : '') + num(Math.abs(vari), 1) + ' %</small>';
+      A.push(acc(esc(x.producto), fecha(x.fecha) + ' · ' + esc(x.mercado), pesos0(x.precio) + v,
+        '<div class="det" style="margin-top:8px"><b>Precio:</b> ' + pesos0(x.precio) + ' ' + esc(String(x.unidad).replace(/^\$/, '')) + ' · ' + fecha(x.fecha) + '</div>' +
+        (vari !== null ? '<div class="det"><b>Antes:</b> ' + pesos0(x.anterior.precio) + ' el ' + fecha(x.anterior.fecha) + ' (' + (vari > 0 ? 'subió ' : vari < 0 ? 'bajó ' : 'igual ') + num(Math.abs(vari), 1) + ' %)</div>' : '') +
+        '<div class="det"><b>Fuente:</b> ' + esc(x.mercado) + ' · <span class="tag ' + (x.origen === 'Automático' ? 'v' : 'g') + '" style="margin:0">' + esc(x.origen || '') + '</span>' + (x.link ? ' · <a href="' + esc(x.link) + '" target="_blank" rel="noopener">Ver la página ' + ic('externo') + '</a>' : '') + '</div>' +
+        (x.obs && /EXPERIMENTAL/.test(x.obs) ? '<div class="det" style="color:var(--warn)">' + ic('alerta') + ' ' + esc(x.obs) + '</div>' : '')));
+    });
+    h += '<h2 class="seccion">Últimos precios</h2>' + (A.length ? '<div class="accL">' + A.join('') + '</div>' : '<div class="card"><p class="muted">Todavía no hay cotizaciones cargadas.</p></div>');
+    var B = [];
+    if (r.dolar && r.dolar.length) B.push(acc('Dólar oficial Banco Nación', 'Vendedor · ' + fecha(r.dolar[0].Fecha), pesos(r.dolar[0].Vendedor), '<div class="scroll" style="max-height:320px"><table><tr><th>Fecha</th><th class="n">Comprador</th><th class="n">Vendedor</th></tr>' +
+      r.dolar.map(function (d) { return '<tr><td>' + fecha(d.Fecha) + '</td><td class="n">' + pesos(d.Comprador) + '</td><td class="n">' + pesos(d.Vendedor) + '</td></tr>'; }).join('') + '</table></div>'));
     var links = L('D_LinkCotizacion');
-    h += '<div class="card"><div class="row" style="align-items:center"><div style="flex:1"><h2>Páginas de cotizaciones</h2><p class="sub" style="margin:0">Links guardados para consultar precios. Se abren en otra pestaña.</p></div>' +
-      (puede('D_LinkCotizacion', 'crear') ? '<button class="btn2" onclick="cotLinkForm()">' + ic('mas') + 'Agregar link</button>' : '') + '</div><div id="cotLinkF"></div><div class="lista" style="margin-top:12px">' +
-      (links.length ? links.map(function (l) { return '<div class="item"><div class="t"><b>' + esc(l.label) + '</b><div>' + esc(l.producto || '') + (l.desc ? ' · ' + esc(l.desc) : '') + '</div></div><div class="der"><a class="btn2" href="' + esc(l.url) + '" target="_blank" rel="noopener">Abrir ' + ic('externo') + '</a></div></div>'; }).join('') : '<p class="muted">No hay links guardados.</p>') + '</div></div>';
-    if (puede('F_Cotizacion', 'crear')) h += '<div class="card"><h2>Cargar una cotización a mano</h2><p class="sub">Para precios que no se leen solos (por ejemplo, un precio de un consignatario). Queda con fecha y fuente.</p><div id="cmMsg"></div>' +
+    B.push(acc('Páginas de cotizaciones', 'Links guardados para consultar precios', links.length + ' links', (puede('D_LinkCotizacion', 'crear') ? '<button class="btn2" style="margin-top:8px" onclick="cotLinkForm()">' + ic('mas') + 'Agregar link</button>' : '') + '<div id="cotLinkF"></div><div class="lista" style="margin-top:12px">' +
+      (links.length ? links.map(function (l) { return '<div class="item"><div class="t"><b>' + esc(l.label) + '</b><div>' + esc(l.producto || '') + (l.desc ? ' · ' + esc(l.desc) : '') + '</div></div><div class="der"><a class="btn2" href="' + esc(l.url) + '" target="_blank" rel="noopener">Abrir ' + ic('externo') + '</a></div></div>'; }).join('') : '<p class="muted">No hay links guardados.</p>') + '</div>'));
+    if (puede('F_Cotizacion', 'crear')) B.push(acc('Cargar una cotización a mano', 'Precios que no se leen solos', '', '<p class="sub" style="margin-top:8px">Por ejemplo, el precio que pasó un consignatario. Queda con fecha y fuente.</p><div id="cmMsg"></div>' +
       '<div class="row">' + campo('Producto', '<input id="cmProd" placeholder="Ej.: Cordero liviano">', '', 1) + campo('Mercado o fuente', '<input id="cmMerc" placeholder="Ej.: Consignataria X">', '', 1) + '</div>' +
       '<div class="row">' + campo('Precio ($)', '<input id="cmPre" type="number" step="any" inputmode="decimal">', '', 1) + campo('Unidad', '<select id="cmUni"><option>$/kg vivo</option><option>$/t</option><option>$/cabeza</option><option>$/kg</option></select>', '', 1) +
       campo('Fecha', '<input id="cmFec" type="date" value="' + hoy() + '" max="' + hoy() + '">', '', 1) + '</div>' + campo('Link (opcional)', '<input id="cmLink" placeholder="https://…">') +
-      '<button class="btn" id="cmBtn" onclick="cotManual()">Guardar cotización</button></div>';
-    h += '<div class="card"><details><summary>Historial (' + r.historial.length + ' registros)</summary><div class="scroll"><table><tr><th>Fecha</th><th>Producto</th><th>Mercado</th><th class="n">Precio</th><th>Unidad</th><th>Origen</th></tr>' +
-      r.historial.map(function (x) { return '<tr><td>' + fecha(x.Fecha) + '</td><td>' + esc(x.Producto) + '</td><td>' + esc(x.Mercado) + '</td><td class="n">' + pesos0(x.Precio) + '</td><td>' + esc(x.Unidad) + '</td><td>' + esc(x.Origen) + '</td></tr>'; }).join('') + '</table></div></details></div>';
+      '<button class="btn" id="cmBtn" onclick="cotManual()">Guardar cotización</button>'));
+    B.push(acc('Historial', 'Todos los precios guardados', r.historial.length + ' registros', '<div class="scroll"><table><tr><th>Fecha</th><th>Producto</th><th>Mercado</th><th class="n">Precio</th><th>Unidad</th><th>Origen</th></tr>' +
+      r.historial.map(function (x) { return '<tr><td>' + fecha(x.Fecha) + '</td><td>' + esc(x.Producto) + '</td><td>' + esc(x.Mercado) + '</td><td class="n">' + pesos0(x.Precio) + '</td><td>' + esc(x.Unidad) + '</td><td>' + esc(x.Origen) + '</td></tr>'; }).join('') + '</table></div>'));
+    h += '<h2 class="seccion">Más</h2><div class="accL">' + B.join('') + '</div>';
     m.innerHTML = h;
   }).catch(function (e) { m.innerHTML = volverBtn(); msg(m.appendChild(document.createElement('div')), 'err', e.message); });
 }
@@ -1419,16 +1493,16 @@ function vImpuestos() {
   call('api_impuestos', S.token).then(function (r) {
     IMP = r;
     var adm = S.u.Rol === 'Administrador', hh = hoy();
-    var h = volverBtn() + '<div class="card"><h2>Impuestos y vencimientos</h2><p class="sub">El sistema calcula los próximos vencimientos y avisa con color: ' + P('Rojo') + 'vencido sin pagar · ' + P('Amarillo') + 'vence en pocos días · ' + P('Verde') + 'al día · ' + P('Sin') + 'pagado.</p>' +
-      '<div class="row" style="align-items:center"><div style="flex:1">CUIT del establecimiento: <b>' + (r.cuit ? esc(r.cuit) + ' (terminación ' + esc(r.terminacion) + ')' : 'sin cargar') + '</b></div>' + (adm ? '<button class="btn2" onclick="impCuit()">' + (r.cuit ? 'Cambiar CUIT' : 'Cargar CUIT') + '</button>' : '') + '</div><div id="impCuitF"></div>' +
+    var h = volverBtn() + '<div class="card"><h2>Impuestos y vencimientos</h2><p class="sub">El sistema calcula los próximos vencimientos y avisa con color: ' + P('Rojo') + 'Vencido sin pagar · ' + P('Amarillo') + 'Vence en pocos días · ' + P('Verde') + 'Al día · ' + P('Sin') + 'Pagado.</p>' +
+      '<div class="row" style="align-items:center"><div style="flex:1">CUIT del establecimiento: <b>' + (r.cuit ? esc(r.cuit) + ' (terminación ' + esc(r.terminacion) + ')' : 'Sin cargar') + '</b></div>' + (adm ? '<button class="btn2" onclick="impCuit()">' + (r.cuit ? 'Cambiar CUIT' : 'Cargar CUIT') + '</button>' : '') + '</div><div id="impCuitF"></div>' +
       (r.avisos.length ? '<div class="msg warn" style="margin-top:12px">' + r.avisos.map(esc).join('<br>') + '</div>' : '') + '<div id="impMsg"></div></div>';
     var est = { 'Vencido': 'r', 'Por vencer': '', 'Al día': 'v', 'Pagado': 'g' };
     h += '<div class="card"><h2>Próximos vencimientos</h2>' + (r.lista.length ? '<div class="lista">' + r.lista.map(function (v, i) {
       var cuando = v.estado === 'Pagado' ? 'Pagado el ' + fecha(v.pagado.fecha) + ' (' + pesos(v.pagado.importe) + ')' : v.dias < 0 ? 'Venció hace ' + (-v.dias) + ' día' + (v.dias === -1 ? '' : 's') : v.dias === 0 ? 'Vence HOY' : 'Faltan ' + v.dias + ' día' + (v.dias === 1 ? '' : 's');
-      return '<div class="item"><div class="t"><b>' + esc(v.impuesto) + ' · período ' + esc(v.periodo) + '</b><div>Vence el ' + fecha(v.fecha) + ' · ' + esc(v.organismo) + (v.origen === 'Estimado' ? ' · <span class="tag">fecha estimada</span>' : '') + '</div><div>' + esc(v.fuente) + '</div></div>' +
+      return '<div class="item"><div class="t"><b>' + esc(v.impuesto) + ' · período ' + esc(v.periodo) + '</b><div>Vence el ' + fecha(v.fecha) + ' · ' + esc(v.organismo) + (v.origen === 'Estimado' ? ' · <span class="tag">Fecha estimada</span>' : '') + '</div><div>' + esc(v.fuente) + '</div></div>' +
         '<div class="der"><span class="tag ' + est[v.estado] + '">' + esc(v.estado) + '</span><div class="muted" style="margin-top:4px">' + cuando + '</div>' +
         (v.estado !== 'Pagado' && puede('F_PagoImpuesto', 'crear') ? '<button class="btn2" style="margin-top:6px" onclick="impPagoForm(' + i + ')">Registrar pago</button>' : '') +
-        (v.link ? '<div><a href="' + esc(v.link) + '" target="_blank" rel="noopener" class="muted">consultar ' + ic('externo') + '</a></div>' : '') + '</div><div id="impPago' + i + '" style="flex-basis:100%"></div></div>';
+        (v.link ? '<div><a href="' + esc(v.link) + '" target="_blank" rel="noopener" class="muted">Consultar ' + ic('externo') + '</a></div>' : '') + '</div><div id="impPago' + i + '" style="flex-basis:100%"></div></div>';
     }).join('') + '</div>' : '<p class="muted">No hay vencimientos para mostrar todavía.</p>') + '</div>';
     var imps = L('D_Impuesto');
     h += '<div class="card"><div class="row" style="align-items:center"><div style="flex:1"><h2>Impuestos que paga el campo</h2><p class="sub" style="margin:0">Cuando el grupo confirme qué impuestos paga Pozo del Carril, se agregan acá y el sistema calcula solo las fechas.</p></div>' +
@@ -1469,7 +1543,7 @@ function impGenerar(anio) {
 
 /* ---------- PANEL DECISIONAL (v3.3) ---------- */
 var PD = { tab: 'resumen', d: null, esc: null };
-var PD_TABS = [['resumen', 'Resumen'], ['etapas', 'Etapas y unidades'], ['rendimiento', 'Rendimiento'], ['consumo', 'Consumo'], ['campanas', 'Campañas'], ['escenarios', 'Escenarios']];
+var PD_TABS = [['resumen', 'Resumen'], ['campanas', 'Campañas'], ['escenarios', 'Escenarios']];
 var ESC_VARS = [
   ['madres', 'Madres en servicio', 'cabezas', 1], ['corderosPorMadre', 'Corderos logrados por madre', 'corderos', 0.01], ['supervivencia', 'Corderos que llegan a la venta', '%', 1],
   ['kgPorCordero', 'Kilos por cordero vendido', 'kg', 0.1], ['precioKg', 'Precio de venta (sin IVA)', '$/kg', 1], ['maizKgDia', 'Maíz por cabeza por día', 'kg', 0.01],
@@ -1483,10 +1557,11 @@ function vPanel(idCamp) {
   }).catch(function (e) { m.innerHTML = volverBtn(); msg(m.appendChild(document.createElement('div')), 'err', e.message); });
 }
 function pdPintar() {
+  if (!PD_TABS.some(function (t) { return t[0] === PD.tab; })) PD.tab = 'resumen';
   var d = PD.d, c = d.indicadores.campana;
   var h = volverBtn() + '<div class="card"><div class="row" style="align-items:center"><div class="f" style="max-width:300px;margin:0"><label for="pdCamp">Campaña</label><select id="pdCamp" onchange="PD.esc=null;vPanel(this.value)">' +
     d.indicadores.campanas.map(function (x) { return '<option value="' + esc(x.id) + '"' + (x.id === c.id ? ' selected' : '') + '>' + esc(x.nombre) + '</option>'; }).join('') + '</select></div>' +
-    '<p class="sub" style="flex:1;margin:0">Un panel para decidir: qué pasó (resumen, etapas, rendimiento y consumo), qué pasaría si cambian los supuestos (escenarios) y preguntas a la IA. Los escenarios nunca cambian los datos reales.</p></div>' +
+    '<p class="sub" style="flex:1;margin:0">Un panel para decidir: qué pasó (resumen), cómo vamos contra otras campañas y qué pasaría si cambian los supuestos (escenarios). Los escenarios nunca cambian los datos reales.</p></div>' +
     '<div class="pills" style="margin-top:14px" role="tablist">' + PD_TABS.map(function (t) { return '<button type="button" role="tab" class="pill' + (PD.tab === t[0] ? ' on' : '') + '" onclick="PD.tab=\'' + t[0] + '\';pdPintar()">' + t[1] + '</button>'; }).join('') + '</div></div><div id="pdCuerpo"></div>';
   $('main').innerHTML = h;
   ({ resumen: pdResumen, etapas: pdEtapas, rendimiento: pdRendimiento, consumo: pdConsumo, campanas: pdCampanas, escenarios: pdEscenarios })[PD.tab] ? ({ resumen: pdResumen, etapas: pdEtapas, rendimiento: pdRendimiento, consumo: pdConsumo, campanas: pdCampanas, escenarios: pdEscenarios })[PD.tab]() : pdResumen();
@@ -1535,23 +1610,26 @@ function pdDetalle(id) {
     evol = Math.abs(dif) < 1e-9 ? 'Quedó igual entre ' + a.nombre + ' y ' + b.nombre + '.' : (mejora ? 'Mejoró' : 'Empeoró') + ' de ' + pdFmtEje(a.valor, i.unidad) + ' (' + a.nombre + ') a ' + pdFmtEje(b.valor, i.unidad) + ' (' + b.nombre + '): ' + (dif > 0 ? '+' : '') + (i.unidad === '%' ? num(dif, 1) + ' puntos' : pdFmtEje(dif, i.unidad)) + (a.valor ? ' (' + (dif > 0 ? '+' : '') + num(dif / Math.abs(a.valor) * 100, 1) + ' %)' : '') + '.';
   } else evol = 'Todavía hay un solo valor para comparar: la evolución aparece cuando haya datos de dos campañas.';
   if (S2.length >= 2) evol += ' En la campaña actual, la foto diaria pasó de ' + pdFmtEje(S2[0].v, i.unidad) + ' (' + fecha(S2[0].f) + ') a ' + pdFmtEje(S2[S2.length - 1].v, i.unidad) + ' (' + fecha(S2[S2.length - 1].f) + ').';
-  var bloque = function (t, x) { return x ? '<div class="detB"><b>' + t + '</b><div>' + x + '</div></div>' : ''; };
-  cont.innerHTML = '<div class="detI"><div class="detCab"><div><div class="muted">' + esc(i.perspectiva) + ' · ' + esc(i.objetivo || '') + '</div><div class="detV" style="color:' + colorEst(i.estado) + '">' + (i.valor === null ? '—' : fmtInd(i.valor, i.unidad)) + '</div></div><span class="tag ' + (i.estado === 'Verde' ? 'v' : i.estado === 'Rojo' ? 'r' : i.estado === 'Amarillo' ? '' : 'g') + '">' + esc(i.estado) + '</span></div>' +
+  var bloque = function (t, x, abierto) { return x ? '<details class="como detB"' + (abierto ? ' open' : '') + '><summary>' + t + '</summary><div>' + x + '</div></details>' : ''; };
+  cont.innerHTML = '<div class="detI"><div class="detCab"><div><div class="muted">' + esc(i.perspectiva) + ' · ' + esc(i.objetivo || '') + '</div><div class="detV" style="color:' + colorEst(i.estado) + '">' + (i.valor === null ? '—' : fmtInd(i.valor, i.unidad)) + '</div></div><span class="tag ' + claseEst(i.estado) + '">' + esc(etqEst(i.estado)) + '</span></div>' +
     '<h3 style="margin-top:6px">Por campaña</h3>' + pdGrafico(i) +
     '<div class="detG">' + bloque('Cómo se calcula', esc(i.formula || '—')) + bloque('Cálculo de esta campaña', esc(i.detalle || '—') + (i.nota ? '<br><span style="color:var(--warn)">' + esc(i.nota) + '</span>' : '')) +
     bloque('Cómo evolucionó', esc(evol)) + bloque('Cómo se lee', esc(i.interpretacion || '—')) + bloque('Semáforo', metaTxt(i) + (i.fuenteMeta ? '<br><span class="muted">Meta: ' + esc(i.fuenteMeta) + '</span>' : '')) +
-    bloque('Qué hacer', esc(i.decision || '—')) + bloque('Quién y cuándo', 'Responsable: ' + esc(i.responsable || '—') + ' · Se mide: ' + esc(i.periodicidad || '—') + (i.automatico ? ' · Se calcula solo con los datos cargados' : ' · Valor cargado a mano')) + '</div>' +
-    '<details style="margin-top:6px"><summary>Ver los valores en tabla</summary><table style="margin-top:6px"><thead><tr><th>Campaña</th><th class="n">Valor</th><th>Semáforo</th></tr></thead><tbody>' + C.map(function (p) { return '<tr><td>' + esc(p.nombre) + '</td><td class="n">' + (p.valor === null ? '—' : fmtInd(p.valor, i.unidad)) + '</td><td>' + P(p.estado === 'Sin datos' || p.estado === 'Sin meta' ? 'Sin' : p.estado) + esc(p.estado) + '</td></tr>'; }).join('') + '</tbody></table></details></div>';
+    bloque('Qué hacer', esc(i.decision || '—'), i.estado === 'Rojo' || i.estado === 'Amarillo') + bloque('Quién y cuándo', 'Responsable: ' + esc(i.responsable || '—') + ' · Se mide: ' + esc(i.periodicidad || '—') + (i.automatico ? ' · Se calcula solo con los datos cargados' : ' · Valor cargado a mano')) + '</div>' +
+    '<details style="margin-top:6px"><summary>Ver los valores en tabla</summary><table style="margin-top:6px"><thead><tr><th>Campaña</th><th class="n">Valor</th><th>Semáforo</th></tr></thead><tbody>' + C.map(function (p) { return '<tr><td>' + esc(p.nombre) + '</td><td class="n">' + (p.valor === null ? '—' : fmtInd(p.valor, i.unidad)) + '</td><td>' + P(p.estado === 'Sin datos' || p.estado === 'Sin meta' ? 'Sin' : p.estado) + esc(etqEst(p.estado)) + '</td></tr>'; }).join('') + '</tbody></table></details></div>';
   cont.classList.remove('hide'); btn.innerHTML = ic('volver'); btn.setAttribute('aria-expanded', 'true');
 }
 function pdResumen() {
   var d = PD.d, I = d.indicadores, cu = I.cuenta;
-  var h = '<div class="card"><h2>Resumen</h2><p class="sub">Tocá el + de cada indicador para ver cómo se calcula, cómo evolucionó entre campañas y qué hacer.</p><div class="sem"><span class="e-Verde">' + P('Verde') + cu.Verde + ' en meta</span><span class="e-Amarillo">' + P('Amarillo') + cu.Amarillo + ' en alerta</span><span class="e-Rojo">' + P('Rojo') + cu.Rojo + ' a corregir</span></div>' +
-    '<div class="listaInd">' + I.indicadores.map(function (i) {
-      return '<div class="filaInd"><button type="button" class="filaBtn" onclick="pdDetalle(\'' + esc(i.id) + '\')"><span class="filaN">' + P(i.estado === 'Sin datos' || i.estado === 'Sin meta' ? 'Sin' : i.estado) + esc(i.nombre) + '<small>' + esc(i.perspectiva) + '</small></span><span class="filaV">' + (i.valor === null ? '—' : fmtInd(i.valor, i.unidad)) + '<small>Meta: ' + (i.metaVerde === '' ? '—' : fmtMeta(i.metaVerde, i.unidad)) + '</small></span><span class="filaMas" id="pdBtn_' + esc(i.id) + '" aria-expanded="false">' + ic('mas') + '</span></button><div id="pdDet_' + esc(i.id) + '" class="hide"></div></div>';
+  var ord = { Rojo: 0, Amarillo: 1, Verde: 2, 'Sin meta': 3, 'Sin datos': 4 };
+  var conDatos = I.indicadores.filter(function (i) { return i.valor !== null; }).sort(function (a, b) { return ord[a.estado] - ord[b.estado]; }), sinDatos = I.indicadores.filter(function (i) { return i.valor === null; });
+  var h = '<div class="card"><h2>Resumen</h2><p class="sub">Tocá el + de cada indicador para ver cómo se calcula, cómo evolucionó entre campañas y qué hacer.</p>' + semConteo(cu) + leyendaMini() +
+    '<div class="listaInd" style="margin-top:12px">' + conDatos.concat(sinDatos).map(function (i, k) {
+      var sep = k === conDatos.length && sinDatos.length ? '<p class="muted" style="margin:14px 0 4px"><b>Todavía sin datos</b> · se completan solos cuando se carguen los datos que les faltan.</p>' : '';
+      return sep + '<div class="filaInd"><button type="button" class="filaBtn" onclick="pdDetalle(\'' + esc(i.id) + '\')"><span class="filaN">' + P(i.estado === 'Sin datos' || i.estado === 'Sin meta' ? 'Sin' : i.estado) + esc(i.nombre) + '<small>' + esc(i.perspectiva) + '</small></span><span class="filaV">' + (i.valor === null ? '—' : fmtInd(i.valor, i.unidad)) + '<small>' + esc(etqEst(i.estado)) + ' · meta: ' + (i.metaVerde === '' ? '—' : fmtMeta(i.metaVerde, i.unidad)) + '</small></span><span class="filaMas" id="pdBtn_' + esc(i.id) + '" aria-expanded="false">' + ic('mas') + '</span></button><div id="pdDet_' + esc(i.id) + '" class="hide"></div></div>';
     }).join('') + '</div></div>';
-  h += '<div class="card"><h2>' + ic('alerta') + ' Hallazgos</h2><p class="sub">Lo que el sistema detectó solo, con reglas: indicadores en rojo, desvíos de consumo y de rinde, y cambios fuertes contra la última foto.</p>' +
-    (d.hallazgos.length ? '<div class="lista">' + d.hallazgos.map(function (x) { return '<div class="item"><div class="t"><b>' + P(x.tipo === 'Cambio' ? 'Sin' : x.tipo) + esc(x.titulo) + '</b><div>' + esc(x.texto) + '</div></div></div>'; }).join('') + '</div>' : '<p class="muted">No hay nada fuera de lo normal en esta campaña.</p>') + '</div>';
+  h += '<div class="card"><h2>' + ic('alerta') + ' Hallazgos</h2><p class="sub">Lo que el sistema detectó solo, con reglas: indicadores urgentes, desvíos de consumo y de rinde, y cambios fuertes contra la última foto. Tocá cada uno para ver el detalle.</p>' +
+    (d.hallazgos.length ? '<div class="accL">' + d.hallazgos.map(function (x) { var e = x.tipo === 'Cambio' ? 'Sin' : x.tipo; return acc(P(e) + esc(x.titulo), x.tipo === 'Cambio' ? 'Cambio fuerte' : esc(etqEst(x.tipo)), '', '<p style="margin:8px 0 0">' + esc(x.texto) + '</p>'); }).join('') + '</div>' : '<p class="muted">No hay nada fuera de lo normal en esta campaña.</p>') + '</div>';
   $('pdCuerpo').innerHTML = h;
 }
 function pdEtapas() {
@@ -1575,7 +1653,7 @@ function pdConsumo() {
     (C.length ? C.map(function (x) { var pc = x.esperado ? (x.real - x.esperado) / x.esperado * 100 : null; return '<tr><td>' + esc(x.subunidad) + '</td><td>' + esc(x.insumo) + '</td><td class="n">' + (x.esperado === null ? '—' : num(x.esperado) + ' ' + esc(x.um)) + '</td><td class="n">' + num(x.real) + ' ' + esc(x.um) + '</td><td class="n">' + (pc === null ? '—' : P(Math.abs(pc) <= 5 ? 'Verde' : Math.abs(pc) <= 10 ? 'Amarillo' : 'Rojo') + (pc > 0 ? '+' : '') + num(pc, 1) + ' %') + '</td></tr>'; }).join('') : '<tr><td colspan="5" class="muted">No hay consumos ni dosis cargados en esta campaña.</td></tr>') +
     '</tbody></table></div></div>';
 }
-/* Escenarios: el cálculo es el de la diapositiva 16 (producción, ingresos, costos y margen simulados) */
+/* Escenarios: producción, ingresos, costos y margen simulados */
 function pdCalc(v) {
   var corderos = v.madres * v.corderosPorMadre * v.supervivencia / 100, kg = corderos * v.kgPorCordero, ingresos = kg * v.precioKg;
   var maizKg = v.madres * v.maizKgDia * v.dias, maiz = maizKg * v.precioMaiz, otros = v.otrosDirectosPorMadre * v.madres, directos = maiz + otros, mb = ingresos - directos;
@@ -1603,7 +1681,7 @@ function pdResultado() {
     fila('Corderos vendidos', 'corderos', false) + fila('Kilos vendidos', 'kg', false) + fila('Ingresos (sin IVA)', 'ingresos', true, R.ingresos) + fila('Maíz consumido (kg)', 'maizKg', false) +
     fila('Costo del maíz', 'maiz', true) + fila('Costos directos', 'directos', true, R.directos) + fila('Margen bruto', 'mb', true, R.mb) + fila('Margen bruto por madre', 'mbMadre', true) + fila('Resultado (margen − indirectos)', 'resultado', true, R.resultado) +
     '</tbody></table></div>' + (meta !== null ? '<p style="margin-top:10px">' + P(e.mbMadre >= meta ? 'Verde' : 'Rojo') + 'Meta de margen bruto por madre: ' + pesos(meta) + '. ' + (e.mbMadre >= meta ? 'Este escenario la alcanza.' : 'A este escenario le faltan ' + pesos(meta - e.mbMadre) + ' por madre.') + '</p>' : '<p class="muted" style="margin-top:10px">Para comparar con una meta, el administrador puede cargar la meta del indicador "Margen bruto por madre" en Indicadores → Cambiar metas.</p>') +
-    '<p class="muted">Cálculo (diapositiva 16): corderos = madres × corderos por madre × % que llega a la venta · ingresos = corderos × kg × precio · maíz = madres × kg por día × días × precio · margen = ingresos − costos directos. "Real registrado" son los números cargados de la campaña.</p>';
+    '<p class="muted">Cálculo: corderos = madres × corderos por madre × % que llega a la venta · ingresos = corderos × kg × precio · maíz = madres × kg por día × días × precio · margen = ingresos − costos directos. "Real registrado" son los números cargados de la campaña.</p>';
 }
 function pdSens() {
   var k = $('sensVar').value, def = ESC_VARS.filter(function (x) { return x[0] === k; })[0], base = PD.esc[k];
@@ -1748,15 +1826,27 @@ function hiFiltrar() { HI.f = { desde: $('hiD').value, hasta: $('hiH').value, us
 /* ---------- UNIDADES DE POZO DEL CARRIL ---------- */
 function vUnidades() {
   var U = L('D_UnidadNeg'), adm = puede('D_UnidadNeg', 'editar');
-  var h = volverBtn() + '<div class="card"><div class="row" style="align-items:center"><div style="flex:1"><h2>Unidades de Pozo del Carril</h2><p class="sub" style="margin:0">El establecimiento tiene varias unidades de negocio. Ovinos, Bovinos y Maíz ya están integradas en este sistema, con la misma base de datos. Para las demás se puede cargar el link de su sistema mientras se integran.</p></div>' +
+  var h = volverBtn() + '<div class="card"><div class="row" style="align-items:center"><div style="flex:1"><h2>Unidades de Pozo del Carril</h2><p class="sub" style="margin:0">Las unidades de negocio del establecimiento. Ovinos es este sistema. Bovinos también está dentro, y se activa o se pone en pausa desde acá. Las demás se abren con el link de su sistema.</p></div>' +
     (puede('D_UnidadNeg', 'crear') ? '<button class="btn2" onclick="uniForm()">' + ic('mas') + 'Agregar unidad</button>' : '') + '</div><div id="uniF"></div></div><div class="tiles">' +
     U.map(function (u) {
-      var icu = ic(u.label === 'Ovino' ? 'oveja' : /^bovin/i.test(u.label) ? 'vaca' : /Ma[ií]z|Soja/.test(u.label) ? 'campo' : 'unidades'), uq = u.id === 'N1' ? 'ovino' : /^ma[ií]z$/i.test(u.label) ? 'maiz' : /^bovin/i.test(u.label) ? 'bovino' : '', aca = !!uq;
-      return '<div class="cot"><div class="row" style="align-items:center;gap:10px"><span class="uni"><span class="ic">' + icu + '</span></span><div style="flex:1"><b style="font-size:18px">' + esc(u.label) + '</b><div class="muted">' + esc(u.tipo || '') + (u.desc ? ' · ' + esc(u.desc) : '') + '</div></div>' + (aca ? '<span class="tag v">En este sistema</span>' : '') + '</div>' +
-        '<div class="row" style="margin-top:12px">' + (aca ? '<button class="btn" onclick="cambiarUnidad(\'' + uq + '\')">Entrar a ' + esc(u.label) + '</button>' : '') + (u.link && !aca ? '<a class="btn" href="' + esc(u.link) + '" target="_blank" rel="noopener">Abrir su sistema ' + ic('externo') + '</a>' : !aca ? '<span class="muted">Todavía no tiene link cargado.</span>' : '') +
-        (adm && !aca ? '<button class="btn2" onclick="uniLink(\'' + esc(u.id) + '\')">' + (u.link ? 'Cambiar link' : 'Cargar link') + '</button>' : '') + '</div><div id="uniL' + esc(u.id) + '"></div></div>';
+      var ov = u.id === 'N1', bov = /^bovin/i.test(String(u.label)), activa = bov && u.estado !== 'En pausa';
+      var icu = ic(ov ? 'oveja' : bov ? 'vaca' : /Ma[ií]z|Soja/.test(u.label) ? 'campo' : 'unidades');
+      var tag = ov ? '<span class="tag v">Estás acá</span>' : bov ? (activa ? '<span class="tag v">Activa</span>' : '<span class="tag g">En pausa</span>') : '';
+      var bot = '';
+      if (bov && activa) bot += '<button class="btn" onclick="cambiarUnidad(\'bovino\')">Entrar a Bovinos</button>';
+      if (!ov && u.link) bot += '<a class="btn' + (bov && activa ? '2' : '') + '" href="' + esc(u.link) + '" target="_blank" rel="noopener">Abrir su sistema ' + ic('externo') + '</a>';
+      if (!ov && !u.link && !(bov && activa)) bot += '<span class="muted">Todavía no tiene link cargado.</span>';
+      if (adm && bov) bot += '<button class="btn2" onclick="uniEstado(\'' + esc(u.id) + '\',' + (activa ? 'false' : 'true') + ')">' + (activa ? 'Poner en pausa' : 'Activar') + '</button>';
+      if (adm && !ov) bot += '<button class="btn2" onclick="uniLink(\'' + esc(u.id) + '\')">' + (u.link ? 'Cambiar link' : 'Agregar link') + '</button>';
+      return '<div class="cot"><div class="row" style="align-items:center;gap:10px"><span class="uni"><span class="ic">' + icu + '</span></span><div style="flex:1;min-width:0"><b style="font-size:18px">' + esc(u.label) + '</b>' + (tag ? '<div style="margin:2px 0">' + tag.replace('class="tag', 'style="margin:0" class="tag') + '</div>' : '') + '<div class="muted">' + esc(u.tipo || '') + (u.desc ? ' · ' + esc(u.desc) : '') + '</div></div></div>' +
+        '<div class="row" style="margin-top:12px">' + bot + '</div><div id="uniL' + esc(u.id) + '"></div><div id="uniE' + esc(u.id) + '"></div></div>';
     }).join('') + '</div>';
   $('main').innerHTML = h;
+}
+function uniEstado(id, activar) {
+  var u = item('D_UnidadNeg', id);
+  call('api_editar', S.token, 'D_UnidadNeg', id, { Nombre: u.label, TipoActividad: u.tipo, Descripcion: u.desc, LinkApp: u.link, Estado: activar ? 'Activa' : 'En pausa' })
+    .then(function () { return refrescar().then(vUnidades); }).catch(function (e) { msg($('uniE' + id), 'err', e.message); });
 }
 function uniLink(id) {
   var u = item('D_UnidadNeg', id);
@@ -1765,13 +1855,121 @@ function uniLink(id) {
 }
 function uniLinkGuardar(id) {
   var u = item('D_UnidadNeg', id);
-  call('api_editar', S.token, 'D_UnidadNeg', id, { Nombre: u.label, TipoActividad: u.tipo, Descripcion: u.desc, LinkApp: $('ulUrl' + id).value })
+  call('api_editar', S.token, 'D_UnidadNeg', id, { Nombre: u.label, TipoActividad: u.tipo, Descripcion: u.desc, LinkApp: $('ulUrl' + id).value, Estado: u.estado || '' })
     .then(function () { return refrescar().then(vUnidades); }).catch(function (e) { msg($('ulMsg' + id), 'err', e.message); });
 }
 function uniForm() {
   var f = formulario('D_UnidadNeg', null, function () { setTimeout(vUnidades, 900); });
   $('uniF').innerHTML = '<div class="mini" style="margin-top:12px">' + f.html + ' <button class="btn2" onclick="$(\'uniF\').innerHTML=\'\'">Cancelar</button></div>'; f.enlazar();
 }
+
+/* =============================================================================================
+ * v3.8 · CARGAR SIN SEÑAL — bandeja de cargas guardadas en el teléfono
+ *  Lo que se carga sin señal se guarda en la memoria del navegador y se envía solo cuando vuelve la conexión.
+ *  Cada carga lleva una clave única: si llega dos veces, el servidor no la duplica (api_conClave).
+ * ============================================================================================= */
+var PEND_FN = { api_crear: 1, api_registrarSanidad: 1, api_registrarMuerte: 1, api_registrarVenta: 1, api_registrarCompra: 1, api_registrarMovimiento: 1, api_pesadasBov: 1, api_corregir: 1 };
+var PEND_MEM = null, PEND_ENVIANDO = false, PEND_ULT = null;
+function esErrorRed(m) { return /NetworkError|network|HTTP 0|Failed to fetch|conexi[oó]n|connection|offline|timed? ?out/i.test(String(m || '')); }
+function sinSenal() { return S.offline || (typeof navigator !== 'undefined' && navigator.onLine === false); }
+function senalVolvio() { if (S.offline) { S.offline = false; senalPintar(); } if (pendLeer().length) setTimeout(pendEnviar, 300); }
+function pendClave() { return (Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10)); }
+function pendLeer() { if (PEND_MEM) return PEND_MEM; var v = null; try { v = JSON.parse(leer('ovPend') || '[]'); } catch (e) {} PEND_MEM = Array.isArray(v) ? v : []; return PEND_MEM; }
+function pendGuardar(L) { PEND_MEM = L; guardar('ovPend', L.length ? JSON.stringify(L) : null); var ok = !L.length || leer('ovPend'); S.pendSoloMemoria = !ok; senalPintar(); }
+function pendAgregar(item) { var L = pendLeer().slice(); L.push(item); pendGuardar(L); }
+function pendDesc(fn, args) {
+  var a = args[1] || {};
+  if (fn === 'api_crear') {
+    var t = args[1], o = args[2] || {}, tit = S.esq && S.esq[t] ? S.esq[t].titulo.replace(/^(Maíz|Bovinos) · /, '') : t;
+    if (t === 'D_Animal') return 'Nacimiento · caravana ' + o.Caravana;
+    if (t === 'D_Bovino') return 'Bovino nuevo · caravana ' + o.Caravana;
+    if (t === 'F_Cosecha') return 'Cosecha · ' + etiqueta('D_Lote', o.IdLote) + ' · ' + num(o.KgTotal, 0) + ' kg';
+    if (t === 'F_ConsumoLote') return 'Maíz · ' + etiqueta('D_InsumoAgro', o.IdInsumoAgro) + ' en ' + etiqueta('D_Lote', o.IdLote);
+    if (t === 'F_MovBov') return 'Bovino · ' + (o.Tipo || '') + ' · caravana ' + o.Caravana;
+    if (t === 'F_AlimentoBov') return 'Bovino · ' + (o.Alimento || 'alimento') + ' · ' + (o.Cantidad || '') + ' ' + (o.Unidad || '');
+    return tit;
+  }
+  if (fn === 'api_registrarSanidad') return 'Tratamiento · ' + ((a.caravanas || a.Caravanas || []).length || '') + ' animal(es) · ' + etiqueta('D_Insumo', a.IdInsumo || '');
+  if (fn === 'api_registrarMuerte') return 'Muerte · caravana ' + (a.Caravana || '');
+  if (fn === 'api_registrarVenta') return 'Venta · ' + ((a.lineas || []).length) + ' animal(es)';
+  if (fn === 'api_registrarCompra') return 'Compra · ' + etiqueta('D_Tercero', a.IdTercero || '') + (a.Numero ? ' · ' + a.Numero : '');
+  if (fn === 'api_registrarMovimiento') return (a.Tipo || 'Cobro o pago') + ' · ' + pesos(a.Importe);
+  if (fn === 'api_pesadasBov') return 'Pesada · ' + (args[4] || []).filter(function (x) { return x.kg !== ''; }).length + ' animales · ' + fecha(args[1]);
+  if (fn === 'api_corregir') return 'Corrección · ' + (S.esq && S.esq[args[1]] ? S.esq[args[1]].titulo : args[1]);
+  return 'Carga';
+}
+function pendListo(item) {
+  var v = VISTAS[item.vista] ? item.vista : 'inicio';
+  $('main').innerHTML = volverBtn() + '<div class="card listo"><div class="ch nubeOk">' + ic('nube') + '</div><h2>Guardado en el teléfono</h2><p>No hay señal. <b>' + esc(item.desc) + '</b> quedó guardado en este teléfono y se va a enviar solo cuando vuelva la señal.</p>' +
+    (S.pendSoloMemoria ? '<p class="muted" style="color:var(--bad)">Este navegador no deja guardar datos: no cierres ni recargues la página hasta que se envíe.</p>' : '<p class="muted">Podés seguir cargando. No hace falta que dejes la página abierta.</p>') +
+    '<div class="row" style="justify-content:center">' + (v !== 'inicio' ? '<button class="btn2" onclick="ir(\'' + v + '\')">Cargar otro</button>' : '') + '<button class="btn" onclick="ir(\'inicio\')">Volver al inicio</button></div></div>';
+  window.scrollTo(0, 0); senalPintar();
+}
+function senalPintar() {
+  var b = $('senal'), ch = $('chipP'); if (!b || !ch) return;
+  var L = S.u ? pendLeer().filter(function (x) { return x.email === S.u.Email; }) : [], n = L.length, errs = L.filter(function (x) { return x.estado === 'error'; }).length;
+  ch.classList.toggle('hide', !n); ch.classList.toggle('err', !!errs);
+  ch.innerHTML = ic(errs ? 'alerta' : 'nube') + n + '<span class="nm"> pendiente' + (n === 1 ? '' : 's') + '</span>';
+  var cl = '', h = '';
+  if (!S.u) cl = 'hide';
+  else if (sinSenal()) { h = '<span class="ic">' + ic('sinsenal') + '</span><span class="tx"><b>Sin señal</b>Lo que cargues se guarda en este teléfono y se envía solo cuando vuelva la señal.' + (n ? ' Hay ' + n + ' carga' + (n === 1 ? '' : 's') + ' esperando.' : '') + '</span>' + (n ? '<button onclick="pendAbrir()">Ver</button>' : ''); }
+  else if (PEND_ENVIANDO) { cl = 'envia'; h = '<span class="ic">' + ic('nube') + '</span><span class="tx"><b>Volvió la señal</b>Enviando ' + n + ' carga' + (n === 1 ? '' : 's') + ' guardada' + (n === 1 ? '' : 's') + ' en el teléfono…</span>'; }
+  else if (errs) { cl = 'err'; h = '<span class="ic">' + ic('alerta') + '</span><span class="tx"><b>' + errs + ' carga' + (errs === 1 ? '' : 's') + ' sin enviar</b>El sistema no ' + (errs === 1 ? 'la' : 'las') + ' aceptó. Revisá el motivo y corregila' + (errs === 1 ? '' : 's') + '.</span><button onclick="pendAbrir()">Revisar</button>'; }
+  else if (n) { cl = 'envia'; h = '<span class="ic">' + ic('nube') + '</span><span class="tx"><b>' + n + ' carga' + (n === 1 ? '' : 's') + ' en el teléfono</b>Se ' + (n === 1 ? 'envía' : 'envían') + ' en unos segundos.</span><button onclick="pendEnviar()">Enviar ahora</button>'; }
+  else if (PEND_ULT) { cl = 'ok'; h = '<span class="ic">' + ic('ok') + '</span><span class="tx"><b>Listo</b>' + esc(PEND_ULT) + '</span><button onclick="PEND_ULT=null;senalPintar()">Cerrar</button>'; }
+  else cl = 'hide';
+  b.className = 'senal' + (cl ? ' ' + cl : ''); b.innerHTML = h;
+}
+function pendEnviar() {
+  if (PEND_ENVIANDO || !S.token || !S.u || (typeof navigator !== 'undefined' && navigator.onLine === false)) return;
+  var cola = pendLeer().filter(function (x) { return x.email === S.u.Email && x.estado === 'espera'; });
+  if (!cola.length) { senalPintar(); return; }
+  PEND_ENVIANDO = true; S.offline = false; senalPintar();
+  var enviadas = 0;
+  var sig = function (i) {
+    if (i >= cola.length) return fin();
+    var it = cola[i];
+    google.script.run.withSuccessHandler(function () {
+      enviadas++; pendGuardar(pendLeer().filter(function (x) { return x.clave !== it.clave; })); sig(i + 1);
+    }).withFailureHandler(function (e) {
+      var m = (e && e.message) || String(e);
+      if (esErrorRed(m)) { S.offline = true; return fin(); }
+      if (/Sesión vencida/.test(m)) return fin();
+      pendGuardar(pendLeer().map(function (x) { return x.clave === it.clave ? Object.assign({}, x, { estado: 'error', error: m }) : x; })); sig(i + 1);
+    }).api_conClave(S.token, it.clave, it.fn, it.args);
+  };
+  var fin = function () {
+    PEND_ENVIANDO = false;
+    if (enviadas) { PEND_ULT = 'Se ' + (enviadas === 1 ? 'envió 1 carga' : 'enviaron ' + enviadas + ' cargas') + ' que estaban guardadas en el teléfono.'; refrescar().catch(function () {}); setTimeout(function () { PEND_ULT = null; senalPintar(); }, 8000); }
+    senalPintar();
+  };
+  sig(0);
+}
+function pendAbrir() {
+  var L = pendLeer().filter(function (x) { return S.u && x.email === S.u.Email; });
+  var d = document.createElement('div'); d.className = 'modal'; d.id = 'pendModal';
+  d.onclick = function (e) { if (e.target === d) d.remove(); };
+  d.innerHTML = '<div class="card"><div class="row" style="align-items:center"><h2 style="flex:1;margin:0">' + ic('nube') + ' Guardado en el teléfono</h2><button class="btn2" onclick="this.closest(\'.modal\').remove()">Cerrar</button></div>' +
+    '<p class="sub" style="margin-top:8px">' + (sinSenal() ? 'Ahora no hay señal. Estas cargas se envían solas cuando vuelva.' : 'Estas cargas todavía no llegaron a la planilla.') + '</p>' +
+    (L.length ? '<div class="pendL">' + L.map(function (x) {
+      var cuando = new Date(x.cuando), hh = cuando.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' }) + ' ' + cuando.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+      return '<div class="pendI' + (x.estado === 'error' ? ' err' : '') + '"><div class="t"><b>' + esc(x.desc) + '</b><small>Cargado el ' + hh + ' · ' + (x.estado === 'error' ? 'No se pudo enviar' : 'Esperando señal') + '</small>' +
+        (x.estado === 'error' ? '<div class="e">' + esc(x.error) + '</div>' : '') + '</div><div class="row" style="gap:6px;flex-wrap:nowrap">' +
+        (x.estado === 'error' ? '<button class="btn2" onclick="pendReintentar(\'' + x.clave + '\')">Reintentar</button>' : '') +
+        '<button class="btn2" onclick="pendDescartar(this,\'' + x.clave + '\')">Descartar</button></div></div>';
+    }).join('') + '</div>' : '<p class="muted">No hay nada pendiente.</p>') +
+    (L.length && !sinSenal() ? '<button class="btn" onclick="pendEnviar();this.closest(\'.modal\').remove()">' + ic('nube') + 'Enviar ahora</button>' : '') +
+    (L.some(function (x) { return x.estado === 'error'; }) ? '<p class="muted" style="margin-top:10px">Si una carga tiene un error, descartala y volvé a cargarla con el dato corregido.</p>' : '') + '</div>';
+  var v = $('pendModal'); if (v) v.remove(); document.body.appendChild(d);
+}
+function pendReintentar(clave) { pendGuardar(pendLeer().map(function (x) { return x.clave === clave ? Object.assign({}, x, { estado: 'espera', error: '' }) : x; })); pendAbrir(); pendEnviar(); }
+function pendDescartar(btn, clave) {
+  if (!btn.dataset.ok) { btn.dataset.ok = '1'; btn.textContent = '¿Seguro? Se pierde'; btn.style.color = 'var(--bad)'; return; }
+  pendGuardar(pendLeer().filter(function (x) { return x.clave !== clave; })); pendAbrir();
+}
+window.addEventListener('online', function () { S.offline = false; senalPintar(); setTimeout(pendEnviar, 1500); });
+window.addEventListener('offline', function () { S.offline = true; senalPintar(); });
+setInterval(function () { if (S.u && pendLeer().some(function (x) { return x.email === S.u.Email && x.estado === 'espera'; })) pendEnviar(); }, 25000);
 
 /* =============================================================================================
  * v3.7 · UNIDAD BOVINA — integrada al mismo sistema
@@ -1783,7 +1981,7 @@ function armarMenuBov(it) {
   if (puede('F_AlimentoBov', 'crear')) carga.push(it('bvAlimento', 'campo', 'Alimento de las cargas'));
   if (puede('F_MovBov', 'crear')) carga.push(it('bvMov', 'venta', 'Venta, muerte o faltante'));
   if (S.u.Rol !== 'Consulta / auditoría') carga.push(it('corregir', 'lapiz', 'Corregir un dato'));
-  var ver = [it('bovino', 'tablero', 'Resumen de Bovinos'), it('indicadores', 'indicadores', 'Indicadores'), it('bvAnimales', 'vaca', 'Los animales'), it('bvCargas', 'vaca', 'Cargas de engorde'), it('bvPesadas', 'balanza', 'Todas las pesadas'),
+  var ver = ['<button class="itS" onclick="menuLateral(false);cambiarUnidad(\'ovino\')">' + ic('volver') + 'Volver a Ovinos</button>', it('bovino', 'tablero', 'Resumen de Bovinos'), it('indicadores', 'indicadores', 'Indicadores'), it('bvAnimales', 'vaca', 'Los animales'), it('bvCargas', 'vaca', 'Cargas de engorde'), it('bvPesadas', 'balanza', 'Todas las pesadas'),
     it('terceros', 'terceros', 'Proveedores y clientes'), it('cotizaciones', 'cotizaciones', 'Cotizaciones'), it('impuestos', 'impuestos', 'Impuestos'), it('unidades', 'unidades', 'Unidades del campo')];
   $('side').innerHTML = '<div class="marcaS"><span class="cvn">PdC</span><div>Pozo del Carril<small>Unidad Bovina</small></div></div><div style="height:6px"></div>' + it('inicio', 'inicio', 'Inicio') +
     (carga.length ? '<div class="grupoS">Cargar</div>' + carga.join('') : '') + '<div class="grupoS">Consultar</div>' + ver.join('') +
@@ -1809,7 +2007,7 @@ function vInicioBov() {
     t('terceros', 'terceros', 'Proveedores y clientes', 'Compartidos con las otras unidades'), t('cotizaciones', 'cotizaciones', 'Cotizaciones', 'Granos, hacienda y dólar'),
     t('impuestos', 'impuestos', 'Impuestos', 'Vencimientos y pagos'), t('unidades', 'unidades', 'Unidades del campo', 'Ovinos, Bovinos, Maíz y las demás')];
   if (S.u.Rol === 'Administrador') ver.push(t('tablas', 'tablas', 'Administración', 'Tablas, parámetros y usuarios'), t('historial', 'libro', 'Historial de cambios', 'Quién cambió qué y cuándo'));
-  var h = selUnidad();
+  var h = selUnidad() || '<div class="unidadSel"><button type="button" onclick="cambiarUnidad(\'ovino\')"><span class="ic">' + ic('volver') + '</span>Volver a Ovinos</button></div>';
   if (S.aviso) { h += '<div class="msg ' + (/^ERROR/.test(S.aviso) ? 'err' : 'ok') + '">' + ic(/^ERROR/.test(S.aviso) ? 'alerta' : 'ok') + '<div style="flex:1">' + esc(S.aviso) + '</div></div>'; S.aviso = ''; }
   if (carga.length) h += '<h2 class="seccion">¿Qué hiciste hoy con la hacienda?</h2><div class="tiles t3">' + carga.join('') + '</div>';
   h += '<h2 class="seccion">Consultar</h2><div class="tiles t4">' + ver.join('') + '</div>';
@@ -1877,10 +2075,15 @@ function uniId(q) { var re = q === 'maiz' ? /^ma[ií]z$/i : q === 'bovino' ? /^b
 function uniDeTabla(t) { var e = S.esq[t] || {}; return e.agro ? uniId('maiz') : e.bov ? uniId('bovino') : 'N1'; }
 function subsOvinas() { return L('D_Subunidad').filter(function (x) { return x.unidad === 'N1'; }); }
 function selUnidad() {
+  // v3.8: arriba aparecen solo las unidades que están en uso: Ovinos, Bovinos si está activo y las que tienen el link de su sistema
   var b = function (u, icono, txt) { return '<button type="button" class="' + (S.unidad === u ? 'on' : '') + '" aria-pressed="' + (S.unidad === u) + '" onclick="cambiarUnidad(\'' + u + '\')"><span class="ic">' + ic(icono) + '</span>' + txt + '</button>'; };
-  return '<div class="unidadSel" role="group" aria-label="Unidad de negocio">' + b('ovino', 'oveja', 'Ovinos') + b('bovino', 'vaca', 'Bovinos') + b('maiz', 'campo', 'Maíz') + '</div>';
+  var ext = L('D_UnidadNeg').filter(function (u) { return u.id !== 'N1' && u.link && !(/^bovin/i.test(String(u.label)) && bovActiva()); });
+  if (!bovActiva() && !ext.length) return '';
+  return '<div class="unidadSel" role="group" aria-label="Unidades">' + b('ovino', 'oveja', 'Ovinos') + (bovActiva() ? b('bovino', 'vaca', 'Bovinos') : '') +
+    ext.map(function (u) { return '<a class="uExt" href="' + esc(u.link) + '" target="_blank" rel="noopener"><span class="ic">' + ic(/Ma[ií]z|Soja/.test(u.label) ? 'campo' : /^bovin/i.test(String(u.label)) ? 'vaca' : 'unidades') + '</span>' + esc(u.label) + ' ' + ic('externo') + '</a>'; }).join('') + '</div>';
 }
-function cambiarUnidad(u) { S.unidad = u; guardar('ovUnidad', u); ir('inicio'); }
+function bovActiva() { var u = L('D_UnidadNeg').filter(function (x) { return /^bovin/i.test(String(x.label)); })[0]; return !!u && u.estado !== 'En pausa'; }
+function cambiarUnidad(u) { if (u !== 'bovino' || !bovActiva()) u = 'ovino'; S.unidad = u; guardar('ovUnidad', u); ir('inicio'); }
 function armarMenuMaiz(it) {
   var carga = [];
   if (puede('F_ConsumoLote', 'crear')) carga.push(it('mzAplicacion', 'campo', 'Labores e insumos'));
@@ -2015,7 +2218,7 @@ function mzResumen(d) {
     k('Margen bruto', M(d.margen), (d.margenPct === null ? '' : num(d.margenPct, 1) + ' % de las ventas · ') + '$ ' + num(d.margenHa, 0) + '/ha') + '</div>';
   h += '<div class="card"><h2>Rinde y costo por lote</h2><div class="scroll" style="max-height:none"><table><thead><tr><th>Lote</th><th>Híbrido</th><th class="n">Ha</th><th class="n">Producción</th><th class="n">Rinde kg/ha</th><th>Contra el estándar</th><th class="n">Costo/ha</th><th class="n">Costo/t</th></tr></thead><tbody>' +
     d.lotes.map(function (l) { return '<tr><td><span class="mzLote">' + esc(String(l.nombre).replace(/^Lote\s*/i, '')) + '</span></td><td>' + esc(l.variedad || '') + '</td><td class="n">' + num(l.ha, 1) + '</td><td class="n">' + num(l.t, 2) + ' t</td><td class="n">' + num(l.rinde, 0) + '</td><td>' + (l.pctEst === null ? '<span class="muted">—</span>' : chip(l.pctEst).replace(' del estándar', '')) + '</td><td class="n">$ ' + num(l.costoHa, 0) + '</td><td class="n">' + (l.costoT === null ? '—' : '$ ' + num(l.costoT, 0)) + '</td></tr>'; }).join('') +
-    '</tbody><tfoot><tr><td><b>Total</b></td><td></td><td class="n"><b>' + num(d.ha, 1) + '</b></td><td class="n"><b>' + num(d.t, 2) + ' t</b></td><td class="n"><b>' + num(d.rinde, 0) + '</b></td><td>' + (d.pctEst === null ? '' : chip(d.pctEst).replace(' del estándar', '')) + '</td><td class="n"><b>$ ' + num(d.costoHa, 0) + '</b></td><td class="n"><b>$ ' + num(d.costoT, 0) + '</b></td></tr></tfoot></table></div>';
+    '</tbody><tfoot><tr><td><b>Total</b></td><td></td><td class="n"><b>' + num(d.ha, 1) + '</b></td><td class="n"><b>' + num(d.t, 2) + ' t</b></td><td class="n"><b>' + num(d.rinde, 0) + '</b></td><td>' + (d.pctEst === null ? '' : chip(d.pctEst).replace(' del estándar', '')) + '</td><td class="n"><b>$ ' + num(d.costoHa, 0) + '</b></td><td class="n"><b>$ ' + num(d.costoT, 0) + '</b></td></tr></tfoot></table></div>' + leyendaMini();
   var conT = d.lotes.filter(function (l) { return l.costoT; }).sort(function (a, b) { return a.costoT - b.costoT; });
   if (conT.length > 1) { var a = conT[0], z = conT[conT.length - 1]; h += '<p class="muted" style="margin-top:10px">El lote más eficiente fue el ' + esc(String(a.nombre).replace(/^Lote\s*/i, '')) + ': cada tonelada le costó $ ' + num(a.costoT, 0) + ', ' + num((1 - a.costoT / z.costoT) * 100, 0) + ' % menos que en el ' + esc(String(z.nombre).replace(/^Lote\s*/i, '')) + '.</p>'; }
   h += '</div>';
@@ -2035,6 +2238,101 @@ function mzResumen(d) {
     (d.interno.bcr ? ' Ovinos valúa su maíz con ' + esc(d.interno.bcr.mercado) + ': $ ' + num(d.interno.bcr.precio, 0) + '/t al ' + fecha(d.interno.bcr.fecha) + '.' : '') + '</p></div>';
   $('main').innerHTML = h;
 }
+
+/* ---------- PRESUPUESTO DE LA CAMPAÑA (v3.8): se carga una vez y queda fijo ---------- */
+var PRE = null;
+function vPresupuesto() {
+  var m = $('main'); m.innerHTML = volverBtn() + '<div class="card"><div class="cargando"><i></i><i></i><i></i><i></i></div></div>';
+  call('api_presupuesto', S.token).then(function (r) {
+    PRE = r;
+    var h = volverBtn() + '<div class="card"><h2>Presupuesto de la campaña</h2><p class="sub" style="margin:0">Lo que se espera vender y lo que se planea gastar. Cada renglón se carga <b>una sola vez</b> y después queda fijo: así en Resultados se compara lo real contra lo planeado. Si hubo un error de tipeo, el administrador lo corrige con el lapicito (Corregir un dato) y queda en el historial.</p></div>';
+    if (r.puedeCargar) h += '<div class="card"><h2>' + ic('mas') + ' Cargar un presupuesto</h2><div id="preMsg"></div><div class="row">' +
+      campo('Campaña', '<select id="preCamp" onchange="preCamp()"><option value="">Elegir…</option>' + r.campanas.map(function (c) { return '<option value="' + esc(c.id) + '">' + esc(c.nombre) + (c.items.length ? ' · ya tiene ' + c.items.length + (c.items.length === 1 ? ' renglón' : ' renglones') : '') + '</option>'; }).join('') + '<option value="__nueva">Una campaña nueva…</option></select>', '', 1) + '</div>' +
+      '<div id="preNueva" class="hide"><div class="row">' + campo('Nombre de la campaña', '<input id="preNom" placeholder="Ej.: Campaña 2027">', '', 1) + campo('Empieza el', '<input id="preDesde" type="date">', '', 1) + campo('Termina el', '<input id="preHasta" type="date">', '', 1) + '</div></div>' +
+      '<div id="preRub"></div></div>';
+    h += '<h2 class="seccion">Presupuestos cargados</h2>';
+    var conP = r.campanas.filter(function (c) { return c.items.length; });
+    h += conP.length ? '<div class="accL">' + conP.map(function (c, k) {
+      var ing = c.items.filter(function (x) { return x.tipo === 'Ingreso'; }), gas = c.items.filter(function (x) { return x.tipo !== 'Ingreso'; });
+      var tI = ing.reduce(function (a, x) { return a + x.importe; }, 0), tG = gas.reduce(function (a, x) { return a + x.importe; }, 0);
+      var fila = function (x) { return '<tr><td>' + esc(x.rubro) + (x.concepto ? '<br><small class="muted">' + esc(x.concepto) + '</small>' : '') + '</td><td>' + (x.tipo === 'Ingreso' ? '<span class="tag v" style="margin:0">Ingreso</span>' : '<span class="tag g" style="margin:0">Costo ' + esc(String(x.clasif).toLowerCase()) + '</span>') + '</td><td class="n">' + pesos(x.importe) + '</td><td class="muted">' + esc(x.quien) + ' · ' + fecha(x.cuando) + (x.corregido ? ' · <span class="tag">Corregido</span>' : '') + '</td></tr>'; };
+      return acc(esc(c.nombre), 'Del ' + fecha(c.desde) + ' al ' + fecha(c.hasta), 'Resultado ' + pesos(tI - tG),
+        '<div class="scroll" style="max-height:none"><table style="margin-top:8px"><tr><th>Renglón</th><th>Clasificación</th><th class="n">Importe</th><th>Cargado</th></tr>' +
+        '<tr><td colspan="4"><b>Ingresos</b></td></tr>' + (ing.length ? ing.map(fila).join('') : '<tr><td colspan="4" class="muted">Sin ingresos cargados</td></tr>') + '<tr class="tot"><td colspan="2">Total ingresos</td><td class="n">' + pesos(tI) + '</td><td></td></tr>' +
+        '<tr><td colspan="4"><b>Gastos</b></td></tr>' + (gas.length ? gas.map(fila).join('') : '<tr><td colspan="4" class="muted">Sin gastos cargados</td></tr>') + '<tr class="tot"><td colspan="2">Total gastos</td><td class="n">' + pesos(tG) + '</td><td></td></tr>' +
+        '<tr class="tot"><td colspan="2">Resultado presupuestado (ingresos − gastos)</td><td class="n">' + pesos(tI - tG) + '</td><td></td></tr></table></div>' +
+        '<p class="muted">' + ic('clave') + ' Lo cargado queda fijo. Para sumar renglones, elegí esta campaña arriba y tocá "Agregar otro". Para comparar con lo real, mirá <button class="link" onclick="ir(\'tablero\')">Resultados</button>.</p>', k === 0);
+    }).join('') + '</div>' : '<div class="card"><p class="muted">Todavía no hay presupuestos cargados.</p></div>';
+    m.innerHTML = h;
+  }).catch(function (e) { m.innerHTML = volverBtn(); msg(m.appendChild(document.createElement('div')), 'err', e.message); });
+}
+var PRE_N = 0;
+function preFila(tipo, rubro, fijo) {
+  var id = 'pf' + (++PRE_N), gastos = PRE.gastos;
+  var opR = function (t, sel) { return (t === 'Ingreso' ? PRE.ingresos.map(function (r) { return { rubro: r }; }) : gastos).map(function (g) { return '<option' + (g.rubro === sel ? ' selected' : '') + '>' + esc(g.rubro) + '</option>'; }).join(''); };
+  return '<div class="preF mini" id="' + id + '" style="margin-top:8px">' + (fijo ? '<input type="hidden" class="pfT" value="' + tipo + '"><input type="hidden" class="pfR" value="' + esc(rubro) + '"><div class="row" style="align-items:center"><b style="flex:1">' + esc(rubro) + '</b><span class="pfC tag ' + (tipo === 'Ingreso' ? 'v' : 'g') + '"></span></div>'
+      : '<div class="row">' + campo('Ingreso o gasto', '<select class="pfT" onchange="preTipo(\'' + id + '\')"><option' + (tipo === 'Ingreso' ? ' selected' : '') + '>Ingreso</option><option' + (tipo !== 'Ingreso' ? ' selected' : '') + '>Gasto</option></select>', '', 1) +
+        campo('Rubro', '<select class="pfR" onchange="preClasif(\'' + id + '\')">' + preOpcRubro(tipo, rubro) + '</select>', '', 1) + '<div class="f" style="flex:0 0 auto;align-self:flex-end"><button class="btn2" onclick="$(\'' + id + '\').remove()">Quitar</button></div></div><div class="pfNw hide">' + campo('Nombre del gasto nuevo', '<input placeholder="Ej.: Alambrado" oninput="preClasif(\'' + id + '\')">', '', 1) + '</div><div class="row"><span class="pfC tag" style="margin:0 0 6px"></span></div>') +
+    '<div class="row">' + campo('Concepto (opcional)', '<input class="pfX" placeholder="' + (tipo === 'Ingreso' ? 'Ej.: Venta de corderos' : 'Ej.: Detalle del gasto') + '">') + campo('Importe ($)', '<input class="pfI" type="number" min="0" step="any" inputmode="decimal">') + '</div></div>';
+}
+function preOpcRubro(t, sel) { return (t === 'Ingreso' ? PRE.ingresos.map(function (r) { return { rubro: r }; }) : PRE.gastos).map(function (g) { return '<option' + (g.rubro === sel ? ' selected' : '') + '>' + esc(g.rubro) + '</option>'; }).join('') + (t === 'Ingreso' ? '' : '<option value="__nuevo">+ Agregar nuevo…</option>'); }
+function preTipo(id) { var f = $(id), t = f.querySelector('.pfT').value; f.querySelector('.pfR').innerHTML = preOpcRubro(t, ''); preClasif(id); }
+/** Directo o indirecto de un gasto nuevo, por su nombre (lo mismo hace el servidor al guardarlo) */
+function clasifGasto(n) { return /alimen|ma[ií]z|raci[oó]n|balancead|suplement|sanidad|vacun|remedio|antiparas|veterin|flete|faena|comisi|esquila|semilla|fertiliz|rollo|fardo|pastura|forraj|mineral/i.test(String(n || '')) ? 'Directo' : 'Indirecto'; }
+function preClasif(id) {
+  var f = $(id), t = f.querySelector('.pfT').value, r = f.querySelector('.pfR').value, g = PRE.gastos.filter(function (x) { return x.rubro === r; })[0], c = f.querySelector('.pfC');
+  var nuevo = r === '__nuevo', box = f.querySelector('.pfNw');
+  if (box) box.classList.toggle('hide', !nuevo);
+  var tipoG = nuevo ? clasifGasto(box ? box.querySelector('input').value : '') : (g ? g.tipo : clasifGasto(r));
+  c.textContent = t === 'Ingreso' ? 'Ingreso' : 'Costo ' + tipoG.toLowerCase(); c.className = 'pfC tag ' + (t === 'Ingreso' ? 'v' : 'g');
+}
+function preCamp() {
+  var v = $('preCamp').value, c = PRE.campanas.filter(function (x) { return x.id === v; })[0], ya = c ? c.items.filter(function (x) { return !x.concepto; }).map(function (x) { return x.rubro; }) : [];
+  $('preNueva').classList.toggle('hide', v !== '__nueva');
+  if (!v) { $('preRub').innerHTML = ''; return; }
+  var base = [['Ingreso', 'Ventas']].concat(PRE.fijos.map(function (r) { return ['Gasto', r]; })).filter(function (x) { return ya.indexOf(x[1]) < 0; });
+  $('preRub').innerHTML = '<p class="muted" style="margin:8px 0 4px">Escribí cuánto se espera vender y cuánto se piensa gastar en toda la campaña. Lo que no se sepa todavía, dejalo vacío y se carga después (una sola vez).</p>' +
+    '<div id="preFilas">' + base.map(function (x) { return preFila(x[0], x[1], true); }).join('') + '</div>' +
+    '<button class="btn2" style="margin-top:10px" onclick="preAgregar()">' + ic('mas') + 'Agregar otro</button>' +
+    (c && c.items.length ? '<p class="muted">Ya cargados (fijos): ' + esc(c.items.map(function (x) { return x.rubro + (x.concepto ? ' · ' + x.concepto : ''); }).join(', ')) + '.</p>' : '') +
+    '<div class="row" style="align-items:center;margin-top:12px"><button class="btn" id="preBtn" onclick="preGuardar()">' + ic('ok') + 'Guardar presupuesto</button><span class="muted">Después de guardarlo no se puede cambiar.</span></div>';
+  Array.prototype.forEach.call(document.querySelectorAll('.preF'), function (f) { preClasif(f.id); });
+}
+function preAgregar() { $('preFilas').insertAdjacentHTML('beforeend', preFila('Gasto', '', false)); var f = $('preFilas').lastElementChild; preClasif(f.id); f.querySelector('.pfT').focus(); }
+function preGuardar() {
+  var v = $('preCamp').value, d = v === '__nueva' ? { nueva: { nombre: $('preNom').value.trim(), desde: $('preDesde').value, hasta: $('preHasta').value } } : { idCampana: v };
+  if (d.nueva && (!d.nueva.nombre || !d.nueva.desde || !d.nueva.hasta)) { msg($('preMsg'), 'err', 'Escribí el nombre y las fechas de la campaña nueva.'); $('preMsg').scrollIntoView({ block: 'center' }); return; }
+  var items = Array.prototype.map.call(document.querySelectorAll('.preF'), function (f) { var i = f.querySelector('.pfI').value, r = f.querySelector('.pfR').value, nw = f.querySelector('.pfNw input');
+    return { tipo: f.querySelector('.pfT').value, rubro: r === '__nuevo' ? (nw ? nw.value.trim() : '') : r, nuevo: r === '__nuevo', concepto: f.querySelector('.pfX').value, importe: i === '' ? '' : Number(i) }; });
+  var b = $('preBtn'); ocupado(b, true);
+  call('api_guardarPresupuesto', S.token, d, items).then(function (r) { return refrescar().then(function () { vPresupuesto(); setTimeout(function () { var x = $('preMsg'); if (x) msg(x, 'ok', r.mensaje); }, 700); }); })
+    .catch(function (e) { msg($('preMsg'), 'err', e.message); $('preMsg').scrollIntoView({ block: 'center' }); ocupado(b, false); });
+}
+
+/* ---------- Mayúsculas (v3.8): primera letra de cada texto y después de dos puntos, en toda la página ---------- */
+var MAY_UNIDADES = /^(kg|t|ha|qq|ml|cc|g|mm|km|l|cm|lt|lts|u|s|h|min)(\/|\b)/i;
+var MAY_INICIO = { P: 1, LI: 1, LABEL: 1, BUTTON: 1, H1: 1, H2: 1, H3: 1, SUMMARY: 1, OPTION: 1, DT: 1, DD: 1 };
+function mayTexto(t, inicio) {
+  var r = t.replace(/(:\s+)([a-záéíóúñü])([^\s]*)/g, function (m, a, b, c) { return MAY_UNIDADES.test(b + c) ? m : a + b.toUpperCase() + c; });
+  if (inicio) r = r.replace(/^(\s*)([a-záéíóúñü])([^\s]*)/, function (m, a, b, c) { return MAY_UNIDADES.test(b + c) ? m : a + b.toUpperCase() + c; });
+  return r;
+}
+function mayNodo(raiz) {
+  if (!raiz || !raiz.nodeType) return;
+  if (raiz.nodeType === 3) raiz = raiz.parentNode; if (!raiz) return;
+  var w = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT, { acceptNode: function (n) { var p = n.parentNode; return !p || /^(SCRIPT|STYLE|TEXTAREA|CODE|PRE)$/.test(p.nodeName) || (p.closest && p.closest('[data-sinmay]')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT; } }), n;
+  while ((n = w.nextNode())) {
+    var p = n.parentNode, inicio = !!(p && (MAY_INICIO[p.nodeName] || (p.classList && (p.classList.contains('tag') || p.classList.contains('muted') || p.classList.contains('sub')))) && p.firstChild === n);
+    var v = n.nodeValue, nv = mayTexto(v, inicio); if (nv !== v) n.nodeValue = nv;
+  }
+}
+(function () {
+  var pend = false, cola = [];
+  var mo = new MutationObserver(function (ms) { ms.forEach(function (m) { if (m.type === 'characterData') cola.push(m.target); else Array.prototype.forEach.call(m.addedNodes, function (x) { cola.push(x); }); });
+    if (!pend) { pend = true; requestAnimationFrame(function () { pend = false; var c = cola; cola = []; c.forEach(mayNodo); }); } });
+  var arr = function () { mo.observe(document.body, { childList: true, subtree: true, characterData: true }); mayNodo(document.body); };
+  if (document.body) arr(); else document.addEventListener('DOMContentLoaded', arr);
+})();
 
 /* ---------- MI CLAVE ---------- */
 function vClave() {

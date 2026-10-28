@@ -5,9 +5,9 @@
  * 04 Consumo (estimado, real, desvío) · 05 Escenarios y sensibilidad · 06 Asistente IA (Gemini)
  *
  * - Los escenarios se calculan en la pantalla a partir de una BASE que arma el servidor con datos reales y
- *   estándares; nunca modifican los datos reales ni los estándares (diapositiva 13).
+ *   estándares; nunca modifican los datos reales ni los estándares.
  * - Historia: todos los días (con el activador del dólar, 19 h) se guarda una foto de los indicadores en
- *   F_HistoriaInd: es la copia analítica por lotes (diapositivas 9 a 11).
+ *   F_HistoriaInd: es la copia analítica por lotes (una foto diaria de los indicadores).
  * - Asistente: la clave de Gemini vive en Propiedades del script (GEMINI_API_KEY), nunca en la página.
  *   A la IA se le mandan solo números del campo (sin emails ni nombres de personas).
  */
@@ -139,19 +139,18 @@ function api_asistente(token, pregunta, idCampana, escenario, unidad, historial)
     if (tc) ctx.dolar_oficial_bna = { fecha: tc.Fecha, comprador: tc.Comprador, vendedor: tc.Vendedor, fuente: tc.Fuente }; } catch (e) {}
   try { var ult = {}; leer_('F_Cotizacion').filter(activo_).forEach(function (x) { var k = x.Producto + ' · ' + x.Mercado; if (!ult[k] || String(x.Fecha) > String(ult[k].Fecha)) ult[k] = x; });
     ctx.ultimas_cotizaciones = Object.keys(ult).map(function (k) { var x = ult[k]; return { producto: x.Producto, mercado: x.Mercado, fecha: x.Fecha, precio: x.Precio, unidad: x.Unidad }; }); } catch (e) {}
-  try { var mz = maizDatos_(''); if (mz.campanas.length) ctx.unidad_maiz = pick_(mz, ['campana', 'ha', 't', 'rinde', 'rindeEst', 'pctEst', 'costoProd', 'costoHa', 'costoT', 'ventasNeto', 'tVendidas', 'precioT', 'margen', 'margenHa', 'margenPct', 'rubros', 'gastos', 'ventas']); } catch (e) {}
-  try { var bv = bovinoDatos_(); ctx.unidad_bovina = { activos: bv.activos, vendidos: bv.vendidos, muertos: bv.muertos, faltantes: bv.faltantes, categorias: bv.categorias, recria: bv.recria, maiz_consumido_kg: bv.maizKg,
+  try { if (!bovinoActivo_()) throw 0; var bv = bovinoDatos_(); ctx.unidad_bovina = { activos: bv.activos, vendidos: bv.vendidos, muertos: bv.muertos, faltantes: bv.faltantes, categorias: bv.categorias, recria: bv.recria, maiz_consumido_kg: bv.maizKg,
     cargas: bv.cargas.map(function (x) { return pick_(x, ['nombre', 'estado', 'inicio', 'fin', 'animales', 'dias', 'pesoIni', 'pesoFin', 'kgGanados', 'adpv', 'adpvDesbaste', 'conversion', 'alimento', 'kgVendidos']); }), aclaracion: 'Las planillas de Bovinos no traen precios: no hay resultados en pesos.' }; } catch (e) {}
-  ctx.unidad_en_pantalla = { ovino: 'Ovinos', maiz: 'Maíz', bovino: 'Bovinos' }[unidad] || 'Ovinos';
+  ctx.unidad_en_pantalla = { ovino: 'Ovinos', bovino: 'Bovinos' }[unidad] || 'Ovinos';
   ctx.mapa_de_la_aplicacion = {
-    'Inicio': 'arriba se elige la unidad (Ovinos, Bovinos o Maíz); muestra el rodeo de hoy, lo que hay que atender y el dólar oficial BNA del día (el administrador lo actualiza tocándolo)',
-    'Ovinos': 'Cargar: Vacunas y tratamientos, Nació un cordero, Murió un animal, Cargar una compra, Vender animales (la factura sale numerada sola), Cobros y pagos, Corregir un dato. Consultar: Los animales (fichas), Proveedores y clientes, Resultados, Indicadores, Panel decisional (escenarios), Cotizaciones, Impuestos, Unidades del campo',
-    'Maíz': 'Cargar: Labores e insumos por lote, Cosecha, Venta de grano, Almacén y fletes, Corregir un dato. Consultar: Resumen de Maíz, Indicadores, Lotes, Estándares y dosis, Insumos y labores',
-    'Bovinos': 'Cargar: Pesé animales (toda la manga junta), Nació un ternero, Alimento de las cargas, Venta, muerte o faltante, Corregir un dato. Consultar: Resumen de Bovinos, Indicadores, Los animales, Cargas de engorde, Todas las pesadas',
+    'Inicio': 'muestra el rodeo de hoy, lo que hay que atender y el dólar oficial BNA del día (el administrador lo actualiza tocándolo)',
+    'Ovinos': 'Cargar: Vacunas y tratamientos, Nació un cordero, Murió un animal, Cargar una compra, Vender animales (la factura sale numerada sola), Cobros y pagos, Corregir un dato. Consultar: Los animales (fichas), Proveedores y clientes, Resultados, Indicadores, Panel decisional (escenarios), Cotizaciones, Impuestos, Unidades del campo, Presupuesto',
+    'Unidades del campo': 'las demás unidades del establecimiento con el link a su sistema; Bovinos está dentro de este sistema y el administrador lo activa o lo pone en pausa desde ahí',
+    'Bovinos (si está activo)': 'Cargar: Pesé animales (toda la manga junta), Nació un ternero, Alimento de las cargas, Venta, muerte o faltante. Consultar: Resumen de Bovinos, Indicadores, Los animales, Cargas de engorde, Todas las pesadas',
     'Cotizaciones': 'precios de granos de la Bolsa de Comercio de Rosario (automáticos), hacienda de Cañuelas, carga manual e historial',
     'Administración': 'solo el Administrador: tablas, usuarios, metas de indicadores e Historial de cambios'
   };
-  var sistema = 'Sos la ovejita asistente del Sistema de Gestión de Pozo del Carril (unidades Ovinos, Bovinos y Maíz), usado por estudiantes de Ciencias Económicas y por el dueño del campo. ' +
+  var sistema = 'Sos la ovejita asistente del Sistema de Gestión de Pozo del Carril (ganadería: unidad Ovina y, si está activa, Bovina), usado por estudiantes de Ciencias Económicas y por el dueño del campo. ' +
     'Respondé en español rioplatense, cálido y directo. Contestá EXACTAMENTE lo que te preguntan y nada más: no agregues datos, análisis ni recomendaciones que no te pidieron. ' +
     'Usá SOLO los datos del contexto JSON; si un dato no está, decilo en una frase y no lo inventes. ' +
     'Elegí el largo según la pregunta: ' +
