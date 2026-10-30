@@ -22,7 +22,7 @@
  */
 
 var TZ = 'America/Argentina/Buenos_Aires';
-var VERSION = '3.8';
+var VERSION = '3.9';
 var AUDIT_COLS = ['CreadoEl', 'CreadoPor', 'ModificadoEl', 'ModificadoPor', 'Activo'];
 var ROLES = ['Administrador', 'Operador de carga', 'Consulta / auditoría']; // v3.5: se quitó "Responsable de subunidad" (el Operador de carga hace lo mismo)
 var SESION_SEGUNDOS = 6 * 60 * 60;
@@ -410,7 +410,46 @@ function genTabla_(tabla) {
 }
 function invalidar_(tabla) {
   delete CACHE_[tabla];
-  try { CacheService.getScriptCache().put('G_' + tabla, Utilities.getUuid().slice(0, 8), 21600); } catch (e) {}
+  try { CacheService.getScriptCache().putAll({ ['G_' + tabla]: Utilities.getUuid().slice(0, 8), G_INICIO: Utilities.getUuid().slice(0, 8) }, 21600); } catch (e) {}
+}
+/* ---------- v3.9 · Entrada rápida ----------
+ * Las listas desplegables y el resumen del inicio son iguales para todos los usuarios: se arman una vez y se guardan
+ * (comprimidos) hasta 6 horas. Cualquier escritura cambia la generación G_INICIO y el paquete se vuelve a armar.
+ * Un activador cada 10 minutos (activarEntradaRapida) lo mantiene armado, así el primero que entra no espera. */
+var INI_SEG = 21600, INI_TROZO = 90000;
+function claveInicio_() {
+  var c = CacheService.getScriptCache(), g = c.get('G_INICIO');
+  if (!g) { g = Utilities.getUuid().slice(0, 8); c.put('G_INICIO', g, 21600); }
+  return 'INI_' + g + '_' + hoyStr_().replace(/-/g, '');
+}
+function paqueteInicio_() {
+  var k = claveInicio_(), c = CacheService.getScriptCache();
+  try {
+    var meta = c.get(k);
+    if (meta) {
+      var n = Number(meta), keys = [];
+      for (var i = 0; i < n; i++) keys.push(k + '_' + i);
+      var got = c.getAll(keys), b64 = '', ok = true;
+      for (var j = 0; j < n; j++) { if (got[keys[j]] == null) { ok = false; break; } b64 += got[keys[j]]; }
+      if (ok) return JSON.parse(Utilities.ungzip(Utilities.newBlob(Utilities.base64Decode(b64), 'application/x-gzip')).getDataAsString());
+    }
+  } catch (e) {}
+  var p = { listas: listas_(), resumen: resumen_() };
+  try {
+    var txt = Utilities.base64Encode(Utilities.gzip(Utilities.newBlob(JSON.stringify(p), 'application/json')).getBytes()), tr = {}, m = 0;
+    for (var x = 0; x < txt.length; x += INI_TROZO) tr[k + '_' + (m++)] = txt.slice(x, x + INI_TROZO);
+    if (m <= 40) { c.putAll(tr, INI_SEG); c.put(k, String(m), INI_SEG); }
+  } catch (e) {}
+  return p;
+}
+/** Lo llama el activador cada 10 minutos: deja armado el paquete del inicio y la versión al día. */
+function calentarSistema() { CACHE_ = {}; HEAD_ = {}; TC_ = null; asegurarVersion_(); paqueteInicio_(); }
+/** Ejecutar UNA vez desde el editor de Apps Script (Ejecutar → activarEntradaRapida). */
+function activarEntradaRapida() {
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'calentarSistema') ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('calentarSistema').timeBased().everyMinutes(10).create();
+  calentarSistema();
+  return 'Listo: el sistema se mantiene preparado cada 10 minutos.';
 }
 function invalidarTodo_() { CACHE_ = {}; HEAD_ = {}; Object.keys(SCHEMA).forEach(invalidar_); }
 function memLeer_(tabla, g) {
@@ -766,14 +805,16 @@ function include(nombre) { return HtmlService.createHtmlOutputFromFile(nombre).g
 
 function api_login(email, clave) {
   CACHE_ = {}; HEAD_ = {};
-  Utilities.sleep(300);
   var u = usuarioPorEmail_(email);
   if (!u || !activo_(u) || !u.ClaveHash || hash_(u.Sal, String(clave)) !== u.ClaveHash) {
     throw new Error('Email o clave incorrectos.');
   }
   var ses = nuevaSesion_(String(u.Email).toLowerCase());
   conBloqueo_(function () { auditar_(String(u.Email).toLowerCase(), 'Ingreso', 'S_Usuarios', u.Email, null, null); });
-  return { token: ses.token, code: ses.code, usuario: publico_({ Email: String(u.Email).toLowerCase(), Nombre: u.Nombre, Rol: u.Rol, IdSubunidad: u.IdSubunidad }) };
+  var r = { token: ses.token, code: ses.code, usuario: publico_({ Email: String(u.Email).toLowerCase(), Nombre: u.Nombre, Rol: u.Rol, IdSubunidad: u.IdSubunidad }) };
+  // v3.9: en el mismo viaje va todo lo que necesita la pantalla (antes eran dos pedidos seguidos al servidor)
+  try { r.inicio = armarInicio_(sesion_(ses.token), ses); } catch (e) {}
+  return r;
 }
 /**
  * v3.1 — Sesión que sobrevive a F5. Además del token (que el navegador guarda), se entrega un código de reingreso
@@ -811,6 +852,9 @@ function api_inicio(token, code) {
   try { u = sesion_(token); }
   catch (e) { if (!code) throw e; ses = api_reingreso(code); token = ses.token; u = sesion_(token); }
   if (!ses) ses = { token: token, code: codigoVigente_(code, u.Email) };
+  return armarInicio_(u, ses);
+}
+function armarInicio_(u, ses) {
   var migracion = asegurarVersion_();
   var esquema = {};
   Object.keys(SCHEMA).forEach(function (t) {
@@ -822,7 +866,8 @@ function api_inicio(token, code) {
       puede: { leer: puede_(u, t, 'leer'), crear: puede_(u, t, 'crear'), editar: puede_(u, t, 'editar'), baja: puede_(u, t, 'baja') }
     };
   });
-  return { usuario: publico_(u), esquema: esquema, listas: listas_(), resumen: resumen_(), rubros: Object.keys(RUBROS), version: VERSION, migracion: migracion, sesion: ses };
+  var p = paqueteInicio_();
+  return { usuario: publico_(u), esquema: esquema, listas: p.listas, resumen: p.resumen, rubros: Object.keys(RUBROS), version: VERSION, migracion: migracion, sesion: ses };
 }
 function enCarencia_() {
   var hoy = hoyStr_(), out = {};

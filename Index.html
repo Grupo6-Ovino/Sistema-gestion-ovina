@@ -563,7 +563,7 @@ function ingresar() {
   var b = $('lBtn'); b.disabled = true;
   call('api_login', $('lEmail').value, $('lClave').value).then(function (r) {
     S.token = r.token; S.code = r.code || null; guardar('ovToken', r.token);
-    return iniciar();
+    return iniciar(r.inicio);
   }).catch(function (e) { msg($('loginMsg'), 'err', e.message); }).then(function () { b.disabled = false; });
 }
 $('lClave').addEventListener('keydown', function (e) { if (e.key === 'Enter') ingresar(); });
@@ -576,8 +576,9 @@ function salir(silencioso) {
   $('menuU').classList.add('hide'); $('app').classList.add('hide'); $('carga').classList.add('hide'); $('login').classList.remove('hide'); if ($('oveja')) { $('oveja').classList.add('hide'); chatAbrir(false); CHAT = []; chatPintar(); }
   if (silencioso) msg($('loginMsg'), 'warn', 'La sesión venció. Volvé a entrar.');
 }
-function iniciar() {
-  return call('api_inicio', S.token, S.code).then(function (r) {
+function iniciar(listo) {
+  // v3.9: al ingresar, el servidor ya manda todo junto con el login (un solo viaje)
+  return (listo ? Promise.resolve(listo) : call('api_inicio', S.token, S.code)).then(function (r) {
     if (r.sesion) { S.token = r.sesion.token; S.code = r.sesion.code; guardar('ovToken', S.token); }
     S.u = r.usuario; S.esq = r.esquema; S.listas = r.listas; S.resumen = r.resumen; S.rubros = r.rubros; S.aviso = r.migracion || '';
     var ini = String(S.u.Nombre || '?').trim().split(/\s+/).map(function (p) { return p[0]; }).slice(0, 2).join('').toUpperCase();

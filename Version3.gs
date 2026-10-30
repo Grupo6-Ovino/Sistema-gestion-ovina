@@ -30,8 +30,13 @@ var CARNERO_BAJA_V3 = 96;
 
 /** v3.7: además de la versión, controla que existan todas las hojas (por si una actualización quedó a medias). */
 function faltanHojas_() {
+  // v3.9: revisar las hojas tarda; si ya se comprobó que están todas, no se repite por 6 horas
+  var c = CacheService.getScriptCache(), k = 'HOJAS_OK_' + VERSION;
+  if (c.get(k)) return false;
   var hay = {}; ss_().getSheets().forEach(function (sh) { hay[sh.getName()] = 1; });
-  return Object.keys(SCHEMA).some(function (t) { return !hay[t]; });
+  var falta = Object.keys(SCHEMA).some(function (t) { return !hay[t]; });
+  if (!falta) c.put(k, '1', 21600);
+  return falta;
 }
 function asegurarVersion_() {
   var p = PropertiesService.getScriptProperties();
@@ -44,7 +49,8 @@ function asegurarVersion_() {
       var log = migrarV3_();
       invalidarTodo_();
       p.setProperty('VERSION_DATOS', VERSION);
-      if (antes === '3.7' || antes === '3.6' || antes === VERSION) return 'Sistema actualizado a la versión 3.8: se puede cargar sin señal (queda guardado en el teléfono y se envía solo), hay Presupuesto de la campaña, Resultados e Indicadores en listas desplegables y el sistema queda solo para ganadería: Bovinos está en Unidades del campo (en pausa hasta que el administrador lo active).';
+      if (antes === '3.8' || antes === VERSION) return 'Sistema actualizado a la versión 3.9: entra más rápido.';
+      if (antes === '3.7' || antes === '3.6') return 'Sistema actualizado a la versión 3.8: se puede cargar sin señal (queda guardado en el teléfono y se envía solo), hay Presupuesto de la campaña, Resultados e Indicadores en listas desplegables y el sistema queda solo para ganadería: Bovinos está en Unidades del campo (en pausa hasta que el administrador lo active).';
       if (antes === '3.5') return 'Sistema actualizado a la versión 3.6: al tocar F5 la página espera en la misma sección (ya no pasa por el inicio) y el historial de cambios lo ve solo el administrador.';
       if (antes === '3.4') return 'Sistema actualizado a la versión 3.5: se quitó el rol Responsable de subunidad (quien lo tenía ahora es Operador de carga), cada registro muestra quién lo cargó y quién lo modificó, y hay un Historial de cambios en Administración.';
       if (antes === '3.3') return 'Sistema actualizado a la versión 3.4: ahora podés corregir datos con el lapicito (Cargar → Corregir un dato y en la ficha de cada animal).';
